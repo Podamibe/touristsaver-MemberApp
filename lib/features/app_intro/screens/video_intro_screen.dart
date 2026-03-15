@@ -23,7 +23,7 @@ class _VideoIntroScreenState extends State<VideoIntroScreen> {
     super.initState();
     _controller = VideoPlayerController.networkUrl(
       Uri.parse(
-          "https://meg8.com/wp-content/uploads/2025/08/TouristSave_Final.mp4"),
+          "https://touristsaver.org/wp-content/uploads/2025/10/TouristSaver3.0.mp4"),
     );
 
     _controller.initialize().then((_) {

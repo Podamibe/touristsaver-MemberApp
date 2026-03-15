@@ -119,14 +119,21 @@ class _MySplashScreenState extends State<MySplashScreen> {
       if (notificationsCount != null && notificationsCount != 0) {
         AppVariables.notificationLabel.value = notificationsCount;
       }
+      String? token = await pref.readData(key: saveToken);
+      bool isLoggedIn = token != null && token.isNotEmpty;
+      bool canGoHome = await checkWalletBalance();
+
       // Wait splash time before deciding where to go
       Timer(Duration(seconds: splashtime), () async {
         if (acc == 'true') {
-          bool canGoHome = await checkWalletBalance();
-          if (canGoHome) {
-            showBottomBar();
+          if (isLoggedIn) {
+            if (canGoHome) {
+              showBottomBar();
+            } else {
+              showTopUpScreen(); // redirect to top up / warning
+            }
           } else {
-            showTopUpScreen(); // redirect to top up / warning
+            showBottomBar();
           }
         } else {
           showIntroVideo();

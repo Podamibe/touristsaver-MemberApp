@@ -69,7 +69,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: FutureBuilder<bool>(
-          future: checkWalletBalance(), // 👈 call the async function
+          future: checkWalletBalance(),
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               // show placeholder or loader while fetching

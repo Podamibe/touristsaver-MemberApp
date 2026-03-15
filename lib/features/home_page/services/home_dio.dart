@@ -311,11 +311,11 @@ class DioHome {
             ? '0'
             : await Pref().readData(key: userChosenLocationRegionID);
     String enterLocationId;
+
     if (countryId != '0' &&
         countryId != 'null' &&
         stateId == '0' &&
         regionId == '0') {
-      //only entering country ID
       enterLocationId = 'countryId=$countryId';
     } else if (countryId != '0' &&
         countryId != 'null' &&
@@ -330,18 +330,25 @@ class DioHome {
       Dio dio = AppVariables.accessToken == null
           ? await getClientNoToken()
           : await getClient();
+
+      Response<String> response;
+
       if (name == 'null' || name == null) {
-        Response<String> response = await dio.get(
+        response = await dio.get(
             '$allMerchant?$enterLocationId&page=$pageNumber&order_by=verifiedDate&ordering=DESC&limit=10&fields=merchantName,maxDiscount,latlon&lang=${AppVariables.selectedLanguageNow}');
-        // log(response.data!);
-        return merchantGetAllResModelFromJson(response.data!);
       } else {
-        Response<String> response = await dio.get(
+        response = await dio.get(
             '$allMerchant?$enterLocationId&page=$pageNumber&merchantName__substring=$name&order_by=verifiedDate&ordering=DESC&limit=10&fields=merchantName,maxDiscount,latlon&lang=${AppVariables.selectedLanguageNow}');
-        // log(response.data!);
-        return merchantGetAllResModelFromJson(response.data!);
       }
+
+      // 2. Parse the data
+      MerchantGetAllResModel parsedData =
+          merchantGetAllResModelFromJson(response.data!);
+
+      // 3. Return the parsed data
+      return parsedData;
     } catch (e) {
+      print("Error fetching merchants: $e");
       return null;
     }
   }

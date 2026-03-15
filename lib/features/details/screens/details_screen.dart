@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 
+import 'dart:convert';
 import 'dart:io';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
@@ -1439,12 +1440,19 @@ class _DetailsScreenState extends State<DetailsScreen> {
 
   //Opening Hour pop up
   openingHour(MerchantDetailResModel merchantDetail) {
+    String? rawOpeningHours =
+        merchantDetail.data?.merchantWebsiteInfo?.openingHourInfo;
+
+    // 2. Check for Dart null, empty strings, AND the word 'null'
+    String textToDisplay = (rawOpeningHours == null ||
+            rawOpeningHours.trim().isEmpty ||
+            rawOpeningHours.trim().toLowerCase() == 'null')
+        ? S.of(context).noOpeningHours
+        : rawOpeningHours;
     return showGeneralDialog(
       barrierLabel: 'Label',
-      barrierDismissible: true, //to dismiss the container once opened
-      barrierColor: Colors.black.withValues(
-          alpha:
-              0.5), //to change the background color once the container is opened
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
       transitionDuration: const Duration(milliseconds: 300),
       context: context,
       pageBuilder: (context, anim1, anim2) {
@@ -1487,16 +1495,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
                           fontFamily: 'Sans'),
                     ),
                     const SizedBox(height: 20),
+
+                    // 3. Use the clean variable we created at the top!
                     AutoSizeText(
-                      merchantDetail.data?.merchantWebsiteInfo == null
-                          ? S.of(context).noOpeningHours
-                          : merchantDetail.data!.merchantWebsiteInfo
-                                      ?.openingHourInfo ==
-                                  ''
-                              ? S.of(context).noOpeningHours
-                              : merchantDetail.data!.merchantWebsiteInfo
-                                      ?.openingHourInfo ??
-                                  S.of(context).noOpeningHours,
+                      textToDisplay,
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,

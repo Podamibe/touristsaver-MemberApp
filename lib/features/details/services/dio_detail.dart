@@ -12,9 +12,9 @@ class DioDetail {
       {required int id, required String day, required int hour}) async {
     try {
       Dio dio = await getClientNoToken();
-      Response<String> response = await dio.get(
-          '$merchantDetail/$id?day=$day&hour=$hour&lang=${AppVariables.selectedLanguageNow}');
-      // log(response.data!);
+      String endpointPath =
+          '$merchantDetail/$id?day=$day&hour=$hour&lang=${AppVariables.selectedLanguageNow}';
+      Response<String> response = await dio.get(endpointPath);
       return merchantDetailResModelFromJson(response.data!);
     } catch (e) {
       return null;
