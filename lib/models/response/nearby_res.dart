@@ -221,7 +221,7 @@ class Datum {
         stripeCustomerId: json["stripeCustomerId"],
         statename: json["statename"],
         countryname: json["countryname"],
-        distance: json["distance"],
+        distance: json["distance"]?.toDouble(),
       );
 
   factory Datum.fromPostCallJson(Map<String, dynamic> json) => Datum(
