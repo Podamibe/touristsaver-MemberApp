@@ -18,8 +18,8 @@ pluginManagement {
 
 plugins {
     id "dev.flutter.flutter-plugin-loader" version "1.0.0"
-id "com.android.application" version "8.3.2" apply false  // Updated to match build.gradle
-    id "org.jetbrains.kotlin.android" version "1.9.24" apply false  // Updated to match build.
+    id "com.android.application" version "8.9.1" apply false  // Upgraded to fix the red errors
+    id "org.jetbrains.kotlin.android" version "2.3.10" apply false  // Upgraded to fix the Kotlin warning
 }
 
 include ":app"

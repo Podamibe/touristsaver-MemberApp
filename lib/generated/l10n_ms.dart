@@ -1086,6 +1086,9 @@ class SMs extends S {
   String get profileUpdatedSuccessfully => 'Profil Berjaya Dikemas Kini';
 
   @override
+  String get accountDeletedSuccessfully => 'Akaun berjaya dipadamkan';
+
+  @override
   String get rateThisMerchant => 'Berikan Penarafan kepada Peniaga Ini';
 
   @override
@@ -1463,4 +1466,14 @@ class SMs extends S {
 
   @override
   String get direction => 'Directions';
+
+  @override
+  String get deleteAccount => 'Padam Akaun';
+
+  @override
+  String get areYouSureDeleteAccount =>
+      'Adakah anda pasti mahu memadamkan akaun anda? Tindakan ini tidak boleh dibatalkan.';
+
+  @override
+  String get delete => 'Padam';
 }

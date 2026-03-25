@@ -305,6 +305,7 @@
 "proceed":"अगाडि बढ",
 "profile":"प्रोफाइल",
 "profileUpdatedSuccessfully":"प्रोफाइल सफलतापूर्वक अद्यावधिक गरियो",
+"accountDeletedSuccessfully": "खाता सफलतापूर्वक मेटाइयो",
 "rateThisMerchant":"यस व्यापारीलाई मूल्याङ्कन गर्नुहोस्",
 "rebate":"छूट",
 "recommend":"सिफारिस गर्नुहोस्",
@@ -870,7 +871,11 @@
 "facebook": "फेसबुक",
 "website": "वेबसाइट",
 "version2": "संस्करण २",
-"from": "बाट"
+"from": "बाट",
+"deleteAccount": "खाता मेटाउनुहोस्",
+"areYouSureDeleteAccount": "के तपाईं निश्चित रूपमा आफ्नो खाता मेटाउन चाहनुहुन्छ? यो कार्य फिर्ता गर्न सकिँदैन।",
+"cancel": "रद्द गर्नुहोस्",
+"delete": "मेटाउनुहोस्"
 
 
 }

@@ -2100,6 +2100,12 @@ abstract class S {
   /// **'Profile updated successfully'**
   String get profileUpdatedSuccessfully;
 
+  /// No description provided for @accountDeletedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Account deleted successfully'**
+  String get accountDeletedSuccessfully;
+
   /// No description provided for @rateThisMerchant.
   ///
   /// In en, this message translates to:
@@ -2804,6 +2810,24 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Directions'**
   String get direction;
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get deleteAccount;
+
+  /// No description provided for @areYouSureDeleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete your account? This action cannot be undone.'**
+  String get areYouSureDeleteAccount;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

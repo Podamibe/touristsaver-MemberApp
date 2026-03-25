@@ -1093,6 +1093,9 @@ class SNe extends S {
       'प्रोफाइल सफलतापूर्वक अद्यावधिक गरियो';
 
   @override
+  String get accountDeletedSuccessfully => 'खाता सफलतापूर्वक मेटाइयो';
+
+  @override
   String get rateThisMerchant => 'यस व्यापारीलाई मूल्याङ्कन गर्नुहोस्';
 
   @override
@@ -1474,4 +1477,14 @@ class SNe extends S {
 
   @override
   String get direction => 'Directions';
+
+  @override
+  String get deleteAccount => 'खाता मेटाउनुहोस्';
+
+  @override
+  String get areYouSureDeleteAccount =>
+      'के तपाईं निश्चित रूपमा आफ्नो खाता मेटाउन चाहनुहुन्छ? यो कार्य फिर्ता गर्न सकिँदैन।';
+
+  @override
+  String get delete => 'मेटाउनुहोस्';
 }

@@ -93,3 +93,5 @@ const deleteDeviceIdOnLogOut = '/notification/fcmToken/delete/{0}';
 const getAllMerchantReviewsURL = '/merchant/merchantReview/getAll';
 const getAllReviewsURL = '/globalSetting/reviewText/getAll';
 const createMerchantReviewsURL = '/merchant/merchantReview/create';
+
+const memberDelete = '/member/general/deleteAccount';

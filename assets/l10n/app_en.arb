@@ -332,6 +332,7 @@
 	"proceed": "Proceed",
 	"profile": "Profile",
 	"profileUpdatedSuccessfully": "Profile updated successfully",
+	"accountDeletedSuccessfully": "Account deleted successfully",
 	"rateThisMerchant": "Rate this Merchant",
 	"rebate": "Rebate: ",
 	"recommend": "Recommend",
@@ -447,5 +448,9 @@
 	"yourFeedback": "Your Feedback",
 	"yourQrCode": "Your QR Code",
 	"yourUniversalTouristSaverCredits": "Your Universal TouristSaver Credits",
-	"direction":"Directions"	
+	"direction":"Directions",
+	"deleteAccount": "Delete Account",
+	"areYouSureDeleteAccount": "Are you sure you want to delete your account? This action cannot be undone.",
+	"cancel": "Cancel",
+	"delete": "Delete"	
 }

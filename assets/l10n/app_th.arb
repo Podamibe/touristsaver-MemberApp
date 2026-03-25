@@ -333,6 +333,7 @@
 	"proceed": "ดำเนินการต่อ",
 	"profile": "โปรไฟล์",
 	"profileUpdatedSuccessfully": "อัปเดตโปรไฟล์สำเร็จ",
+	"accountDeletedSuccessfully": "ลบบัญชีสำเร็จแล้ว",
 	"rateThisMerchant": "ให้คะแนนร้านค้านี้",
 	"rebate": "ส่วนลด: ",
 	"recommend": "แนะนำ",
@@ -447,5 +448,9 @@
 	"yourEmailIsNotActivatedYetNPleaseVerifyYourEmailBeforeRecommendingMerchants": "อีเมลของคุณยังไม่ได้เปิดใช้งาน\nโปรดยืนยันอีเมลของคุณก่อนแนะนำร้านค้า",
 	"yourFeedback": "คำติชมของคุณ",
 	"yourQrCode": "รหัส QR ของคุณ",
-	"yourUniversalTouristSaverCredits": "เครดิต TouristSaver สากลของคุณ"
+	"yourUniversalTouristSaverCredits": "เครดิต TouristSaver สากลของคุณ",
+	"deleteAccount": "ลบบัญชี",
+	"areYouSureDeleteAccount": "คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีของคุณ? การดำเนินการนี้ไม่สามารถย้อนกลับได้",
+	"cancel": "ยกเลิก",
+	"delete": "ลบ"
 }

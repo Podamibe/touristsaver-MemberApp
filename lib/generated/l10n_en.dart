@@ -1080,6 +1080,9 @@ class SEn extends S {
   String get profileUpdatedSuccessfully => 'Profile updated successfully';
 
   @override
+  String get accountDeletedSuccessfully => 'Account deleted successfully';
+
+  @override
   String get rateThisMerchant => 'Rate this Merchant';
 
   @override
@@ -1457,4 +1460,14 @@ class SEn extends S {
 
   @override
   String get direction => 'Directions';
+
+  @override
+  String get deleteAccount => 'Delete Account';
+
+  @override
+  String get areYouSureDeleteAccount =>
+      'Are you sure you want to delete your account? This action cannot be undone.';
+
+  @override
+  String get delete => 'Delete';
 }

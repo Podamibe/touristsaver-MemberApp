@@ -1073,6 +1073,9 @@ class STh extends S {
   String get profileUpdatedSuccessfully => 'อัปเดตโปรไฟล์สำเร็จ';
 
   @override
+  String get accountDeletedSuccessfully => 'ลบบัญชีสำเร็จแล้ว';
+
+  @override
   String get rateThisMerchant => 'ให้คะแนนร้านค้านี้';
 
   @override
@@ -1452,4 +1455,14 @@ class STh extends S {
 
   @override
   String get direction => 'Directions';
+
+  @override
+  String get deleteAccount => 'ลบบัญชี';
+
+  @override
+  String get areYouSureDeleteAccount =>
+      'คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีของคุณ? การดำเนินการนี้ไม่สามารถย้อนกลับได้';
+
+  @override
+  String get delete => 'ลบ';
 }

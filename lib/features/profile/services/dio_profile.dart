@@ -25,6 +25,19 @@ class DioProfile {
     }
   }
 
+  //delete member
+  Future<dynamic> deleteMember() async {
+    try {
+      Dio dio = await getClient();
+      Response<String> response = await dio.put(memberDelete);
+      return commonResModelFromJson(response.data!);
+    } on DioException catch (e) {
+      return errorResModelFromJson(e.response?.data);
+    } catch (err) {
+      return null;
+    }
+  }
+
   // Edit Profile if number is edited
   Future<dynamic> editProfileNumber(
       {required EditProfileReqModelNumber editProfileReqModelnumber}) async {

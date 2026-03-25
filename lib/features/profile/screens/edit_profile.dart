@@ -4,10 +4,12 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:new_piiink/common/app_variables.dart';
 import 'package:new_piiink/common/widgets/custom_app_bar.dart';
 import 'package:new_piiink/common/widgets/custom_button.dart';
 import 'package:new_piiink/common/widgets/custom_loader.dart';
 import 'package:new_piiink/common/widgets/custom_snackbar.dart';
+import 'package:new_piiink/constants/pref.dart';
 import 'package:new_piiink/constants/read_sms_otp.dart';
 import 'package:new_piiink/common/widgets/error.dart';
 import 'package:new_piiink/constants/global_colors.dart';
@@ -16,6 +18,7 @@ import 'package:new_piiink/features/profile/services/dio_membership.dart';
 import 'package:new_piiink/features/profile/services/dio_profile.dart';
 import 'package:new_piiink/models/error_res.dart';
 import 'package:new_piiink/models/request/edit_profile_req.dart';
+import 'package:new_piiink/models/response/common_res.dart';
 import 'package:new_piiink/models/response/edit_profile_res.dart';
 import 'package:new_piiink/models/response/user_detail_res.dart';
 
@@ -68,6 +71,67 @@ class _EditProfileState extends State<EditProfile> {
   void initState() {
     fillUserEditForm = fillEditForm();
     super.initState();
+  }
+
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(S.of(context).deleteAccount),
+          content: Text(S
+              .of(context)
+              .areYouSureDeleteAccount), // "Are you sure you want to delete your account? This action cannot be undone."
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(S.of(context).cancel),
+            ),
+            TextButton(
+              onPressed: () async {
+                // 1. Get the navigator before the async gap
+                final navigator = Navigator.of(context);
+
+                // 2. Close the dialog
+                navigator.pop();
+
+                setState(() => isLoading = true);
+
+                var res = await DioProfile().deleteMember();
+
+                if (!mounted) return;
+
+                if (res is CommonResModel && res.status == "success") {
+                  await Pref().removeAll();
+                  AppVariables.accessToken = null;
+
+                  setState(() => isLoading = false);
+
+                  // 3. Pop the Edit Profile page
+                  // Using the navigator reference we grabbed earlier
+                  GlobalSnackBar.showSuccess(context,
+                      res.message ?? S.of(context).accountDeletedSuccessfully);
+                  navigator.pop();
+
+                  // 4. Show success message
+                } else {
+                  setState(() => isLoading = false);
+                  GlobalSnackBar.showError(
+                      context,
+                      (res is ErrorResModel)
+                          ? res.message!
+                          : S.of(context).errorInEditingProfile);
+                }
+              },
+              child: Text(
+                S.of(context).delete,
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -418,6 +482,22 @@ class _EditProfileState extends State<EditProfile> {
                                     }
                                   },
                                 ),
+                          const SizedBox(height: 20),
+
+// Delete Account Button
+                          TextButton(
+                            onPressed: () => _showDeleteConfirmation(context),
+                            child: Text(
+                              S
+                                  .of(context)
+                                  .deleteAccount, // Ensure this key exists in your ARB/l10n files
+                              style: viewAllStyle.copyWith(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),

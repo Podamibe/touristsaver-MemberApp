@@ -331,6 +331,7 @@
   "proceed": "Teruskan",
   "profile": "Profil",
   "profileUpdatedSuccessfully": "Profil Berjaya Dikemas Kini",
+  "accountDeletedSuccessfully": "Akaun berjaya dipadamkan",
   "rateThisMerchant": "Berikan Penarafan kepada Peniaga Ini",
   "rebate": "Rebat: ",
   "recommend": "Cadangkan",
@@ -445,5 +446,9 @@
   "yourEmailIsNotActivatedYetNPleaseVerifyYourEmailBeforeRecommendingMerchants": "E-mel anda belum diaktifkan.\nSila sahkan e-mel anda sebelum mengesyorkan peniaga.",
   "yourFeedback": "Maklum Balas Anda",
   "yourQrCode": "Kod QR Anda",
-  "yourUniversalTouristSaverCredits": "Kredit TouristSaver Universal Anda"
+  "yourUniversalTouristSaverCredits": "Kredit TouristSaver Universal Anda",
+  "deleteAccount": "Padam Akaun",
+  "areYouSureDeleteAccount": "Adakah anda pasti mahu memadamkan akaun anda? Tindakan ini tidak boleh dibatalkan.",
+  "cancel": "Batal",
+  "delete": "Padam"
 }
