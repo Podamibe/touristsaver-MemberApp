@@ -24,6 +24,7 @@ import 'package:new_piiink/models/response/user_detail_res.dart';
 
 import '../../../common/show_verify_email_bottom_sheet.dart';
 import 'package:new_piiink/generated/l10n.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class EditProfile extends StatefulWidget {
   static const String routeName = '/edit-profile';
@@ -76,44 +77,73 @@ class _EditProfileState extends State<EditProfile> {
   void _showDeleteConfirmation(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: Text(S.of(context).deleteAccount),
-          content: Text(S
-              .of(context)
-              .areYouSureDeleteAccount), // "Are you sure you want to delete your account? This action cannot be undone."
+          content: Text(S.of(context).areYouSureDeleteAccount),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: Text(S.of(context).cancel),
             ),
             TextButton(
               onPressed: () async {
-                // 1. Get the navigator before the async gap
-                final navigator = Navigator.of(context);
+                // 1. Pop the dialog immediately
+                Navigator.of(dialogContext).pop();
 
-                // 2. Close the dialog
-                navigator.pop();
-
+                // 2. Start loading on the main screen
                 setState(() => isLoading = true);
 
+                // 3. Call the API to delete the member
                 var res = await DioProfile().deleteMember();
 
                 if (!mounted) return;
 
-                if (res is CommonResModel && res.status == "success") {
+                if (res is CommonResModel &&
+                    (res.status?.toLowerCase() == "success" ||
+                        res.status == "OK")) {
+                  // --- START OF LOGOUT CLEANUP LOGIC ---
+
+                  // Clear specific local data just like the LogOut button does
+                  await Pref().removeData("saveToken");
+                  await Pref().removeData("issuerType");
+                  await Pref().removeData('fcmToken');
+                  await Pref().removeData('isTokenSent');
+                  await Pref().removeData('notificationsCount');
+                  await Pref().removeData("saveUserID");
+                  await Pref().removeData("saveCurrency");
+                  await Pref().removeData("savePublishableKey");
+                  await Pref().removeData("userChosenLocationStateID");
+                  await Pref().removeData("userChosenLocationRegionID");
+
+                  // Alternatively, just nuke everything to be safe:
                   await Pref().removeAll();
+
                   AppVariables.accessToken = null;
+
+                  // Delete Firebase Token
+                  try {
+                    // ignore: undefined_identifier
+                    await FirebaseMessaging.instance.deleteToken();
+                  } catch (e) {
+                    debugPrint('Firebase token deletion failed: $e');
+                  }
+
+                  AppVariables.notificationLabel.value = 0;
+                  AppVariables.initNotifications = false;
+
+                  // --- END OF CLEANUP LOGIC ---
 
                   setState(() => isLoading = false);
 
-                  // 3. Pop the Edit Profile page
-                  // Using the navigator reference we grabbed earlier
                   GlobalSnackBar.showSuccess(context,
                       res.message ?? S.of(context).accountDeletedSuccessfully);
-                  navigator.pop();
 
-                  // 4. Show success message
+                  // Navigate exactly the way your logout button navigates
+                  if (mounted) {
+                    context.pushReplacementNamed('bottom-bar',
+                        pathParameters: {'page': '4'});
+                  }
                 } else {
                   setState(() => isLoading = false);
                   GlobalSnackBar.showError(
