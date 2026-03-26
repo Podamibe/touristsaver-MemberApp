@@ -1059,7 +1059,7 @@ class SEn extends S {
       'Postal code should be greater than 4 digits';
 
   @override
-  String get postalZipCode => 'Postal/Zip Code *';
+  String get postalZipCode => 'Postal/Zip Code';
 
   @override
   String get preCode => 'Premium Code (optional)';

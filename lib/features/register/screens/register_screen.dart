@@ -728,8 +728,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                             child:
                                                                 Image.network(
                                                               e.logoUrl ??
-                                                                  'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/No_flag.svg/1024px-No_flag.svg.png',
+                                                                  '', // Pass empty string if null to trigger the errorBuilder
                                                               fit: BoxFit.fill,
+                                                              errorBuilder:
+                                                                  (context,
+                                                                      error,
+                                                                      stackTrace) {
+                                                                // If the image fails to load, show a default flag icon instead of a broken box
+                                                                return const Icon(
+                                                                  Icons.flag,
+                                                                  size: 20,
+                                                                  color: Colors
+                                                                      .grey,
+                                                                );
+                                                              },
                                                             ),
                                                           ),
                                                           const SizedBox(
@@ -947,7 +959,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 controller: postalCodeController,
                                 cursorColor: GlobalColors.appColor,
                                 decoration: textInputDecoration1.copyWith(
-                                    hintText: S.of(context).postalZipCode),
+                                    hintText:
+                                        '${S.of(context).postalZipCode} (optional)'),
                               ),
                               const SizedBox(height: 15),
 
@@ -1393,21 +1406,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           });
                                           return;
                                         } else if (postalCodeController
-                                            .text.isEmpty) {
-                                          GlobalSnackBar.valid(
-                                            context,
-                                            S
-                                                .of(context)
-                                                .pleaseFillPostalCodeWith4Digits,
-                                            // 'Please fill postal code'
-                                          );
-                                          setState(() {
-                                            isLoading = false;
-                                          });
-                                          return;
-                                        } else if (postalCodeController
-                                                .text.length <
-                                            4) {
+                                                .text.isNotEmpty &&
+                                            postalCodeController.text.length <
+                                                4) {
                                           GlobalSnackBar.valid(
                                               context,
                                               S

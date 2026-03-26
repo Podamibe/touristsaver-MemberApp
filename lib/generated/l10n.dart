@@ -2061,7 +2061,7 @@ abstract class S {
   /// No description provided for @postalZipCode.
   ///
   /// In en, this message translates to:
-  /// **'Postal/Zip Code *'**
+  /// **'Postal/Zip Code'**
   String get postalZipCode;
 
   /// No description provided for @preCode.

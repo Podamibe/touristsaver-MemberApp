@@ -298,7 +298,7 @@
 "pleaseWaitD":"कृपया पर्खनुहोस्...",
 "popularMerchants":"लोकप्रिय व्यापारी",
 "postalCodeShouldBeGreaterThan4Digits":"पोस्टल कोड 4 अंक भन्दा ठूलो हुनुपर्छ",
-"postalZipCode":"पोस्टल/जिप कोड*",
+"postalZipCode":"पोस्टल/जिप कोड",
 "preCode":"प्रिमियम कोड (वैकल्पिक)",
 "premiumCodeIsNotValid":"प्रिमियम कोड मान्य छैन!",
 "pressBackButtonAgainToExit":"बाहिर निस्कन फेरि ब्याक बटन थिच्नुहोस्",

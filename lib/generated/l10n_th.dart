@@ -1052,7 +1052,7 @@ class STh extends S {
       'รหัสไปรษณีย์ควรมีมากกว่า 4 หลัก';
 
   @override
-  String get postalZipCode => 'รหัสไปรษณีย์/รหัสไปรษณีย์ *';
+  String get postalZipCode => 'รหัสไปรษณีย์/รหัสไปรษณีย์';
 
   @override
   String get preCode => 'รหัสพรีเมียม (ตัวเลือก)';

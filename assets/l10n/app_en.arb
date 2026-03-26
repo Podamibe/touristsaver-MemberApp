@@ -325,7 +325,7 @@
 	"pleaseWaitD": "Please Wait...",
 	"popularMerchants": "Popular Merchants",
 	"postalCodeShouldBeGreaterThan4Digits": "Postal code should be greater than 4 digits",
-	"postalZipCode": "Postal/Zip Code *",
+	"postalZipCode": "Postal/Zip Code",
 	"preCode": "Premium Code (optional)",
 	"premiumCodeIsNotValid": "Premium code is not valid",
 	"pressBackButtonAgainToExit": "Press back button again to exit",

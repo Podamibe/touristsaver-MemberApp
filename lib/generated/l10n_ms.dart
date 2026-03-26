@@ -1064,7 +1064,7 @@ class SMs extends S {
       'Kod pos harus lebih besar daripada 4 digit';
 
   @override
-  String get postalZipCode => 'Poskod *';
+  String get postalZipCode => 'Poskod';
 
   @override
   String get preCode => 'Kod Premium (pilihan)';
