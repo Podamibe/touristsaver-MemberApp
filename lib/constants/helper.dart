@@ -51,29 +51,46 @@ Future<Dio> getClient() async {
 }
 
 // For user with no token or not logged in
+// For user with no token or not logged in
 Future<Dio> getClientNoToken() async {
   final Dio dio = Dio();
-  String lang = await Pref().readData(key: 'locale') ?? 'en';
-  String deviceId = await getDeviceId();
+
+  // 1. Safely get Locale
+  String lang = 'en';
+  try {
+    lang = await Pref().readData(key: 'locale') ?? 'en';
+  } catch (e) {
+    debugPrint("Failed to get locale on iOS: $e");
+  }
+
+  // 2. Safely get Device ID
+  String deviceId = 'unknown_device';
+  try {
+    deviceId = await getDeviceId();
+  } catch (e) {
+    debugPrint("Failed to get device ID on iOS: $e");
+  }
+
   String myPlatform = Platform.isAndroid
       ? "Android"
       : Platform.isIOS
           ? "iOS"
           : "other";
+
   final headers = <String, String>{
     'Content-Type': 'application/json; charset=UTF-8',
     'accept': 'application/json',
     'accept-language': lang,
     'Device-Info': 'member__${myPlatform}__$deviceId'
   };
-  // Map<String, String> qParams = {'lang': lang};
+
   dio.options
     ..headers = headers
     ..baseUrl = baseUrl
-    // ..queryParameters = qParams
-    ..connectTimeout = Duration(seconds: 30)
-    ..sendTimeout = Duration(seconds: 30)
-    ..receiveTimeout = Duration(seconds: 30);
+    ..connectTimeout = const Duration(seconds: 30)
+    ..sendTimeout = const Duration(seconds: 30)
+    ..receiveTimeout = const Duration(seconds: 30);
+
   dio.interceptors.add(LogInterceptor());
   return dio;
 }

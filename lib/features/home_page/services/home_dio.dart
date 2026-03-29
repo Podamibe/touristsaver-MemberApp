@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:new_piiink/common/app_variables.dart';
 import 'package:new_piiink/constants/helper.dart';
 import 'package:new_piiink/constants/pref.dart';
@@ -19,21 +20,37 @@ import '../../../models/response/cat_model.dart';
 
 class DioHome {
   //App Slider
+//App Slider
   Future<SliderResModel?> getSlider() async {
-    String? countryID = await Pref().readData(key: userChosenLocationID);
-    if (countryID != null || countryID != '0' || countryID != 'null') {
+    try {
+      // 1. Try to read the Country ID
+      String? countryID;
       try {
-        Dio dio = await getClientNoToken();
-        Response<String> response = await dio
-            .get('$appSlide?countryId=$countryID&order_by=order&ordering=ASC');
-        // log(response.data!);
-        return sliderResModelFromJson(response.data!);
+        countryID = await Pref().readData(key: userChosenLocationID);
       } catch (e) {
-        // print('Error in getting app slider:$e');
-        return null;
+        debugPrint("Error reading country ID for slider: $e");
       }
+
+      // 2. THE FIX: If the user is logged out, the ID will be null.
+      // We must provide a default fallback (e.g., '3' for Australia) so the API doesn't fail.
+      if (countryID == null ||
+          countryID.isEmpty ||
+          countryID == 'null' ||
+          countryID == '0') {
+        countryID =
+            '3'; // <-- Change this to your actual default Country ID if it is not 3
+      }
+
+      // 3. Make the API Call safely
+      Dio dio = await getClientNoToken();
+      Response<String> response = await dio
+          .get('$appSlide?countryId=$countryID&order_by=order&ordering=ASC');
+
+      return sliderResModelFromJson(response.data!);
+    } catch (e) {
+      debugPrint('Error in getting app slider: $e');
+      return null;
     }
-    return null;
   }
 
   // Nearby merchants by location
