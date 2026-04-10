@@ -94,6 +94,17 @@ class DioHome {
     }
   }
 
+  Future<dynamic> getBanner(
+      {double? latitude, double? longitude, double? radius}) async {
+    try {
+      Dio dio = await getClientNoToken();
+      Response<String> response = await dio.post(bannerList);
+      return (response.data!);
+    } catch (e) {
+      return null;
+    }
+  }
+
   // Popular Offers By Locations
   Future<dynamic> getBestOffers(
       {required NearByLocationReqModel nearByLocationReqModel,

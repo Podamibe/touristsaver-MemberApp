@@ -14,23 +14,27 @@ class TopUpStripeReqModel {
   TopUpStripeReqModel({
     this.paymentGateway,
     this.membershipPackageId,
+    this.memberPremiumCode,
     this.countryId,
   });
 
   final String? paymentGateway;
   final String? membershipPackageId;
+  final String? memberPremiumCode;
   final String? countryId;
 
   factory TopUpStripeReqModel.fromJson(Map<String, dynamic> json) =>
       TopUpStripeReqModel(
         paymentGateway: json["paymentGateway"],
         membershipPackageId: json["membershipPackageId"],
+        memberPremiumCode: json["memberPremiumCode"],
         countryId: json["countryId"],
       );
 
   Map<String, dynamic> toJson() => {
         "paymentGateway": paymentGateway,
         "membershipPackageId": membershipPackageId,
+        "memberPremiumCode": memberPremiumCode,
         "countryId": countryId,
       };
 }

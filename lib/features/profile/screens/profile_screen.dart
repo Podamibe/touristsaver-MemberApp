@@ -55,7 +55,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     List<String> additional = [
-      S.of(context).charity,
+      // S.of(context).charity,
       S.of(context).recommendNewMerchant,
       S.of(context).about,
       S.of(context).termsConditions,

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:new_piiink/constants/helper.dart';
 import 'package:new_piiink/constants/pref.dart';
@@ -23,6 +25,41 @@ class DioCommon {
     } catch (e) {
       // print("Error in updating changed mobile number: $e");
       return null;
+    }
+  }
+
+  Future<dynamic> getBanner(
+      {double? latitude, double? longitude, double? radius}) async {
+    try {
+      Dio dio = await getClientNoToken();
+      // Changed Response<String> to Response<dynamic>
+      Response response = await dio.get(bannerList);
+
+      // If Dio hasn't already auto-decoded it, decode it manually
+      if (response.data is String) {
+        return jsonDecode(response.data);
+      }
+      return response.data;
+    } catch (e) {
+      print("DEBUG: Banner API failed with error: $e");
+      return null;
+    }
+  }
+
+  Future<dynamic> getdiscountInmemberPremiumCode() async {
+    try {
+      Dio dio = await getClient();
+      Response response = await dio.get(memberPremiumGetOne);
+      if (response.data is String) {
+        return jsonDecode(response.data);
+      }
+      print("DEBUG: Member Premium API response: ${response.data}");
+
+      return response.data;
+    } catch (e) {
+      print("DEBUG: Banner API failed with error: $e");
+
+      return Future.error(e.toString());
     }
   }
 

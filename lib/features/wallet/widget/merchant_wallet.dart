@@ -211,126 +211,137 @@ class _MerchantWalletScreenState extends State<MerchantWalletScreen> {
                           ),
                         ),
                       ),
-                      FittedBox(
+
+                      // --------------------------------------------------
+                      // ✅ FIXED RESPONSIVE DROPDOWNS START HERE
+                      // --------------------------------------------------
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10.0, vertical: 10.0),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            FittedBox(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10.0, vertical: 10.0),
-                                child: OutlineGradientButton(
-                                  padding: EdgeInsets.zero,
-                                  strokeWidth: 1,
-                                  radius: const Radius.circular(5.0),
-                                  backgroundColor:
-                                      GlobalColors.appWhiteBackgroundColor,
-                                  elevation: 2,
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      GlobalColors.appColor,
-                                      GlobalColors.appColor1
-                                    ],
-                                    begin: Alignment.topRight,
-                                    end: Alignment.bottomLeft,
-                                  ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton2(
-                                      iconStyleData: IconStyleData(
-                                        icon: const Icon(
-                                          Icons.expand_more,
-                                          size: 20,
-                                          color: GlobalColors.appColor,
+                            // LEFT DROPDOWN (Wallet Type)
+                            Expanded(
+                              child: OutlineGradientButton(
+                                padding: EdgeInsets.zero,
+                                strokeWidth: 1,
+                                radius: const Radius.circular(5.0),
+                                backgroundColor:
+                                    GlobalColors.appWhiteBackgroundColor,
+                                elevation: 2,
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    GlobalColors.appColor,
+                                    GlobalColors.appColor1
+                                  ],
+                                  begin: Alignment.topRight,
+                                  end: Alignment.bottomLeft,
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton2(
+                                    isExpanded: true,
+                                    iconStyleData: IconStyleData(
+                                      icon: const Icon(
+                                        Icons.expand_more,
+                                        size: 20,
+                                        color: GlobalColors.appColor,
+                                      ),
+                                      openMenuIcon: const Icon(
+                                        Icons.expand_less,
+                                        size: 20,
+                                        color: GlobalColors.appColor,
+                                      ),
+                                    ),
+                                    items: walletTypeDropdownItems.map((e) {
+                                      return DropdownMenuItem(
+                                        value: e,
+                                        child: AutoSizeText(
+                                          e == 'Merchant'
+                                              ? S.of(context).merchant
+                                              : S.of(context).groupMerchant,
+                                          style: dopdownTextStyle,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                        openMenuIcon: const Icon(
-                                          Icons.expand_less,
-                                          size: 20,
-                                          color: GlobalColors.appColor,
-                                        ),
-                                      ),
-                                      items: walletTypeDropdownItems.map((e) {
-                                        return DropdownMenuItem(
-                                          value: e,
-                                          child: AutoSizeText(
-                                            e == 'Merchant'
-                                                ? S.of(context).merchant
-                                                : S.of(context).groupMerchant,
-                                            style: dopdownTextStyle,
-                                          ),
-                                        );
-                                      }).toList(),
-                                      onChanged: (newValue) {
-                                        setState(() {
-                                          selectedWalletType = newValue!;
-                                        });
-                                      },
-                                      value: selectedWalletType,
-                                      buttonStyleData: const ButtonStyleData(
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 10),
-                                        height: 50,
-                                        width: 180,
-                                      ),
-                                      dropdownStyleData:
-                                          const DropdownStyleData(
-                                        maxHeight: 400,
-                                        width: 250,
-                                      ),
-                                      menuItemStyleData:
-                                          const MenuItemStyleData(
-                                        height: 40,
-                                      ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (newValue) {
+                                      setState(() {
+                                        selectedWalletType = newValue!;
+                                      });
+                                    },
+                                    value: selectedWalletType,
+                                    buttonStyleData: const ButtonStyleData(
+                                      padding:
+                                          EdgeInsets.symmetric(horizontal: 10),
+                                      height: 50,
+                                    ),
+                                    dropdownStyleData: const DropdownStyleData(
+                                      maxHeight: 400,
+                                    ),
+                                    menuItemStyleData: const MenuItemStyleData(
+                                      height: 40,
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                            FittedBox(
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton2(
-                                  iconStyleData: IconStyleData(
-                                    icon: const Icon(
-                                      Icons.expand_more,
-                                      size: 20,
-                                      color: GlobalColors.appColor,
-                                    ),
-                                    openMenuIcon: const Icon(
-                                      Icons.expand_less,
-                                      size: 20,
-                                      color: GlobalColors.appColor,
-                                    ),
-                                  ),
-                                  items: sort.map((e) {
-                                    return DropdownMenuItem(
-                                      value: e,
-                                      child: AutoSizeText(
-                                        e == 'Sort by Alphabetical'
-                                            ? S.of(context).sortByAlphabetical
-                                            : S
-                                                .of(context)
-                                                .sortByTouristSaverCredits,
-                                        style: dopdownTextStyle,
+
+                            SizedBox(width: 10.w),
+
+                            // RIGHT DROPDOWN (Sort By)
+                            Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(5.0),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton2(
+                                    isExpanded: true,
+                                    iconStyleData: IconStyleData(
+                                      icon: const Icon(
+                                        Icons.expand_more,
+                                        size: 20,
+                                        color: GlobalColors.appColor,
                                       ),
-                                    );
-                                  }).toList(),
-                                  onChanged: (newValue) {
-                                    setState(() {
-                                      sortBy = newValue.toString();
-                                    });
-                                  },
-                                  value: sortBy,
-                                  buttonStyleData: const ButtonStyleData(
-                                    padding:
-                                        EdgeInsets.symmetric(horizontal: 10),
-                                    height: 50,
-                                    width: 180,
-                                  ),
-                                  dropdownStyleData: const DropdownStyleData(
-                                    width: 250,
-                                    maxHeight: 250,
-                                  ),
-                                  menuItemStyleData: const MenuItemStyleData(
-                                    height: 40,
+                                      openMenuIcon: const Icon(
+                                        Icons.expand_less,
+                                        size: 20,
+                                        color: GlobalColors.appColor,
+                                      ),
+                                    ),
+                                    items: sort.map((e) {
+                                      return DropdownMenuItem(
+                                        value: e,
+                                        child: AutoSizeText(
+                                          e == 'Sort by Alphabetical'
+                                              ? S.of(context).sortByAlphabetical
+                                              : S
+                                                  .of(context)
+                                                  .sortByTouristSaverCredits,
+                                          style: dopdownTextStyle,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (newValue) {
+                                      setState(() {
+                                        sortBy = newValue.toString();
+                                      });
+                                    },
+                                    value: sortBy,
+                                    buttonStyleData: const ButtonStyleData(
+                                      padding:
+                                          EdgeInsets.symmetric(horizontal: 10),
+                                      height: 50,
+                                    ),
+                                    dropdownStyleData: const DropdownStyleData(
+                                      maxHeight: 250,
+                                    ),
+                                    menuItemStyleData: const MenuItemStyleData(
+                                      height: 40,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -338,6 +349,10 @@ class _MerchantWalletScreenState extends State<MerchantWalletScreen> {
                           ],
                         ),
                       ),
+                      // --------------------------------------------------
+                      // ✅ FIXED RESPONSIVE DROPDOWNS END HERE
+                      // --------------------------------------------------
+
                       searchController.text.isNotEmpty
                           ? searchedMerchantWalletList()
                           : merWallet.isEmpty &&
@@ -654,7 +669,7 @@ class _MerchantWalletScreenState extends State<MerchantWalletScreen> {
       padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
       child: NotAvailable(
         titleText:
-            '${selectedWalletType == 'Merchant' ? S.of(context).merchant : S.of(context).groupMerchant}${S.of(context).wallet}${S.of(context).notAvailable}',
+            '${selectedWalletType == 'Merchant' ? S.of(context).merchant : S.of(context).groupMerchant} ${S.of(context).wallet} ${S.of(context).notAvailable}',
         bodyText: S
             .of(context)
             .firstTryShoppingWithSomeMerchantsToGainAndTransferMerchantTouristSavers,

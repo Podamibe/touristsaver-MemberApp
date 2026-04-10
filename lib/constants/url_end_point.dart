@@ -18,6 +18,8 @@ const confirmApplyPiiinkURL = '/member/transaction/startApplyPiiink';
 const terminalConfirmApplyPiiinkURL =
     '/member/transaction/terminalStartApplyPiiink';
 const surApplyPiiink = '/member/transaction/applyPiiink';
+
+const memberPremiumGetOne = '/memberPremiumCode/getOne';
 const universalGetMyWallet = '/wallet/universal/getMyWallet';
 const merchantGetMyWallet = '/wallet/merchant/getMyWallet';
 const profileEdit = '/member/general/edit';
@@ -54,6 +56,8 @@ const patchChoosenLanguage = '/member/general/changeAppLang';
 const getActiveLang = '/country/getActivelang';
 const getAllPhonePrefix = '/globalSetting/countryWisePrefix/getAll';
 const nearByLocation = '/merchant/general/getMerchantWithinRadius';
+
+const bannerList = 'banner/getOne/';
 const locationRange = '/globalSetting/appLocationRange/getAll';
 const changePasswordUrl = '/member/general/changePassword';
 const changeCountryURL = '/member/general/changeCountry';

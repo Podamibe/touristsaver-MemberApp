@@ -26,6 +26,7 @@ import 'package:new_piiink/router.dart';
 import 'firebase_options.dart';
 import 'l10n/locale_bloc.dart';
 import 'package:new_piiink/generated/l10n.dart';
+import 'package:new_piiink/constants/initialize_stripe.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +39,8 @@ Future<void> main() async {
   //     .validateSDKIntegration(); //For Branch.io Remove it from the production
   await SystemChrome.setPreferredOrientations(
       [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
+
+  await initializeFlutterStripe();
   // Stripe.publishableKey = await Pref().readData(key: savePublishableKey);
   // stripePublishableKey; // set the publishable key for Stripe - this is mandatory
   // Stripe.merchantIdentifier = 'merchant.flutter.stripe.test';

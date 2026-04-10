@@ -63,7 +63,7 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
   List<String> additionalList = [];
   buildAdditionalList() {
     additionalList.addAll([
-      S.of(context).charity,
+      // S.of(context).charity,
       S.of(context).changeCountry,
       S.of(context).changePassword,
       S.of(context).editProfile,

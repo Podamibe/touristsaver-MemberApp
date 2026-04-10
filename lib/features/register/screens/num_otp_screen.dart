@@ -310,7 +310,9 @@ class _NumberOTPScreenState extends State<NumberOTPScreen> with CodeAutoFill {
                           // if premium code is provided but not paid
                           // if (res.data!.premiumCodeIsApplied == true &&
                           //     res.data!.premiumCodeIsPaid == false) {
-                          if (res.data!.premiumCodeIsApplied == true) {
+
+                          if (res.data!.premiumCodeIsApplied == true &&
+                              res.data?.discount == "100") {
                             context.pushReplacementNamed('congrats-screen',
                                 pathParameters: {
                                   'piiinkCredit': toFixed2DecimalPlaces(
@@ -356,13 +358,20 @@ class _NumberOTPScreenState extends State<NumberOTPScreen> with CodeAutoFill {
                           //   }
                           // }
                           // if premium code is not provided
+
+                          //Yukesh removed this paid-free screen!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                          // else {
+                          //   context.pushReplacementNamed('paid-free',
+                          //       pathParameters: {
+                          //         'uniCredit': toFixed2DecimalPlaces(
+                          //                 res.data!.universalWallet!.balance!)
+                          //             .toString()
+                          //       });
+                          // }
                           else {
-                            context.pushReplacementNamed('paid-free',
-                                pathParameters: {
-                                  'uniCredit': toFixed2DecimalPlaces(
-                                          res.data!.universalWallet!.balance!)
-                                      .toString()
-                                });
+                            context.pushReplacementNamed(
+                              'top-up',
+                            );
                           }
                         } else if (res is ErrorResModel) {
                           if (!mounted) return;

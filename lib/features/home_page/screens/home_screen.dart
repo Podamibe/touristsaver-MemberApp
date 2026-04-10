@@ -19,9 +19,6 @@ import 'package:new_piiink/features/connectivity/cubit/internet_cubit.dart';
 import 'package:new_piiink/features/home_page/bloc/slider_blocs.dart';
 import 'package:new_piiink/features/home_page/bloc/slider_events.dart';
 import 'package:new_piiink/features/home_page/bloc/slider_states.dart';
-// import 'package:new_piiink/features/home_page/services/home_dio.dart';
-// import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-// import '../../../common/services/rate_my_app.dart';
 import 'package:new_piiink/models/response/slider_res.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -31,8 +28,6 @@ import '../../../common/widgets/custom_snackbar.dart';
 import '../../../common/widgets/empty_data.dart';
 import '../../../common/widgets/reg_log_slider.dart';
 import '../../../constants/convert_to_map_of_string.dart';
-// import '../../../l10n/locale_bloc.dart';
-// import '../../../l10n/locales.dart';
 import '../../../models/response/app_version_log_model.dart';
 import '../../../models/response/category_list_res.dart';
 import '../../connectivity/screens/connectivity.dart';
@@ -59,15 +54,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
-  // For the refresh Indicator
   final GlobalKey<RefreshIndicatorState> refreshIndicatorHome =
       GlobalKey<RefreshIndicatorState>();
-  //late AppLocalizations lang;
+
   bool isLoading = false;
   bool? hideNotificationIcon;
   final GlobalKey alertKey = GlobalKey();
   late AppLifecycleState appLifecycleState;
-  bool isPoop = false;
   bool? forceUpdate = false;
   String? versionApp;
   String? storeLink;
@@ -78,6 +71,8 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isUpdateDialogShown = false;
   bool _isShowing = false;
 
+  // Banner data variable
+
   _getAppVersion() async {
     await PackageInfo.fromPlatform().then((PackageInfo packageInfo) {
       setState(() {
@@ -85,6 +80,21 @@ class _HomeScreenState extends State<HomeScreen>
         _build = packageInfo.buildNumber;
       });
     });
+  }
+
+  Future<void> fetchBanner() async {
+    try {
+      var res = await DioCommon().getBanner();
+      print("Banner 1111111API Response: $res");
+      if (res != null && res['status'] == "Success") {
+        setState(() {
+          // We grab the inner 'data' object from the API response
+          bannerData = res['data'];
+        });
+      }
+    } catch (e) {
+      debugPrint("Error processing banner: $e");
+    }
   }
 
   Future<void> getPiiinkInfo() async {
@@ -154,10 +164,7 @@ class _HomeScreenState extends State<HomeScreen>
           onWillPop: () async => false,
           child: AlertDialog(
             key: alertKey,
-            title: const Text(
-              'App Update Required',
-              // textAlign: TextAlign.center,
-            ),
+            title: const Text('App Update Required'),
             content: SizedBox(
               height: 320.h,
               width: 300.w,
@@ -167,7 +174,6 @@ class _HomeScreenState extends State<HomeScreen>
                 children: [
                   Text(
                     'Your app version ${Platform.isAndroid ? '$_version+$_build' : _version} is outdated. Please update to the latest version $versionApp.',
-                    // textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 10),
                   featureList == null || featureList == ""
@@ -177,9 +183,7 @@ class _HomeScreenState extends State<HomeScreen>
                           child: SingleChildScrollView(
                             child: Column(
                               children: [
-                                Html(
-                                  data: featureList ?? '',
-                                ),
+                                Html(data: featureList ?? ''),
                                 const SizedBox(height: 5),
                               ],
                             ),
@@ -224,102 +228,13 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  ///--------------------------Show language button commented for Now----------------------------------------------------
-  // void showLanguageBottomSheet(BuildContext context) {
-  //   if (AppVariables.visibleLocaleList.isEmpty) {
-  //     for (LocaleModel localeModel in L10n.all) {
-  //       if (AppVariables.localeList.contains(localeModel.locale.languageCode)) {
-  //         //    L10n.all.remove(localeModel);
-  //         AppVariables.visibleLocaleList.add(localeModel);
-  //       }
-  //     }
-  //   }
-  //   showModalBottomSheet(
-  //     context: context,
-  //     isScrollControlled: true,
-  //     backgroundColor: GlobalColors.paleGray,
-  //     shape: const RoundedRectangleBorder(
-  //       borderRadius: BorderRadius.only(
-  //         topLeft: Radius.circular(20.0),
-  //         topRight: Radius.circular(20.0),
-  //       ),
-  //     ),
-  //     builder: (context) {
-  //       return Padding(
-  //         padding: const EdgeInsets.all(16.0),
-  //         child: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             Text(
-  //               S.of(context).chooseLanguage,
-  //               style: notiHeaderTextStyle,
-  //             ),
-  //             const SizedBox(height: 20),
-  //             BlocBuilder<LocaleCubit, LocaleState>(
-  //               builder: (context, state) {
-  //                 return Container(
-  //                   constraints: BoxConstraints(
-  //                       maxHeight: MediaQuery.of(context).size.height / 2.2),
-  //                   child: ListView.separated(
-  //                     shrinkWrap: true,
-  //                     itemCount: AppVariables.visibleLocaleList.length,
-  //                     itemBuilder: (context, index) {
-  //                       LocaleModel localeModel =
-  //                           AppVariables.visibleLocaleList[index];
-  //                       bool isLocaleSelected =
-  //                           localeModel == state.localeModel;
-  //                       return ListTile(
-  //                         onTap: () {
-  //                           context
-  //                               .read<LocaleCubit>()
-  //                               .changeLocale(localeModel);
-  //                           Future.delayed(const Duration(milliseconds: 300))
-  //                               .then((value) => Navigator.of(context).pop());
-  //                         },
-  //                         leading: ClipOval(
-  //                           child: Image.asset(
-  //                             localeModel.imagePath,
-  //                             height: 32.0,
-  //                             width: 32.0,
-  //                           ),
-  //                         ),
-  //                         title: Text(localeModel.name),
-  //                         trailing: isLocaleSelected
-  //                             ? const Icon(
-  //                                 Icons.check_circle_rounded,
-  //                                 color: GlobalColors.appColor,
-  //                               )
-  //                             : null,
-  //                         shape: RoundedRectangleBorder(
-  //                           borderRadius: BorderRadius.circular(10.0),
-  //                           side: isLocaleSelected
-  //                               ? const BorderSide(
-  //                                   color: GlobalColors.appColor1, width: 1.5)
-  //                               : BorderSide(color: Colors.grey[300]!),
-  //                         ),
-  //                         tileColor: isLocaleSelected
-  //                             ? GlobalColors.appGreyBackgroundColor
-  //                             : null,
-  //                       );
-  //                     },
-  //                     separatorBuilder: (context, index) {
-  //                       return const SizedBox(height: 16.0);
-  //                     },
-  //                   ),
-  //                 );
-  //               },
-  //             ),
-  //           ],
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
+  dynamic bannerData;
 
-  // final AppRating appRating = AppRating();
   @override
   void initState() {
+    super.initState();
     getPiiinkInfo();
+    fetchBanner(); // Added banner fetch
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       context
           .read<CategoryBloc>()
@@ -336,7 +251,6 @@ class _HomeScreenState extends State<HomeScreen>
       }
     });
     WidgetsBinding.instance.addObserver(this);
-    super.initState();
   }
 
   @override
@@ -377,6 +291,73 @@ class _HomeScreenState extends State<HomeScreen>
         });
   }
 
+  Widget experienceBanner() {
+    // Logic to handle redirection
+    Future<void> _launchBannerUrl() async {
+      final String? rawUrl = bannerData?['url'];
+      if (rawUrl != null && rawUrl.isNotEmpty) {
+        // Logic to ensure the URL has http/https prefix
+        String prefixedUrl = prefixHttp(rawUrl);
+        Uri webUri = Uri.parse(prefixedUrl);
+
+        try {
+          await launchUrl(webUri, mode: LaunchMode.externalApplication);
+        } catch (e) {
+          debugPrint("Could not launch $prefixedUrl: $e");
+        }
+      }
+    }
+
+    // Ensure data exists
+    if (bannerData == null) return const SizedBox();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(30.r),
+        onTap: _launchBannerUrl, // ✅ Triggers the URL launch
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 15.w),
+          decoration: BoxDecoration(
+            color: const Color(0xFF5369FF),
+            borderRadius: BorderRadius.circular(30.r),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                bannerData?['information'] ?? "",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                bannerData?['country'] ?? "",
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // final localeData = context.read<LocaleCubit>().state;
@@ -399,210 +380,40 @@ class _HomeScreenState extends State<HomeScreen>
                       height: 50,
                     ),
                   ),
-
-                  Row(
-                    children: [
-                      // Padding(
-                      //   padding: const EdgeInsets.only(
-                      //     top: 10,
-                      //     right: 10,
-                      //   ),
-                      //   child: OutlinedButton(
-                      //     onPressed: () {
-                      //       if (AppVariables.visibleLocaleList.isEmpty) {
-                      //         for (LocaleModel localeModel in L10n.all) {
-                      //           if (AppVariables.localeList.contains(
-                      //               localeModel.locale.languageCode)) {
-                      //             //    L10n.all.remove(localeModel);
-                      //             AppVariables.visibleLocaleList
-                      //                 .add(localeModel);
-                      //           }
-                      //         }
-                      //       }
-                      //       showModalBottomSheet(
-                      //         context: context,
-                      //         isScrollControlled: true,
-                      //         backgroundColor: GlobalColors.paleGray,
-                      //         shape: const RoundedRectangleBorder(
-                      //           borderRadius: BorderRadius.only(
-                      //             topLeft: Radius.circular(20.0),
-                      //             topRight: Radius.circular(20.0),
-                      //           ),
-                      //         ),
-                      //         builder: (context) {
-                      //           return Padding(
-                      //             padding: const EdgeInsets.all(16.0),
-                      //             child: Column(
-                      //               mainAxisSize: MainAxisSize.min,
-                      //               children: [
-                      //                 Text(
-                      //                   S.of(context).chooseLanguage,
-                      //                   style: notiHeaderTextStyle,
-                      //                 ),
-                      //                 const SizedBox(height: 20),
-                      //                 BlocBuilder<LocaleCubit, LocaleState>(
-                      //                   builder: (context, state) {
-                      //                     return Container(
-                      //                       constraints: BoxConstraints(
-                      //                           maxHeight:
-                      //                               MediaQuery.of(context)
-                      //                                       .size
-                      //                                       .height /
-                      //                                   2.2),
-                      //                       child: ListView.separated(
-                      //                         shrinkWrap: true,
-                      //                         itemCount: AppVariables
-                      //                             .visibleLocaleList.length,
-                      //                         itemBuilder: (context, index) {
-                      //                           LocaleModel localeModel =
-                      //                               AppVariables
-                      //                                       .visibleLocaleList[
-                      //                                   index];
-                      //                           bool isLocaleSelected =
-                      //                               localeModel ==
-                      //                                   state.localeModel;
-                      //                           return ListTile(
-                      //                             onTap: () {
-                      //                               context
-                      //                                   .read<LocaleCubit>()
-                      //                                   .changeLocale(
-                      //                                       localeModel);
-                      //                               Future.delayed(
-                      //                                       const Duration(
-                      //                                           milliseconds:
-                      //                                               300))
-                      //                                   .then((value) {
-                      //                                 context
-                      //                                     .read<CategoryBloc>()
-                      //                                     .add(LoadCategoryEvent(
-                      //                                         AppVariables
-                      //                                             .selectedLanguageNow));
-                      //                                 Navigator.of(context)
-                      //                                     .pop();
-                      //                               });
-                      //                             },
-                      //                             leading: ClipOval(
-                      //                               child: Image.asset(
-                      //                                 localeModel.imagePath,
-                      //                                 height: 32.0,
-                      //                                 width: 32.0,
-                      //                               ),
-                      //                             ),
-                      //                             title: Text(localeModel.name),
-                      //                             trailing: isLocaleSelected
-                      //                                 ? const Icon(
-                      //                                     Icons
-                      //                                         .check_circle_rounded,
-                      //                                     color: GlobalColors
-                      //                                         .appColor,
-                      //                                   )
-                      //                                 : null,
-                      //                             shape: RoundedRectangleBorder(
-                      //                               borderRadius:
-                      //                                   BorderRadius.circular(
-                      //                                       10.0),
-                      //                               side: isLocaleSelected
-                      //                                   ? const BorderSide(
-                      //                                       color: GlobalColors
-                      //                                           .appColor1,
-                      //                                       width: 1.5)
-                      //                                   : BorderSide(
-                      //                                       color: Colors
-                      //                                           .grey[300]!),
-                      //                             ),
-                      //                             tileColor: isLocaleSelected
-                      //                                 ? GlobalColors
-                      //                                     .appGreyBackgroundColor
-                      //                                 : null,
-                      //                           );
-                      //                         },
-                      //                         separatorBuilder:
-                      //                             (context, index) {
-                      //                           return const SizedBox(
-                      //                               height: 16.0);
-                      //                         },
-                      //                       ),
-                      //                     );
-                      //                   },
-                      //                 ),
-                      //               ],
-                      //             ),
-                      //           );
-                      //         },
-                      //       );
-                      //     },
-                      //     //  => showLanguageBottomSheet(context),
-                      //     style: OutlinedButton.styleFrom(
-                      //       padding: const EdgeInsets.all(8.0),
-                      //       foregroundColor: GlobalColors.paleGray,
-                      //       shape: RoundedRectangleBorder(
-                      //         borderRadius: BorderRadius.circular(10.0),
-                      //       ),
-                      //     ),
-                      //     child: Row(
-                      //       mainAxisAlignment: MainAxisAlignment.center,
-                      //       children: [
-                      //         ClipOval(
-                      //           child: BlocBuilder<LocaleCubit, LocaleState>(
-                      //             builder: (context, state) {
-                      //               return Image.asset(
-                      //                 state.localeModel.imagePath,
-                      //                 height: 32.0,
-                      //                 width: 32.0,
-                      //               );
-                      //             },
-                      //           ),
-                      //         ),
-                      //         const Icon(
-                      //           Icons.arrow_drop_down_rounded,
-                      //           color: GlobalColors.gray,
-                      //         ),
-                      //       ],
-                      //     ),
-                      //   ),
-                      // ),
-                      // Notification Icon
-                      if (AppVariables.accessToken != null &&
-                          hideNotificationIcon == false)
-                        InkWell(
-                          onTap: () async {
-                            // log('home log notification ${AppVariables.notificationLabel.value}');
-                            AppVariables.notificationLabel.value = 0;
-                            await Pref().writeInt(
-                                key: 'notificationsCount',
-                                value: AppVariables.notificationLabel.value);
-                            if (!mounted) return;
-                            context.pushNamed('notification');
-                          },
-                          child: SizedBox(
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.only(top: 10, right: 10),
-                              child: ValueListenableBuilder(
-                                valueListenable: AppVariables.notificationLabel,
-                                builder: (context, value, child) {
-                                  // log(value.toString());
-                                  return Badge(
-                                    backgroundColor: GlobalColors.appColor1,
-                                    smallSize: 10,
-                                    isLabelVisible: value == 0 ? false : true,
-                                    child: const Icon(
-                                      Icons.notifications_outlined,
-                                      color: GlobalColors.appColor,
-                                      size: 30,
-                                    ),
-                                  );
-                                },
+                  if (AppVariables.accessToken != null &&
+                      hideNotificationIcon == false)
+                    InkWell(
+                      onTap: () async {
+                        // log('home log notification ${AppVariables.notificationLabel.value}');
+                        AppVariables.notificationLabel.value = 0;
+                        await Pref().writeInt(
+                            key: 'notificationsCount',
+                            value: AppVariables.notificationLabel.value);
+                        if (!mounted) return;
+                        context.pushNamed('notification');
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 10, right: 10),
+                        child: ValueListenableBuilder(
+                          valueListenable: AppVariables.notificationLabel,
+                          builder: (context, value, child) {
+                            return Badge(
+                              backgroundColor: GlobalColors.appColor1,
+                              smallSize: 10,
+                              isLabelVisible: value != 0,
+                              child: const Icon(
+                                Icons.notifications_outlined,
+                                color: GlobalColors.appColor,
+                                size: 30,
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         ),
-                    ],
-                  ),
+                      ),
+                    ),
                 ],
               ),
               const SizedBox(height: 10),
-              // Search For Merchants
               GestureDetector(
                 onTap: () {
                   context.pushNamed('search-merchant').then((value) {
@@ -630,16 +441,9 @@ class _HomeScreenState extends State<HomeScreen>
                   child: Row(
                     children: [
                       const SizedBox(width: 10),
-                      Expanded(
-                        flex: 1,
-                        child: Image.asset(
-                          'assets/images/search.png',
-                          height: 20,
-                        ),
-                      ),
+                      Image.asset('assets/images/search.png', height: 20),
                       const SizedBox(width: 5),
                       Expanded(
-                        flex: 9,
                         child: Text(
                           S.of(context).searchForMerchantsCategoryLocation,
                           overflow: TextOverflow.ellipsis,
@@ -662,6 +466,7 @@ class _HomeScreenState extends State<HomeScreen>
           context
               .read<CategoryBloc>()
               .add(LoadCategoryEvent(AppVariables.selectedLanguageNow));
+          await fetchBanner();
           if (!mounted) return;
           setState(() {
             if (AppVariables.locationEnabledStatus.value > 1) {
@@ -695,10 +500,16 @@ class _HomeScreenState extends State<HomeScreen>
                     ValueListenableBuilder(
                       valueListenable: AppVariables.locationEnabledStatus,
                       builder: (context, value, child) {
-                        // log(value.toString());
-                        bool isLoading = value == 0 ? true : false;
+                        bool isLoading = value == 0;
+                        bool isBannerVisible = bannerData != null &&
+                            bannerData['isActive'] == true;
                         return Column(
                           children: [
+                            if (isBannerVisible) ...[
+                              const SizedBox(height: 10),
+                              experienceBanner(),
+                              const SizedBox(height: 20),
+                            ],
                             BestOffer(
                                 key: ValueKey(value), isLoading: isLoading),
                             const SizedBox(height: 20),
@@ -724,7 +535,6 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-//Category Widget
   categoryWidget() {
     return BlocBuilder<CategoryBloc, CategoryState>(
       builder: (context, state) {
@@ -734,9 +544,7 @@ class _HomeScreenState extends State<HomeScreen>
             child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.only(left: 10.0, right: 10.0),
-                separatorBuilder: (context, index) {
-                  return const SizedBox(width: 20);
-                },
+                separatorBuilder: (context, index) => const SizedBox(width: 20),
                 itemCount: 10,
                 itemBuilder: (context, index) {
                   return const TabContainer(icon: '', text: '...');
@@ -751,23 +559,19 @@ class _HomeScreenState extends State<HomeScreen>
                 : ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.only(left: 10.0, right: 10.0),
-                    separatorBuilder: (context, index) {
-                      return const SizedBox(width: 20);
-                    },
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(width: 20),
                     itemCount: categoryList.data!.data!.length,
                     itemBuilder: (context, index) {
                       return InkWell(
                         onTap: () {
                           context.pushNamed('category-screen', pathParameters: {
-                            // 'categoryName': categoryList
-                            //     .data!.data![index].name!,
                             'parentId':
                                 categoryList.data!.data![index].id.toString(),
                           }).then((value) {
                             if (value == true) {
                               if (AppVariables.locationEnabledStatus.value >
-                                      1 &&
-                                  value == true) {
+                                  1) {
                                 AppVariables.locationEnabledStatus.value += 1;
                               }
                             }
@@ -792,15 +596,11 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  //AD Slider
   adSlider() {
     return BlocBuilder<SliderBloc, SliderState>(builder: (context, state) {
-      //Loading State
       if (state is SliderLoadingState) {
         return const SliderLoader();
-      }
-      //Loaded State
-      else if (state is SliderLoadedState) {
+      } else if (state is SliderLoadedState) {
         SliderResModel sliderList = state.sliderList;
         return sliderList.data!.isEmpty
             ? emptySliderData()
@@ -829,7 +629,6 @@ class _HomeScreenState extends State<HomeScreen>
                           onTap: () {
                             if (i.hasLink == true) {
                               if (i.externalLink != null) {
-                                //To open the website link
                                 String prefixedUrl =
                                     prefixHttp(i.externalLink.toString());
                                 Uri webOpen = Uri.parse(prefixedUrl);
@@ -838,7 +637,6 @@ class _HomeScreenState extends State<HomeScreen>
                                         ? LaunchMode.externalApplication
                                         : LaunchMode
                                             .externalNonBrowserApplication);
-                                return;
                               } else if (i.screenValue != null &&
                                   i.internalLink == 'login') {
                                 if (AppVariables.accessToken == null) {
@@ -908,11 +706,8 @@ class _HomeScreenState extends State<HomeScreen>
                             child: CachedNetworkImage(
                               imageUrl: i.url!,
                               fit: BoxFit.cover,
-                              placeholder: (context, url) {
-                                return const Center(
-                                    child:
-                                        FittedBox(child: CustomAllLoader1()));
-                              },
+                              placeholder: (context, url) => const Center(
+                                  child: FittedBox(child: CustomAllLoader1())),
                               errorWidget: (context, url, error) => Center(
                                   child: Image.asset(
                                       'assets/images/no_image.jpg')),
@@ -924,9 +719,7 @@ class _HomeScreenState extends State<HomeScreen>
                   );
                 }).toList(),
               );
-      }
-      //Error State
-      else if (state is SliderErrorState) {
+      } else if (state is SliderErrorState) {
         return const SliderError();
       } else {
         return const SizedBox();
@@ -934,7 +727,6 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  // If slider data is empty
   emptySliderData() {
     return CarouselSlider(
         options: CarouselOptions(

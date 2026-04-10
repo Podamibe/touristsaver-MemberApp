@@ -39,6 +39,7 @@ class Data {
   final bool? premiumCodeIsApplied;
   final bool? premiumCodeIsPaid;
   final int? packageId;
+  final String? discount;
 
   Data({
     this.showFreePiiinks,
@@ -48,6 +49,7 @@ class Data {
     this.premiumCodeIsApplied,
     this.premiumCodeIsPaid,
     this.packageId,
+    this.discount,
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
@@ -62,6 +64,7 @@ class Data {
         premiumCodeIsApplied: json["premiumCodeIsApplied"],
         premiumCodeIsPaid: json["premiumCodeIsPaid"],
         packageId: json["packageId"],
+        discount: json["discount"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -72,6 +75,7 @@ class Data {
         "premiumCodeIsApplied": premiumCodeIsApplied,
         "premiumCodeIsPaid": premiumCodeIsPaid,
         "packageId": packageId,
+        "discount": discount,
       };
 }
 
