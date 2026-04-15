@@ -59,22 +59,9 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
   final TextEditingController newPasswordController = TextEditingController();
   final TextEditingController confirmNewPasswordController =
       TextEditingController();
+  dynamic showCharity = false;
 
   List<String> additionalList = [];
-  buildAdditionalList() {
-    additionalList.addAll([
-      // S.of(context).charity,
-      S.of(context).changeCountry,
-      S.of(context).changePassword,
-      S.of(context).editProfile,
-      // S.of(context).rewards,
-      S.of(context).recommendNewMerchant,
-      S.of(context).referAFriend,
-      S.of(context).biometrics,
-      S.of(context).about,
-      S.of(context).termsConditions,
-    ]);
-  }
 
   bool? hideRecommendOption;
   bool? hideRemoveAccountButton;
@@ -99,6 +86,10 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
 
   @override
   void initState() {
+    super.initState();
+    fetchShowCharity();
+    getPiiinkInfo();
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       buildAdditionalList();
       // hideRewardsOption = await Pref().readData(key: issuerType);
@@ -114,13 +105,49 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
       //   additionalList.remove(S.of(context).rewards);
       // }
     });
-    getPiiinkInfo();
-    super.initState();
+  }
+
+  buildAdditionalList() {
+    setState(() {
+      // ✅ CRITICAL: Clear the list so you don't get duplicates
+      additionalList.clear();
+
+      if (showCharity is Map && showCharity['show'] == true) {
+        additionalList.add(S.of(context).charity);
+      }
+
+      additionalList.addAll([
+        S.of(context).changeCountry,
+        S.of(context).changePassword,
+        S.of(context).editProfile,
+        S.of(context).recommendNewMerchant,
+        S.of(context).referAFriend,
+        S.of(context).biometrics,
+        S.of(context).about,
+        S.of(context).termsConditions,
+      ]);
+    });
+  }
+
+  Future<void> fetchShowCharity() async {
+    try {
+      var res = await DioCommon().getShowCharity();
+
+      if (res != null && res['status'] == "Success") {
+        if (!mounted) return;
+        setState(() {
+          showCharity = res['data'];
+        });
+        buildAdditionalList();
+      }
+    } catch (e) {
+      debugPrint("Error processing banner: $e");
+    }
   }
 
   @override
   void dispose() {
-    ConnectivityCubit().close();
+    // ConnectivityCubit().close();
     super.dispose();
   }
 
