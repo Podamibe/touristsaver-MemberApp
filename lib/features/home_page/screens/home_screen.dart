@@ -245,10 +245,10 @@ class _HomeScreenState extends State<HomeScreen>
       await _getAppVersion();
       await getVersionLog();
       _checkForceUpdate();
-      bool val = await Pref().readBool(key: 'isShownRegLog') ?? false;
-      if (val == false) {
-        await paySlider();
-      }
+      // bool val = await Pref().readBool(key: 'isShownRegLog') ?? false;
+      // if (val == false) {
+      //   await paySlider();
+      // }
     });
     WidgetsBinding.instance.addObserver(this);
   }
