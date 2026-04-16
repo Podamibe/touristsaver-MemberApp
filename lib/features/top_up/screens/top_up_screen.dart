@@ -523,6 +523,9 @@ class _TopUpWidgetState extends State<TopUpWidget> {
         ],
       );
     }
+    if (originalFee == 0 || originalFee == 0.0) {
+      return const SizedBox.shrink();
+    }
 
     // Default return (No discount)
     return AutoSizeText(
@@ -643,7 +646,14 @@ class _TopUpWidgetState extends State<TopUpWidget> {
                                   .memPackAll!
                                   .data![widget.index!]
                                   .buttonTextColor!)),
-                              text: S.of(context).topUp,
+                              text: (widget.memPackAll!.data![widget.index!]
+                                              .packageFee! ==
+                                          0 ||
+                                      widget.memPackAll!.data![widget.index!]
+                                              .packageFee! ==
+                                          0.0)
+                                  ? "Continue"
+                                  : S.of(context).topUp,
                               onPressed: () async {
                                 setState(() {
                                   isLoading = true;
@@ -694,7 +704,13 @@ class _TopUpWidgetState extends State<TopUpWidget> {
                                     if (hasBalance) {
                                       GlobalSnackBar.showSuccess(context,
                                           S.of(context).paymentSuccessful);
-                                      context.pop();
+                                      if (context.canPop()) {
+                                        context.pop();
+                                      } else {
+                                        context.pushReplacementNamed(
+                                            'bottom-bar',
+                                            pathParameters: {'page': '0'});
+                                      }
                                     }
                                     return;
                                   }
