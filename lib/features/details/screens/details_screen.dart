@@ -56,7 +56,7 @@ class DetailsScreen extends StatefulWidget {
 class _DetailsScreenState extends State<DetailsScreen> {
   //For title in Google Map
   String? addressDetail;
-
+  bool isHoursExpanded = false;
   // For image
   List imageList = [];
 
@@ -313,6 +313,219 @@ class _DetailsScreenState extends State<DetailsScreen> {
         },
       ),
     );
+  }
+
+  // 1. Builds the dynamic "Open · Closes 6 PM" text
+  Widget _buildDynamicHoursHeader(String? rawHours) {
+    if (rawHours == null ||
+        rawHours.trim().isEmpty ||
+        rawHours.toLowerCase() == 'null') {
+      return _headerText("Hours not available", "", Colors.black87);
+    }
+    DateTime now = DateTime.now();
+    String fullDay =
+        DateFormat('EEEE').format(now).toLowerCase(); // e.g. "monday"
+    String shortDay = DateFormat('EEE').format(now).toLowerCase(); // e.g. "mon"
+
+    List<String> lines = rawHours.split('\n');
+
+    String? todayTimeStr;
+
+    // Find the line matching today's day
+    for (int i = 0; i < lines.length; i++) {
+      String line = lines[i].toLowerCase();
+
+      if (line.contains(fullDay) ||
+          line.contains(shortDay) ||
+          (line.contains('mon') && line.contains('sun')) ||
+          (line.contains('mon') &&
+              line.contains('fri') &&
+              now.weekday >= 1 &&
+              now.weekday <= 5) ||
+          (line.contains('weekend') && now.weekday >= 6)) {
+        int digitIdx = line.indexOf(RegExp(r'\d'));
+        if (digitIdx != -1) {
+          todayTimeStr = lines[i].substring(digitIdx).trim();
+        } else if (i + 1 < lines.length &&
+            lines[i + 1].contains(RegExp(r'\d'))) {
+          todayTimeStr = lines[i + 1].trim();
+        } else if (line.contains('closed')) {
+          todayTimeStr = 'closed';
+        }
+        break;
+      }
+    }
+    if (todayTimeStr == null)
+      return _headerText("Opening Hours", "", Colors.black87);
+    if (todayTimeStr.toLowerCase().contains('closed'))
+      return _headerText("Closed", " · Today", const Color(0xFFD93025));
+
+    // Calculate if it's open right now
+    try {
+      List<String> parts = todayTimeStr.split(RegExp(r'[-–to]'));
+      if (parts.length >= 2) {
+        String openStr = parts[0].trim();
+        String closeStr = parts[1].trim();
+
+        int? openMin = _parseTimeStr(openStr);
+        int? closeMin = _parseTimeStr(closeStr);
+
+        if (openMin != null && closeMin != null) {
+          int nowMin = now.hour * 60 + now.minute;
+
+          if (closeMin < openMin) closeMin += 24 * 60; // Handle overnight hours
+          int checkNowMin = nowMin;
+          if (nowMin < openMin && closeMin > 24 * 60) checkNowMin += 24 * 60;
+
+          if (checkNowMin >= openMin && checkNowMin <= closeMin) {
+            return _headerText("Open", " · Closes $closeStr",
+                const Color(0xFF188038)); // Google Green
+          } else {
+            return _headerText("Closed", " · Opens $openStr",
+                const Color(0xFFD93025)); // Google Red
+          }
+        }
+      }
+    } catch (e) {
+      print(" parsing hours: $e");
+      // Ignore parsing errors and fallback
+    }
+
+    // Fallback if parsing fails but we got the text
+    return _headerText("Today", " · $todayTimeStr", Colors.black87);
+  }
+
+  // 2. Converts "5:00 pm" or "17:30" to minutes for math
+  int? _parseTimeStr(String timeStr) {
+    try {
+      String clean = timeStr.toLowerCase().trim();
+      bool isPm = clean.contains('pm');
+      bool isAm = clean.contains('am');
+      clean = clean.replaceAll(RegExp(r'[a-z\s]'), '');
+      List<String> p = clean.split(':');
+      if (p.isEmpty || p[0].isEmpty) return null;
+
+      int h = int.parse(p[0]);
+      int m = p.length > 1 ? int.parse(p[1]) : 0;
+
+      if (isPm && h < 12) h += 12;
+      if (isAm && h == 12) h = 0;
+
+      return h * 60 + m;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // 3. Formats the RichText nicely
+  Widget _headerText(String status, String suffix, Color statusColor) {
+    return RichText(
+      text: TextSpan(
+        children: [
+          TextSpan(
+              text: status,
+              style: TextStyle(
+                  color: statusColor,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16.sp,
+                  fontFamily: 'Sans')),
+          TextSpan(
+              text: suffix,
+              style: TextStyle(
+                  color: Colors.black87, fontSize: 16.sp, fontFamily: 'Sans')),
+        ],
+      ),
+    );
+  }
+
+  // 4. Builds the expanded list of all days
+  Widget _buildOpeningHoursList(MerchantDetailResModel merchantDetail) {
+    String? rawOpeningHours =
+        merchantDetail.data?.merchantWebsiteInfo?.openingHourInfo;
+    String textToDisplay = (rawOpeningHours == null ||
+            rawOpeningHours.trim().isEmpty ||
+            rawOpeningHours.trim().toLowerCase() == 'null')
+        ? S.of(context).noOpeningHours
+        : rawOpeningHours;
+
+    List<Widget> hoursListWidgets = [];
+    if (textToDisplay == S.of(context).noOpeningHours) {
+      hoursListWidgets
+          .add(Text(textToDisplay, style: TextStyle(fontSize: 14.sp)));
+    } else {
+      List<String> lines = textToDisplay.split('\n');
+      String? pendingDay;
+
+      for (int i = 0; i < lines.length; i++) {
+        String line = lines[i].trim();
+        if (line.isEmpty) continue;
+        int firstDigitIndex = line.indexOf(RegExp(r'\d'));
+
+        if (firstDigitIndex != -1) {
+          String leftPart = line
+              .substring(0, firstDigitIndex)
+              .replaceAll(RegExp(r'[:-]'), '')
+              .trim();
+          String rightPart = line.substring(firstDigitIndex).trim();
+
+          if (pendingDay != null) {
+            leftPart = pendingDay + (leftPart.isNotEmpty ? ' $leftPart' : '');
+            pendingDay = null;
+          }
+
+          if (rightPart.isNotEmpty) {
+            hoursListWidgets.add(
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                        flex: 2,
+                        child: Text(leftPart,
+                            style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black87))),
+                    const SizedBox(width: 10),
+                    Expanded(
+                        flex: 3,
+                        child: Text(rightPart,
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                                fontSize: 14.sp,
+                                color: Colors.black.withValues(alpha: 0.7)))),
+                  ],
+                ),
+              ),
+            );
+          }
+        } else {
+          if (i + 1 < lines.length && lines[i + 1].contains(RegExp(r'\d'))) {
+            pendingDay = line;
+          } else {
+            hoursListWidgets.add(
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2.0),
+                child: Text(
+                  line.trim(),
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: line.toLowerCase().contains('closed')
+                        ? Colors.red.withValues(alpha: 0.8)
+                        : Colors.black.withValues(alpha: 0.6),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            );
+          }
+        }
+      }
+    }
+    return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: hoursListWidgets);
   }
 
 //For locating merchant in google map
@@ -806,46 +1019,79 @@ class _DetailsScreenState extends State<DetailsScreen> {
             child: Column(
               children: [
                 //Opening Hour
-                Row(
+                // Opening Hours
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: const BoxDecoration(shape: BoxShape.circle),
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          isHoursExpanded = !isHoursExpanded;
+                        });
+                      },
                       child: Padding(
-                        padding: const EdgeInsets.all(
-                            4.0), // adjust padding as needed
-                        child: Image.asset(
-                          'assets/images/clock.png',
-                          fit: BoxFit.contain,
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Teal Clock Icon
+                            const Padding(
+                              padding: EdgeInsets.only(top: 2.0),
+                              child: Icon(Icons.access_time,
+                                  color: Color(0xFF00796B), size: 24),
+                            ),
+                            const SizedBox(width: 12),
+
+                            // Dynamic Header (Open/Closed)
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildDynamicHoursHeader(merchantDetail.data
+                                      ?.merchantWebsiteInfo?.openingHourInfo),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    isHoursExpanded
+                                        ? "Hide hours"
+                                        : "See more hours",
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 14.sp,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // Dropdown Chevron
+                            Icon(
+                              isHoursExpanded
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                              color: Colors.grey[600],
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () {
-                          openingHour(merchantDetail);
-                        },
-                        child: AutoSizeText(
-                          S.of(context).viewOpeningHours,
-                          style: const TextStyle(
-                            shadows: [
-                              Shadow(color: Colors.black, offset: Offset(0, -5))
-                            ],
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.transparent,
-                            decoration: TextDecoration.underline,
-                            decorationColor: Colors.black,
-                            decorationThickness: 1,
-                            decorationStyle: TextDecorationStyle.solid,
-                          ),
-                        ),
-                      ),
+
+                    // Smooth Expanding List
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      child: isHoursExpanded
+                          ? Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 36.0,
+                                  bottom: 10.0), // Indents text to match header
+                              child: _buildOpeningHoursList(merchantDetail),
+                            )
+                          : const SizedBox(width: double.infinity, height: 0),
                     ),
                   ],
                 ),
+
+                const SizedBox(height: 15),
 
                 const SizedBox(height: 15),
                 Row(
@@ -1439,87 +1685,180 @@ class _DetailsScreenState extends State<DetailsScreen> {
   }
 
   //Opening Hour pop up
+  //Opening Hour pop up
   openingHour(MerchantDetailResModel merchantDetail) {
     String? rawOpeningHours =
         merchantDetail.data?.merchantWebsiteInfo?.openingHourInfo;
 
-    // 2. Check for Dart null, empty strings, AND the word 'null'
     String textToDisplay = (rawOpeningHours == null ||
             rawOpeningHours.trim().isEmpty ||
             rawOpeningHours.trim().toLowerCase() == 'null')
         ? S.of(context).noOpeningHours
         : rawOpeningHours;
+
+    // 1. Parse the string into neat Google-style rows
+    List<Widget> hoursListWidgets = [];
+
+    if (textToDisplay == S.of(context).noOpeningHours) {
+      hoursListWidgets
+          .add(Text(textToDisplay, style: TextStyle(fontSize: 16.sp)));
+    } else {
+      List<String> lines = textToDisplay.split('\n');
+      for (String line in lines) {
+        if (line.trim().isEmpty) continue;
+
+        // NEW LOGIC: Find the very first number (digit) in the line
+        int firstDigitIndex = line.indexOf(RegExp(r'\d'));
+
+        // If we found a number, split the text there
+        if (firstDigitIndex != -1) {
+          // Left part gets everything before the number, and we clean up any rogue colons
+          String leftPart = line
+              .substring(0, firstDigitIndex)
+              .replaceAll(RegExp(r'[:-]'), '')
+              .trim();
+          // Right part gets the number and everything after it
+          String rightPart = line.substring(firstDigitIndex).trim();
+
+          if (rightPart.isNotEmpty) {
+            hoursListWidgets.add(
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        leftPart,
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 3,
+                      child: Text(
+                        rightPart,
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          color: Colors.black.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+        } else {
+          // If there are NO numbers in the line (e.g., "Sunday Closed" or "Bookings needed")
+          hoursListWidgets.add(
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: Text(
+                line.trim(),
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: line.toLowerCase().contains('closed')
+                      ? Colors.red.withValues(alpha: 0.8)
+                      : Colors.black.withValues(alpha: 0.6),
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          );
+        }
+      }
+    }
+
     return showGeneralDialog(
       barrierLabel: 'Label',
       barrierDismissible: true,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
+      barrierColor:
+          Colors.black.withValues(alpha: 0.6), // Slightly darker background
       transitionDuration: const Duration(milliseconds: 300),
       context: context,
       pageBuilder: (context, anim1, anim2) {
         return Align(
           alignment: Alignment.center,
-          child: Dismissible(
-            direction: DismissDirection.vertical,
-            onDismissed: (_) => context.pop(),
-            key: const Key('key'),
-            child: FittedBox(
-              fit: BoxFit.fill,
-              child: Container(
-                width: MediaQuery.of(context).size.width / 1.1,
-                margin: const EdgeInsets.only(left: 10.0, right: 10.0),
-                decoration: BoxDecoration(
+          child: Material(
+            color:
+                Colors.transparent, // Required for text styling inside dialogs
+            child: Container(
+              width: MediaQuery.of(context).size.width / 1.15,
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height *
+                    0.7, // Keeps it from overflowing
+              ),
+              padding: const EdgeInsets.all(20.0),
+              decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(5.0),
-                ),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 15),
+                  borderRadius:
+                      BorderRadius.circular(16.0), // Standard modern rounding
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    )
+                  ]),
+              child: Column(
+                mainAxisSize: MainAxisSize.min, // Hugs content perfectly
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 2. Standard Google Header (Icon + Title)
+                  Row(
+                    children: [
+                      const Icon(Icons.access_time_filled,
+                          color: Colors.blueAccent, size: 22),
+                      const SizedBox(width: 10),
+                      Text(
+                        S.of(context).openingHours,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 18.sp,
+                          color: Colors.black87,
+                          fontFamily: 'Sans',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 15),
+                  const Divider(height: 1, thickness: 1),
+                  const SizedBox(height: 10),
 
-                    // Grey Line
-                    Container(
-                      width: 65,
-                      height: 4,
-                      decoration: BoxDecoration(
-                          color: Colors.grey.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(50)),
+                  // 3. Formatted list of hours
+                  Flexible(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: hoursListWidgets,
+                      ),
                     ),
-
-                    const SizedBox(height: 20),
-                    AutoSizeText(
-                      S.of(context).openingHours,
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          decoration: TextDecoration.none,
-                          color: Colors.black.withValues(alpha: 0.8),
-                          fontFamily: 'Sans'),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // 3. Use the clean variable we created at the top!
-                    AutoSizeText(
-                      textToDisplay,
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          decoration: TextDecoration.none,
-                          color: Colors.black.withValues(alpha: 0.8),
-                          fontFamily: 'Sans'),
-                    ),
-
-                    const SizedBox(height: 45),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
         );
       },
       transitionBuilder: (context, anim1, anim2, child) {
+        // Improved Google-like spring transition
         return SlideTransition(
-          position: Tween(begin: const Offset(0, 1), end: const Offset(0, 0))
-              .animate(anim1),
-          child: child,
+          position: Tween(begin: const Offset(0, 0.1), end: const Offset(0, 0))
+              .animate(
+                  CurvedAnimation(parent: anim1, curve: Curves.easeOutCubic)),
+          child: FadeTransition(
+            opacity: anim1,
+            child: child,
+          ),
         );
       },
     );

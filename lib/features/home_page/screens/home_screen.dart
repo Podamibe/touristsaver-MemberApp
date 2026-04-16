@@ -296,10 +296,8 @@ class _HomeScreenState extends State<HomeScreen>
     Future<void> _launchBannerUrl() async {
       final String? rawUrl = bannerData?['url'];
       if (rawUrl != null && rawUrl.isNotEmpty) {
-        // Logic to ensure the URL has http/https prefix
         String prefixedUrl = prefixHttp(rawUrl);
         Uri webUri = Uri.parse(prefixedUrl);
-
         try {
           await launchUrl(webUri, mode: LaunchMode.externalApplication);
         } catch (e) {
@@ -308,25 +306,26 @@ class _HomeScreenState extends State<HomeScreen>
       }
     }
 
-    // Ensure data exists
     if (bannerData == null) return const SizedBox();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
       child: InkWell(
-        borderRadius: BorderRadius.circular(30.r),
-        onTap: _launchBannerUrl, // ✅ Triggers the URL launch
+        borderRadius:
+            BorderRadius.circular(50.r), // More rounded corners like the image
+        onTap: _launchBannerUrl,
         child: Container(
           width: double.infinity,
-          padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 15.w),
+          padding: EdgeInsets.symmetric(vertical: 11.h, horizontal: 15.w),
           decoration: BoxDecoration(
-            color: const Color(0xFF5369FF),
-            borderRadius: BorderRadius.circular(30.r),
+            // ✅ Exact background color from the image (Bright Royal Blue)
+            color: const Color(0xFF5271FF),
+            borderRadius: BorderRadius.circular(40.r), // Perfectly oval ends
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -338,17 +337,25 @@ class _HomeScreenState extends State<HomeScreen>
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Montserrat',
+                  // ✅ Bold sans-serif font matching the image
+                  fontSize: 25.sp,
+                  fontWeight:
+                      FontWeight.w800, // Extra bold for "Tap for 4000+..."
+                  letterSpacing: -0.5,
                 ),
               ),
-              SizedBox(height: 2.h),
+              SizedBox(height: 4.h), // Tight spacing like the reference
               Text(
                 bannerData?['country'] ?? "",
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.9),
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w400,
+                  color: Colors.white,
+                  fontFamily: 'Montserrat',
+                  // ✅ Thinner, slightly smaller font for "Australia & New Zealand"
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w500, // Medium weight
+                  letterSpacing: 0.2,
                 ),
               ),
             ],
@@ -497,6 +504,7 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     const SizedBox(height: 15),
                     categoryWidget(),
+                    const SizedBox(height: 5), // Reduced from 15/20 to 5
                     ValueListenableBuilder(
                       valueListenable: AppVariables.locationEnabledStatus,
                       builder: (context, value, child) {
@@ -506,7 +514,7 @@ class _HomeScreenState extends State<HomeScreen>
                         return Column(
                           children: [
                             if (isBannerVisible) ...[
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 1),
                               experienceBanner(),
                               const SizedBox(height: 20),
                             ],
@@ -553,7 +561,7 @@ class _HomeScreenState extends State<HomeScreen>
         } else if (state is CategoryLoadedState) {
           CategoryListResModel categoryList = state.categoryList;
           return SizedBox(
-            height: categoryList.data!.data!.isEmpty ? 50 : 125,
+            height: categoryList.data!.data!.isEmpty ? 50 : 105,
             child: categoryList.data!.data!.isEmpty
                 ? EmptyData(text: S.of(context).noCategoryFound)
                 : ListView.separated(

@@ -104,6 +104,12 @@ class _MySplashScreenState extends State<MySplashScreen> {
     );
   }
 
+  void showlogin() async {
+    context.pushReplacementNamed(
+      'login',
+    );
+  }
+
   @override
   void initState() {
     // Checking whether the user has accepted the terms and condition or not
@@ -133,7 +139,7 @@ class _MySplashScreenState extends State<MySplashScreen> {
               showTopUpScreen(); // redirect to top up / warning
             }
           } else {
-            showBottomBar();
+            showlogin();
           }
         } else {
           showIntroVideo();

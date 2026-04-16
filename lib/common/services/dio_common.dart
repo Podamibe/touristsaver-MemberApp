@@ -63,6 +63,22 @@ class DioCommon {
     }
   }
 
+  Future<dynamic> getShowCharity() async {
+    try {
+      Dio dio = await getClientNoToken();
+      Response response = await dio.get(showCharityGetOne);
+      if (response.data is String) {
+        return jsonDecode(response.data);
+      }
+
+      return response.data;
+    } catch (e) {
+      print("DEBUG: Banner API failed with error: $e");
+
+      return Future.error(e.toString());
+    }
+  }
+
   // Verify Changed Mobile Number
   Future<VerifyChangedNumberResModel?> editProfile(
       {required VerifyChangedNumberReqModel

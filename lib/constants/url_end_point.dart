@@ -20,6 +20,8 @@ const terminalConfirmApplyPiiinkURL =
 const surApplyPiiink = '/member/transaction/applyPiiink';
 
 const memberPremiumGetOne = '/memberPremiumCode/getOne';
+const showCharityGetOne = '/showCharity/getOne';
+
 const universalGetMyWallet = '/wallet/universal/getMyWallet';
 const merchantGetMyWallet = '/wallet/merchant/getMyWallet';
 const profileEdit = '/member/general/edit';

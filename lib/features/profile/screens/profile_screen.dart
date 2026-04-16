@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:new_piiink/common/services/dio_common.dart';
 import 'package:new_piiink/common/widgets/custom_app_bar.dart';
 import 'package:new_piiink/common/widgets/custom_button.dart';
 import 'package:new_piiink/common/widgets/reg_log_slider.dart';
@@ -15,6 +16,7 @@ import '../../connectivity/screens/connectivity.dart';
 
 class ProfileScreen extends StatefulWidget {
   static const String routeName = "/profile";
+
   const ProfileScreen({super.key});
 
   @override
@@ -22,44 +24,47 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // List<String> additonal = [
-  //   charity,
-  //   recommend,
-  //   about,
-  //   terms,
-  // ];
-
-  // buildAdditionalList() {
-  //   additional.addAll([
-  //     S.of(context).charity,
-  //     S.of(context).recommendNewMerchant,
-  //     S.of(context).about,
-  //     S.of(context).termsConditions,
-  //   ]);
-  // }
-
-  // @override
-  // void initState() {
-  //   WidgetsBinding.instance.addPostFrameCallback((_) {
-  //     buildAdditionalList();
-  //   });
-  //   super.initState();
-  // }
+  dynamic showCharity = false;
+  @override
+  void initState() {
+    super.initState();
+    fetchShowCharity(); // ✅ Fetch when screen opens
+  }
 
   @override
   void dispose() {
-    ConnectivityCubit().close();
+    // ConnectivityCubit().close();
     super.dispose();
+    // fetchShowCharity();
+  }
+
+  Future<void> fetchShowCharity() async {
+    try {
+      var res = await DioCommon().getShowCharity();
+
+      if (res != null && res['status'] == "Success") {
+        if (!mounted) return;
+        setState(() {
+          showCharity = res['data'];
+        });
+      }
+    } catch (e) {
+      debugPrint("Error processing banner: $e");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    List<String> additional = [
-      // S.of(context).charity,
+    List<String> additional = [];
+
+    if (showCharity is Map && showCharity['show'] == true) {
+      additional.add(S.of(context).charity);
+    }
+    additional.addAll([
       S.of(context).recommendNewMerchant,
       S.of(context).about,
       S.of(context).termsConditions,
-    ];
+    ]);
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),

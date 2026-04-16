@@ -38,7 +38,7 @@ class TabContainer extends StatelessWidget {
                 child: icon!.isEmpty || icon == null
                     ? CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: GlobalColors.appColor,
+                        color: const Color(0xFFF146EA),
                       )
                     : SvgPicture.network(
                         icon!,
@@ -49,9 +49,9 @@ class TabContainer extends StatelessWidget {
                         placeholderBuilder: (context) =>
                             CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: GlobalColors.appColor,
+                          color: const Color(0xFFF146EA),
                         ),
-                        color: GlobalColors.appColor,
+                        color: const Color(0xFFF146EA),
                         fit: BoxFit.contain,
                       )),
           ),
@@ -111,7 +111,7 @@ class TransTabContainer extends StatelessWidget {
                 angle: 180 * math.pi / angle!,
                 child: IconButton(
                   icon: Icon(icon),
-                  color: GlobalColors.appColor,
+                  color: const Color(0xFFF146EA),
                   onPressed: onPressed,
                   iconSize: 35,
                 ),

@@ -13,7 +13,7 @@ import '../common/widgets/custom_snackbar.dart';
 import '../router.dart';
 
 ///URL for Staging and Production
-// const baseUrl = 'http://192.168.20.41:3000/api/';
+// const baseUrl = 'http://192.168.10.3:3000/api/';
 // const baseUrl = 'https://staging.dev.piiink.org/api/';
 const baseUrl = 'https://backend.touristsaver.org/api/';
 
