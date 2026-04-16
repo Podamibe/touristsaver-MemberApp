@@ -8,9 +8,41 @@ import 'package:new_piiink/constants/pref.dart';
 import 'package:new_piiink/constants/pref_key.dart';
 import 'package:new_piiink/generated/l10n.dart';
 
+// Make sure to import wherever your checkWalletBalance() and AppVariables live
+import '../../../common/app_variables.dart';
+import 'package:new_piiink/splash_screen.dart'; // Adjust if checkWalletBalance is elsewhere
+
 class IntroScreen extends StatelessWidget {
   static const String routeName = '/intro-screen';
   const IntroScreen({super.key});
+
+  // 👉 NEW: Helper method to handle routing after Intro is done or skipped
+  Future<void> _finishIntroAndNavigate(BuildContext context) async {
+    Pref pref = Pref();
+    // Save "acc" as true so next time splash skips video + intro
+    await pref.writeData(key: accept, value: 'true');
+
+    // 1. Check if the user is logged in
+    String? token = await pref.readData(key: saveToken);
+    bool isLoggedIn = token != null && token.isNotEmpty;
+
+    if (isLoggedIn) {
+      // 2. Check their wallet balance if they are logged in
+      bool canGoHome = await checkWalletBalance();
+
+      if (!context.mounted) return;
+
+      if (canGoHome) {
+        context.goNamed('bottom-bar', pathParameters: {'page': '0'});
+      } else {
+        context.goNamed('top-up'); // redirect to top up / warning
+      }
+    } else {
+      if (!context.mounted) return;
+      // 3. Not logged in, send to login screen
+      context.goNamed('login');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,17 +99,12 @@ class IntroScreen extends StatelessWidget {
               //   decoration: getPageDecoration(),
               // ),
             ],
-            // onDone
-            onDone: () async {
-              Pref pref = Pref();
 
-              // Save "acc" as true so next time splash skips video + intro
-              await pref.writeData(key: accept, value: 'true');
-              context.goNamed('bottom-bar', pathParameters: {'page': '0'});
-              // }
-            },
-            //ClampingScrollPhysics prevent the scroll offset from exceeding the bounds of the content.
-            // scrollPhysics: const ClampingScrollPhysics(),
+            // 👉 UPDATED: Call the helper function on Done
+            onDone: () => _finishIntroAndNavigate(context),
+
+            // 👉 NEW: Also call it on Skip so users don't get stuck!
+            onSkip: () => _finishIntroAndNavigate(context),
 
             // Done
             showDoneButton: true,
@@ -99,6 +126,7 @@ class IntroScreen extends StatelessWidget {
                 ),
               ),
             ),
+
             // Next
             showNextButton: true,
             next: Container(
@@ -128,8 +156,6 @@ class IntroScreen extends StatelessWidget {
                     fontWeight: FontWeight.w400,
                     color: GlobalColors.textColor,
                     fontSize: 15.sp)),
-            // isBottomSafeArea: true,
-            // dotsDecorator: getDotsDecorator(),
           ),
         ),
       ),
@@ -174,6 +200,4 @@ class IntroScreen extends StatelessWidget {
           fontWeight: FontWeight.w600),
     );
   }
-
-  //method to customize the dots style
 }
