@@ -1,3 +1,4 @@
+// Created by: Sweta
 // ignore_for_file: deprecated_member_use
 
 import 'dart:async';
@@ -50,15 +51,15 @@ import '../../connectivity/screens/connectivity.dart';
 import '../../connectivity/screens/connectivity_screen.dart';
 import 'package:new_piiink/generated/l10n.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginRegisterScreen extends StatefulWidget {
   static const String routeName = '/login';
-  const LoginScreen({super.key});
+  const LoginRegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<LoginRegisterScreen> createState() => _LoginRegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
   final TextEditingController numController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool _isHidden = true;
@@ -100,15 +101,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (AppVariables.isLocalAuthEnabled == true) {
       bool didAuthenticate = await localAuth.authenticate(
+          // ignore: use_build_context_synchronously
           localizedReason: S.of(context).pleaseAuthenticateToSignIn,
           options: const AuthenticationOptions(
               useErrorDialogs: true, biometricOnly: true, stickyAuth: true),
           authMessages: [
             AndroidAuthMessages(
                 biometricHint: '',
+                // ignore: use_build_context_synchronously
                 signInTitle: S.of(context).biometricAuthentication,
-                cancelButton: S.of(context).noThanks),
-            IOSAuthMessages(cancelButton: S.of(context).noThanks)
+                //'Biometric Authentication',
+                // ignore: use_build_context_synchronously
+                cancelButton: S.of(context).noThanks
+                // 'No thanks',
+                ),
+            // ignore: use_build_context_synchronously
+            IOSAuthMessages(cancelButton: S.of(context).noThanks
+                // 'No thanks',
+                )
           ]);
       if (didAuthenticate) {
         numController.text = await Pref().readData(key: 'saveUsername') ?? '';
@@ -155,18 +165,27 @@ class _LoginScreenState extends State<LoginScreen> {
     context.pushReplacementNamed('top-up'); // adjust route name
   }
 
+  void registerLogin() async {
+    context.pushReplacementNamed(
+      'register', // 👉 Matches the name: 'register' in your GoRoute
+      queryParameters: {
+        'issuercode': '',
+        'memberReferralCode': '',
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GlobalColors.appWhiteBackgroundColor, // Clean background
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: CustomAppBar(
           text: S.of(context).logIn,
-          // icon: Icons.arrow_back_ios,
-          // onPressed: () {
-          //   context.pop();
-          // },
+          icon: Icons.arrow_back_ios,
+          onPressed: () {
+            context.pop();
+          },
         ),
       ),
       body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
@@ -176,83 +195,62 @@ class _LoginScreenState extends State<LoginScreen> {
           } else if (state == ConnectivityState.disconnected) {
             return const NoConnectivityScreen();
           } else if (state == ConnectivityState.connected) {
-            return Align(
-                alignment: Alignment.topCenter,
-                // Centered on screen
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: BlocProvider(
-                    lazy: false,
-                    create: (context) => LocationAllBloc(
-                        RepositoryProvider.of<DioLocation>(context))
+            return SingleChildScrollView(
+              child: BlocProvider(
+                lazy: false,
+                create: (context) =>
+                    LocationAllBloc(RepositoryProvider.of<DioLocation>(context))
                       ..add(LoadLocationAllEvent()),
+                child: BlocBuilder<LocationAllBloc, LocationAllState>(
+                  builder: (context, locationState) {
+                    // Loading State
+                    if (locationState is LocationAllLoadingState) {
+                      return const CustomAllLoader();
+                    }
+                    // Loaded State
+                    else if (locationState is LocationAllLoadedState) {
+                      LocationGetAllResModel locationList =
+                          locationState.locationGetAll;
+                      phone_pre.CountryWisePrefixResModel phonePrefixList =
+                          locationState.countryWisePrefixResModel;
 
-                    child: BlocBuilder<LocationAllBloc, LocationAllState>(
-                      builder: (context, locationState) {
-                        // Loading State
-                        if (locationState is LocationAllLoadingState) {
-                          return const CustomAllLoader();
-                        }
-                        // Loaded State
-                        else if (locationState is LocationAllLoadedState) {
-                          LocationGetAllResModel locationList =
-                              locationState.locationGetAll;
-                          phone_pre.CountryWisePrefixResModel phonePrefixList =
-                              locationState.countryWisePrefixResModel;
+                      return Column(
+                        children: [
+                          const SizedBox(height: 30),
+                          // Beautiful Header Image
+                          Hero(
+                            tag: 'login_logo',
+                            child: Image.asset(
+                              "assets/images/tourist.png",
+                              height: 140,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
 
-                          return Container(
-                            width: MediaQuery.of(context).size.width *
-                                0.9, // 90% of screen width
-                            padding: EdgeInsets.symmetric(
-                                vertical: 20.h, horizontal: 20.w),
-                            margin: EdgeInsets.only(top: 50.h, bottom: 40.h),
+                          // The Form Card
+                          Container(
+                            width: MediaQuery.of(context).size.width / 1,
+                            constraints: const BoxConstraints(
+                              maxHeight: double.infinity,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 25.0, horizontal: 15.0),
+                            margin: const EdgeInsets.symmetric(
+                                vertical: 10.0, horizontal: 15.0),
                             decoration: BoxDecoration(
-                                color: Colors.white, // Pure white card
-                                borderRadius: BorderRadius.circular(
-                                    20.r), // Smooth rounded corners
+                                color: GlobalColors.appWhiteBackgroundColor,
+                                borderRadius: BorderRadius.circular(15),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: GlobalColors.appColor
-                                        .withValues(alpha: 0.1),
-                                    blurRadius: 15,
+                                    color: Colors.grey.withValues(alpha: 0.15),
+                                    blurRadius: 10,
                                     spreadRadius: 2,
-                                    offset: const Offset(
-                                        0, 5), // Soft floating shadow
+                                    offset: const Offset(0, 4),
                                   )
                                 ]),
                             child: Column(
-                              mainAxisSize:
-                                  MainAxisSize.min, // Wrap content tightly
                               children: [
-                                // --- App Logo ---
-                                SizedBox(
-                                  height: 80.h,
-                                  child: Image.asset(
-                                      "assets/images/tourist.png",
-                                      fit: BoxFit.contain),
-                                ),
-                                SizedBox(height: 15.h),
-
-                                // --- Welcome Text ---
-                                // Text(
-                                //   "Welcome Back!",
-                                //   style: TextStyle(
-                                //     fontSize: 24.sp,
-                                //     fontWeight: FontWeight.bold,
-                                //     color: Colors.black87,
-                                //   ),
-                                // ),
-                                SizedBox(height: 5.h),
-                                Text(
-                                  "Sign in to continue",
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    color: Colors.grey.shade500,
-                                  ),
-                                ),
-                                SizedBox(height: 30.h),
-
-                                // --- Country Dropdown ---
                                 DropdownButtonWidget(
                                   label: S.of(context).selectCountryA,
                                   searchController: countrySearchController,
@@ -284,80 +282,59 @@ class _LoginScreenState extends State<LoginScreen> {
                                   },
                                   value: selectedCountry,
                                 ),
-                                SizedBox(height: 20.h),
-
-                                // --- Mobile Number ---
-                                TextFormField(
-                                  controller: numController,
-                                  cursorColor: GlobalColors.appColor,
-                                  keyboardType: TextInputType.number,
-                                  decoration: textInputDecoration1.copyWith(
-                                      hintText: S.of(context).mobileNumberA),
-                                  inputFormatters: <TextInputFormatter>[
-                                    FilteringTextInputFormatter.allow(
-                                        RegExp(r'[0-9]*'))
-                                  ],
-                                ),
-                                SizedBox(height: 20.h),
-
-                                // --- Password ---
-                                IgnorePointer(
-                                  ignoring: isLoading,
+                                const SizedBox(height: 20),
+                                SizedBox(
+                                  width:
+                                      MediaQuery.of(context).size.width / 1.2,
                                   child: TextFormField(
-                                    controller: passwordController,
+                                    controller: numController,
                                     cursorColor: GlobalColors.appColor,
+                                    keyboardType: TextInputType.number,
                                     decoration: textInputDecoration1.copyWith(
-                                      hintText: S.of(context).passwordA,
-                                      suffix: GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            _isHidden = !_isHidden;
-                                          });
-                                        },
-                                        child: _isHidden
-                                            ? Icon(
-                                                Icons.visibility_off,
-                                                size: 20,
-                                                color: Colors.grey.shade600,
-                                              )
-                                            : Icon(
-                                                Icons.visibility,
-                                                size: 20,
-                                                color: GlobalColors.appColor,
-                                              ),
-                                      ),
-                                    ),
-                                    obscureText: isLoading == true || _isHidden,
+                                        hintText: S.of(context).mobileNumberA),
+                                    inputFormatters: <TextInputFormatter>[
+                                      FilteringTextInputFormatter.allow(
+                                          RegExp(r'[0-9]*'))
+                                    ],
                                   ),
                                 ),
-                                SizedBox(height: 10.h),
+                                const SizedBox(height: 20),
 
-                                // --- Forgot Password ---
-                                InkWell(
-                                  onTap: () async {
-                                    forgotEmailnumController.clear();
-                                    forgotPopUp(locationList.data ?? [],
-                                        phonePrefixList.data ?? []);
-                                  },
-                                  child: Align(
-                                    alignment: Alignment.centerRight,
-                                    child: Padding(
-                                      padding: EdgeInsets.only(
-                                          right: 5.w, bottom: 20.h),
-                                      child: AutoSizeText(
-                                        S.of(context).forgotPassword,
-                                        style: textStyle15h.copyWith(
-                                          decoration: TextDecoration.underline,
-                                          color: GlobalColors
-                                              .appColor, // Colored link
-                                          fontWeight: FontWeight.w600,
+                                SizedBox(
+                                  width:
+                                      MediaQuery.of(context).size.width / 1.2,
+                                  child: IgnorePointer(
+                                    ignoring: isLoading,
+                                    child: TextFormField(
+                                      controller: passwordController,
+                                      cursorColor: GlobalColors.appColor,
+                                      decoration: textInputDecoration1.copyWith(
+                                        hintText: S.of(context).passwordA,
+                                        suffix: GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              _isHidden = !_isHidden;
+                                            });
+                                          },
+                                          child: _isHidden
+                                              ? const Icon(
+                                                  Icons.visibility_off,
+                                                  size: 20,
+                                                )
+                                              : const Icon(
+                                                  Icons.visibility,
+                                                  size: 20,
+                                                ),
                                         ),
                                       ),
+                                      obscureText:
+                                          isLoading == true || _isHidden,
                                     ),
                                   ),
                                 ),
+                                const SizedBox(height: 20),
 
-                                // --- Login Button ---
+                                // Login Button & Fingerprint Row
                                 isLoading == true
                                     ? const CustomButtonWithCircular()
                                     : Row(
@@ -370,15 +347,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 text: S.of(context).logIn,
                                                 onPressed: onLoginSubmit),
                                           ),
-                                          //Fingerprint Login Spacer
-                                          AppVariables.isLocalAuthEnabled ==
-                                                      false ||
-                                                  AppVariables
-                                                          .isLocalAuthEnabled ==
-                                                      null
-                                              ? const SizedBox()
-                                              : SizedBox(width: 10.w),
-                                          //Fingerprint Login Button
+                                          const SizedBox(width: 5),
+                                          // Fingerprint Login
                                           AppVariables.isLocalAuthEnabled ==
                                                       false ||
                                                   AppVariables
@@ -387,83 +357,89 @@ class _LoginScreenState extends State<LoginScreen> {
                                               ? const SizedBox()
                                               : Expanded(
                                                   flex: 2,
-                                                  child: Container(
-                                                    decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10.r),
-                                                      color: GlobalColors
-                                                          .appColor
-                                                          .withValues(
-                                                              alpha:
-                                                                  0.1), // Soft background for fingerprint
-                                                    ),
-                                                    child: CustomIconButton(
-                                                      onPressed: () async {
-                                                        await readFromSharedPref();
-                                                      },
-                                                      icon: const Icon(
-                                                        Icons.fingerprint,
-                                                        color: GlobalColors
-                                                            .appColor,
-                                                        size: 32,
-                                                      ),
+                                                  child: CustomIconButton(
+                                                    onPressed: () async {
+                                                      await readFromSharedPref();
+                                                    },
+                                                    icon: const Icon(
+                                                      Icons.fingerprint,
+                                                      color: Colors.white,
+                                                      size: 30,
                                                     ),
                                                   ),
                                                 ),
+                                          SizedBox(width: 5.w),
                                         ],
                                       ),
-                                SizedBox(height: 25.h),
+                                const SizedBox(height: 20),
 
-                                // --- Register Link ---
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      "Don't have an account? ",
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                    GestureDetector(
-                                      onTap: () {
-                                        // 👉 Use pushNamed instead of pushReplacementNamed
-                                        context.pushNamed(
-                                          'register',
-                                          queryParameters: {
-                                            'issuercode': '',
-                                            'memberReferralCode': '',
-                                          },
-                                        );
-                                      },
-                                      child: Text(
-                                        "Register Now",
-                                        style: TextStyle(
-                                          fontSize: 15.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: GlobalColors.appColor,
+                                // Forgot Password Link
+                                InkWell(
+                                  onTap: () async {
+                                    forgotEmailnumController.clear();
+                                    forgotPopUp(locationList.data ?? [],
+                                        phonePrefixList.data ?? []);
+                                  },
+                                  child: Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Padding(
+                                      padding:
+                                          const EdgeInsets.only(right: 5.0),
+                                      child: AutoSizeText(
+                                        S.of(context).forgotPassword,
+                                        style: textStyle15h.copyWith(
+                                          decoration: TextDecoration.underline,
                                         ),
                                       ),
                                     ),
-                                  ],
+                                  ),
                                 ),
                               ],
                             ),
-                          );
-                        }
-                        // Error State
-                        else if (locationState is LocationAllErrorState) {
-                          return const Error1();
-                        }
-                        // if none the state is executable
-                        else {
-                          return const SizedBox();
-                        }
-                      },
-                    ), //Location
-                  ),
-                ));
+                          ),
+                          const SizedBox(height: 25),
+
+                          // Register Section
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Don't have an account? ",
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: registerLogin,
+                                child: Text(
+                                  "Register",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: GlobalColors.appColor,
+                                    fontWeight: FontWeight.bold,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 40),
+                        ],
+                      );
+                    }
+                    // Error State
+                    else if (locationState is LocationAllErrorState) {
+                      return const Error1();
+                    }
+                    // if none the state is executable
+                    else {
+                      return const SizedBox();
+                    }
+                  },
+                ), //Location
+              ),
+            );
           } else {
             return const SizedBox();
           }
@@ -471,8 +447,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
-  // --- LOGIC METHODS REMAIN UNCHANGED BELOW THIS LINE ---
 
   onLoginSubmit() async {
     setState(() {
@@ -598,7 +572,7 @@ class _LoginScreenState extends State<LoginScreen> {
         bool canGoHome = await checkWalletBalance();
         if (canGoHome) {
           context.pushReplacementNamed('bottom-bar',
-              pathParameters: {'page': '0'});
+              pathParameters: {'page': '4'});
         } else {
           showTopUpScreen(); // redirect to top up / warning
         }

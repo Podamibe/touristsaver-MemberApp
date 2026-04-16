@@ -820,38 +820,41 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
                                   logOutConfirmed = true;
                                 });
 
-                                bool apiSuccess = false;
-                                try {
-                                  // Get deviceId before removing any local tokens
-                                  String deviceId =
-                                      AppVariables.deviceId.isNotEmpty
-                                          ? AppVariables.deviceId
-                                          : await getDeviceId();
+                                // 2. BACKGROUND TASKS: Do not put 'await' in front of this!
+                                // This lets the app continue instantly while the server thinks.
+                                Future.delayed(Duration.zero, () async {
+                                  try {
+                                    String? deviceId;
+                                    if (AppVariables.deviceId.isNotEmpty) {
+                                      deviceId = AppVariables.deviceId;
+                                    } else {
+                                      deviceId = await getDeviceId();
+                                    }
 
-                                  // API call to delete device ID for notifications
-                                  var response = await getClient().then(
-                                    (dio) => dio.delete(
-                                      deleteDeviceIdOnLogOut
-                                          .format(params: [deviceId]),
-                                    ),
-                                  );
-
-                                  if (response.data != null &&
-                                      response.data['status'] == "Success") {
-                                    apiSuccess = true;
+                                    if (deviceId != null &&
+                                        deviceId.isNotEmpty) {
+                                      await getClient().then(
+                                        (dio) => dio.delete(
+                                          deleteDeviceIdOnLogOut
+                                              .format(params: [deviceId]),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    debugPrint(
+                                        'Error during device ID deletion: $e');
                                   }
-                                  // If API fails or status is not 'Success', it falls to the 'finally' block
-                                } catch (e) {
-                                  // This catch block handles DioErrors (network issues, 4xx/5xx status codes)
-                                  debugPrint(
-                                      'Error during device ID deletion: $e');
-                                  // Do not set apiSuccess to true here.
-                                }
 
-                                // --- Common Logout Logic (Always runs, regardless of API success) ---
-                                // The following steps clear local data and navigate the user away.
+                                  try {
+                                    await FirebaseMessaging.instance
+                                        .deleteToken();
+                                  } catch (e) {
+                                    debugPrint(
+                                        'Firebase token deletion failed: $e');
+                                  }
+                                });
 
-                                // 2. Clear Local Data (Essential for a logout)
+                                // 3. CLEAR LOCAL DATA IMMEDIATELY
                                 await Pref().removeData(saveToken);
                                 await Pref().removeData(issuerType);
                                 await Pref().removeData('fcmToken');
@@ -866,37 +869,16 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
                                     .removeData(userChosenLocationRegionID);
                                 AppVariables.accessToken = null;
 
-                                // 3. Delete Firebase Token (Always try to clear it locally)
-                                try {
-                                  await FirebaseMessaging.instance
-                                      .deleteToken();
-                                } catch (e) {
-                                  debugPrint(
-                                      'Firebase token deletion failed: $e');
-                                }
-
                                 AppVariables.notificationLabel.value = 0;
                                 AppVariables.initNotifications = false;
 
                                 if (!mounted) return;
 
-                                // 4. Dismiss Dialog and Navigate (Crucial Fixes)
-
-                                // Dismiss the dialog immediately after cleaning up and before navigating
-                                // Use the dialogContext for this
+                                // 4. INSTANT NAVIGATION
+                                // Close the dialog
                                 Navigator.of(dialogContext).pop();
 
-                                // Navigate to the login/home screen
-                                context.pushReplacementNamed('bottom-bar',
-                                    pathParameters: {'page': '4'});
-
-                                // If the API succeeded, you can show a success snackbar if needed.
-                                if (apiSuccess) {
-                                  // GlobalSnackBar.showSuccess(dialogContext, 'Logged out successfully');
-                                } else {
-                                  // If the API failed, we still logged out locally, so only log the error.
-                                  // Optionally, show a generic message that logout succeeded locally.
-                                }
+                                context.pushReplacementNamed('login');
                               },
                               text: S.of(context).yes,
                             ),
