@@ -155,6 +155,10 @@ class _LoginScreenState extends State<LoginScreen> {
     context.pushReplacementNamed('top-up'); // adjust route name
   }
 
+  void showPaidFreeScreen() {
+    context.pushReplacementNamed('paid-free'); // adjust route name
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -600,7 +604,7 @@ class _LoginScreenState extends State<LoginScreen> {
           context.pushReplacementNamed('bottom-bar',
               pathParameters: {'page': '0'});
         } else {
-          showTopUpScreen(); // redirect to top up / warning
+          showPaidFreeScreen(); // redirect to top up / warning
         }
       }
     } else if (res is ErrorResModel) {

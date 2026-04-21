@@ -361,7 +361,12 @@ final GoRouter goRouter = GoRouter(
       name: 'top-up',
       builder: (context, state) => const TopUpScreen(),
     ),
-
+    //Paid Free Screen
+    GoRoute(
+      path: '/paid-free',
+      name: 'paid-free',
+      builder: (context, state) => PaidFreeScreen(),
+    ),
     //Transfer Piiinks
     GoRoute(
       path: '/transfer-piiinks',
@@ -545,13 +550,6 @@ final GoRouter goRouter = GoRouter(
           CongratsScreen(piiinkCredit: state.pathParameters['piiinkCredit']!),
     ),
 
-    //Paid Free Screen
-    GoRoute(
-      path: '/paid-free/:uniCredit',
-      name: 'paid-free',
-      builder: (context, state) =>
-          PaidFreeScreen(uniCredit: state.pathParameters['uniCredit']!),
-    ),
     //Qr Scan Screen
     GoRoute(
       path: '/qr_screen',

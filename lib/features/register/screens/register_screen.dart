@@ -1558,7 +1558,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   //Check Premium
   checkPremium() async {
     //If premium code is not empty but issuer code is empty following code be executed
-    if (premiumController.text.isNotEmpty && providerController.text.isEmpty) {
+    final String premiumCodeInput = premiumController.text.trim().toUpperCase();
+    if (premiumCodeInput.isNotEmpty && providerController.text.isEmpty) {
       GlobalSnackBar.valid(
           context, S.of(context).pleaseEnterIssuerCodeToUsePremiumCode);
       setState(() {
@@ -1566,13 +1567,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       });
     }
     // If premium code is not empty following code will be executed to register the user
-    else if (premiumController.text.isNotEmpty &&
+    else if (premiumCodeInput.isNotEmpty &&
         providerController.text.isNotEmpty) {
       bool? validityResult = await checkEmailAndPhoneNo();
       if (validityResult == false) {
         var preRes = await DioRegister().premiumVal(
           premiumValidityReqModel: PremiumValidityReqModel(
-            memberPremiumCode: premiumController.text.trim(),
+            memberPremiumCode: premiumCodeInput,
             issuerCode: providerController.text.trim(),
           ),
         );
@@ -1717,7 +1718,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           'postalCode': postalCodeController.text.trim(),
           'premium': premiumController.text.isEmpty
               ? 'null'
-              : premiumController.text.trim(),
+              : premiumController.text.trim().toUpperCase(),
           'referralCode': referralCodeController.text.isEmpty
               ? 'null'
               : referralCodeController.text.trim(),

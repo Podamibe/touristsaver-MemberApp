@@ -21,21 +21,36 @@ class _VideoIntroScreenState extends State<VideoIntroScreen> {
   @override
   void initState() {
     super.initState();
+
+    // 1. FIRST, assign the controller
     _controller = VideoPlayerController.networkUrl(
       Uri.parse(
           "https://touristsaver.org/wp-content/uploads/2025/10/TouristSaver3.0.mp4"),
     );
 
+    // 2. THEN set the volume (this helps iOS recognize the audio session)
+    _controller.setVolume(1.0);
+
+    // 3. Initialize and play
     _controller.initialize().then((_) {
       setState(() {});
       _controller.play();
       _controller.setLooping(false);
     });
 
+    // 4. Attach your perfectly updated listener
     _controller.addListener(() {
-      if (_controller.value.position >= _controller.value.duration) {
-        // Video ended → navigate immediately
-        context.goNamed("intro-screen");
+      final value = _controller.value;
+
+      if (value.isInitialized && value.duration > Duration.zero) {
+        if (value.position >= value.duration) {
+          if (!_isVideoEnded) {
+            setState(() {
+              _isVideoEnded = true;
+            });
+            context.goNamed("intro-screen");
+          }
+        }
       }
     });
   }

@@ -130,6 +130,10 @@ class _NumberOTPScreenState extends State<NumberOTPScreen> with CodeAutoFill {
     super.dispose();
   }
 
+  void showPaidFreeScreen() {
+    context.pushReplacementNamed('paid-free'); // adjust route name
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -313,12 +317,15 @@ class _NumberOTPScreenState extends State<NumberOTPScreen> with CodeAutoFill {
 
                           if (res.data!.premiumCodeIsApplied == true &&
                               res.data?.discount == "100") {
-                            context.pushReplacementNamed('congrats-screen',
-                                pathParameters: {
-                                  'piiinkCredit': toFixed2DecimalPlaces(
-                                          res.data!.universalWallet!.balance!)
-                                      .toString(),
-                                });
+                            print(
+                                "000000000000000000000000000000000000000000000000000");
+                            showPaidFreeScreen(); // redirect to paid free screen with the message of premium code applied but not paid with the option to continue with free or top up
+                            // context.pushReplacementNamed('congrats-screen',
+                            //     pathParameters: {
+                            //       'piiinkCredit': toFixed2DecimalPlaces(
+                            //               res.data!.universalWallet!.balance!)
+                            //           .toString(),
+                            //     });
                           }
                           // if premium code is provided plus paid
                           // else if (res.data!.premiumCodeIsApplied == true &&
@@ -360,19 +367,18 @@ class _NumberOTPScreenState extends State<NumberOTPScreen> with CodeAutoFill {
                           // if premium code is not provided
 
                           //Yukesh removed this paid-free screen!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                          // else {
-                          //   context.pushReplacementNamed('paid-free',
-                          //       pathParameters: {
-                          //         'uniCredit': toFixed2DecimalPlaces(
-                          //                 res.data!.universalWallet!.balance!)
-                          //             .toString()
-                          //       });
-                          // }
                           else {
+                            print(
+                                "000000001111111111111111111111111111111111111110000000000000000000000000000000000000000000");
                             context.pushReplacementNamed(
-                              'top-up',
+                              'paid-free',
                             );
                           }
+                          // else {
+                          //   context.pushReplacementNamed(
+                          //     'top-up',
+                          //   );
+                          // }
                         } else if (res is ErrorResModel) {
                           if (!mounted) return;
                           GlobalSnackBar.showError(context, res.message!);
