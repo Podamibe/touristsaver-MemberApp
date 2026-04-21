@@ -136,7 +136,7 @@ class _MySplashScreenState extends State<MySplashScreen> {
             if (canGoHome) {
               showBottomBar();
             } else {
-              showTopUpScreen(); // redirect to top up / warning
+              showPaidFreeScreen(); // redirect to top up / warning
             }
           } else {
             showlogin();
@@ -153,6 +153,10 @@ class _MySplashScreenState extends State<MySplashScreen> {
 
   void showTopUpScreen() {
     context.pushReplacementNamed('top-up'); // adjust route name
+  }
+
+  void showPaidFreeScreen() {
+    context.pushReplacementNamed('paid-free'); // adjust route name
   }
 
   // @override

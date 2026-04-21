@@ -85,6 +85,7 @@ class TopUpButton extends StatelessWidget {
         ),
         child: AutoSizeText(
           text,
+          maxLines: 1,
           style: buttonText.copyWith(
               fontSize: 15, color: buttonTextColor ?? GlobalColors.appColor1),
         ),
