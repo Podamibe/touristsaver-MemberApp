@@ -1511,7 +1511,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return Align(
           alignment: Alignment.center,
           child: Container(
-            height: 100,
+            height: 120,
             width: MediaQuery.of(context).size.width / 1.1,
             margin: const EdgeInsets.only(left: 10.0, right: 10.0),
             decoration: BoxDecoration(
@@ -1555,10 +1555,140 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  // Missing Issuer Code Confirmation Dialog
+  missingIssuerConfirmationDialog() {
+    return showGeneralDialog(
+      barrierLabel: 'Label',
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      transitionDuration: const Duration(milliseconds: 300),
+      context: context,
+      pageBuilder: (context, anim1, anim2) {
+        return Align(
+          alignment: Alignment.center,
+          child: Container(
+            // 1. REMOVED fixed height here
+            width: MediaQuery.of(context).size.width / 1.1,
+            margin: const EdgeInsets.only(left: 10.0, right: 10.0),
+            padding: const EdgeInsets.all(
+                20.0), // Increased padding slightly for breathing room
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(5.0),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: Column(
+                // 2. ADDED MainAxisSize.min so it only takes exactly as much height as needed
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Text
+                  AutoSizeText(
+                    infoMessage ?? '__',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16.sp,
+                      color: Colors.black,
+                      fontFamily: 'Sans',
+                    ),
+                  ),
+                  const SizedBox(
+                      height: 20), // Spacing between text and buttons
+
+                  // Buttons (Cancel & Continue)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: CustomButton(
+                          text: S.of(context).cancel,
+                          onPressed: () {
+                            context.pop(); // Dismiss dialog
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: CustomButton(
+                          text: S.of(context).continueL,
+                          onPressed: () async {
+                            context.pop(); // Dismiss dialog
+                            setState(() {
+                              isLoading = true;
+                            });
+
+                            // 1. Check if email/phone already exists
+                            bool? validityResult = await checkEmailAndPhoneNo();
+
+                            if (validityResult == false) {
+                              // 2. Validate the premium code (with an empty issuer code)
+                              var preRes = await DioRegister().premiumVal(
+                                premiumValidityReqModel:
+                                    PremiumValidityReqModel(
+                                  memberPremiumCode: premiumController.text
+                                      .trim()
+                                      .toUpperCase(),
+                                  issuerCode: providerController.text
+                                      .trim(), // Empty because they continued without one
+                                ),
+                              );
+
+                              if (!mounted) return;
+
+                              if (preRes is CommonResModel) {
+                                if (preRes.status == 'success') {
+                                  // 3. Everything is valid, send the OTP!
+                                  sendPhoneOtp();
+                                } else {
+                                  GlobalSnackBar.showError(
+                                      context,
+                                      preRes.message ??
+                                          S.of(context).premiumCodeIsNotValid);
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+                                }
+                              } else {
+                                // Invalid premium code format/error
+                                setState(() {
+                                  isLoading = false;
+                                });
+                                invalidPremium();
+                              }
+                            } else {
+                              // Email or Phone already exists
+                              setState(() {
+                                isLoading = false;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, anim1, anim2, child) {
+        return SlideTransition(
+          position: Tween(begin: const Offset(0, 1), end: const Offset(0, 0))
+              .animate(anim1),
+          child: child,
+        );
+      },
+    );
+  }
+
   //Check Premium
   checkPremium() async {
     //If premium code is not empty but issuer code is empty following code be executed
     final String premiumCodeInput = premiumController.text.trim().toUpperCase();
+    if (premiumCodeInput == 'SAVER20' && providerController.text.isEmpty) {
+      providerController.text = 'AU0000000001';
+    }
     if (premiumCodeInput.isNotEmpty && providerController.text.isEmpty) {
       GlobalSnackBar.valid(
           context, S.of(context).pleaseEnterIssuerCodeToUsePremiumCode);

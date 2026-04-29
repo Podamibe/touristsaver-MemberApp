@@ -64,6 +64,7 @@ class IntroScreen extends StatelessWidget {
           padding: const EdgeInsets.all(10.0),
           child: IntroductionScreen(
             globalBackgroundColor: GlobalColors.appWhiteBackgroundColor,
+            isProgress: false,
             pages: [
               // First
               PageViewModel(
