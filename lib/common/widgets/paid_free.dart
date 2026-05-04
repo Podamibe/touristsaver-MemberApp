@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -33,9 +35,9 @@ import 'package:new_piiink/models/response/pre_topup_free_res.dart';
 import 'package:new_piiink/models/response/pre_topup_paid_res.dart';
 import 'package:new_piiink/models/response/premium_validity_res.dart';
 import 'package:new_piiink/models/response/top_up_stripe_res.dart';
-
 import 'package:new_piiink/generated/l10n.dart';
 import 'package:new_piiink/splash_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class PaidFreeScreen extends StatefulWidget {
   static const String routeName = '/paid-free';
@@ -59,6 +61,7 @@ class _PaidFreeScreenState extends State<PaidFreeScreen> {
 
   // Premium data mapping
   dynamic premiumData;
+  String? registrationImageUrl;
 
   @override
   void initState() {
@@ -67,6 +70,25 @@ class _PaidFreeScreenState extends State<PaidFreeScreen> {
     });
     super.initState();
     fetchMemberPremiumGetOne();
+
+    fetchRegistrationImage();
+  }
+
+  Future<void> fetchRegistrationImage() async {
+    try {
+      // Assuming your method is inside a class called DioCommon
+      var res = await DioCommon().getRegistrationImage();
+
+      if (res != null && res['status'] == "Success") {
+        if (!mounted) return;
+        setState(() {
+          // Extract the URL from the nested "data" object
+          registrationImageUrl = res['data']['url'];
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching registration image: $e");
+    }
   }
 
   Future<void> fetchMemberPremiumGetOne() async {
@@ -82,28 +104,40 @@ class _PaidFreeScreenState extends State<PaidFreeScreen> {
       debugPrint("Error processing banner: $e");
     }
   }
+  //the memPackAll comes from   Future<MemberShipPackageResModel?> memPack() async which is in top_up_dio folder
 
-  // Piiink loaded quantity method updated to pass premiumData
   piiinkLoaded(MemberShipPackageResModel memPackAll, String? countryId) {
+    // 👉 1. Find the exact indices of all "premium" packages in the list
+    List<int> premiumIndices = [];
+    if (memPackAll.data != null) {
+      for (int i = 0; i < memPackAll.data!.length; i++) {
+        if (memPackAll.data![i].subscriptionType == 'premium') {
+          premiumIndices.add(i);
+        }
+      }
+    }
     return ListView.separated(
       separatorBuilder: (context, index) {
         return const SizedBox(height: 20);
       },
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: memPackAll.data!.length,
+      // 👉 2. Only build items for the premium packages we found
+      itemCount: premiumIndices.length,
       itemBuilder: (context, index) {
+        // 👉 3. Grab the original index so TopUpWidget still reads the correct data
+        int realIndex = premiumIndices[index];
         return TopUpWidget(
           memPackAll: memPackAll,
-          index: index,
+          index: realIndex,
           countryID: countryId,
-          premiumData: premiumData, // Pass the data to the child
+          premiumData: premiumData,
+          registrationImageUrl: registrationImageUrl, // Pass it here!
         );
       },
     );
   }
 
-  // ... [Keep your existing applyPremium, giveAwayPopUp, invalidCode, applyButton, etc.]
   applyPremium() async {
     setState(() {
       isAppliedLoading = true;
@@ -264,6 +298,7 @@ class _PaidFreeScreenState extends State<PaidFreeScreen> {
         double.tryParse(discountStr?.toString() ?? "0") ?? 0;
     String appBarTitle =
         discountPercent == 100 ? "Free Membership" : "Join now";
+    const Color primaryBlue = Color(0xFF5871FF);
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
@@ -274,43 +309,40 @@ class _PaidFreeScreenState extends State<PaidFreeScreen> {
             final hasBalance = snapshot.data ?? false;
             return hasBalance
                 ? CustomAppBar(
-                    text: appBarTitle, // 👉 3. Apply the dynamic title here!
-                    // icon: Icons.arrow_back_ios,
-                    // onPressed: () => context.pop()
+                    text: appBarTitle,
+                    textColor: primaryBlue,
+                    fontSize: 24.sp,
+                    fontWeight: FontWeight.w900,
                   )
                 : CustomAppBar(
-                    text: appBarTitle, // 👉 Apply it here too!
+                    text: appBarTitle,
+                    textColor: primaryBlue,
+                    fontSize: 24.sp,
+                    fontWeight: FontWeight.w900,
                     icon: Icons.person_outlined,
                     onPressed: () => context.push('/log-profile'));
           },
         ),
       ),
-      // 1. Move BlocProvider to the top of the body
       body: BlocProvider(
         lazy: false,
         create: (context) =>
             MemPackAllBloc(RepositoryProvider.of<DioTopUpStripe>(context))
               ..add(LoadMemPackAllEvent()),
-        // 2. Use a Builder to get the correct context for the Bloc
         child: Builder(
           builder: (context) {
-            // 3. Wrap with RefreshIndicator
             return RefreshIndicator(
               color: GlobalColors.appColor,
               onRefresh: () async {
-                // Re-fetch the premium discount code data
+                await fetchRegistrationImage();
                 await fetchMemberPremiumGetOne();
-                // Re-fetch the membership packages from the API
                 context.read<MemPackAllBloc>().add(LoadMemPackAllEvent());
               },
               child: ScrollConfiguration(
                 behavior: const ScrollBehavior(),
                 child: SingleChildScrollView(
-                  // 👉 CRITICAL: AlwaysScrollableScrollPhysics is required for
-                  // RefreshIndicator to work even if the screen isn't full!
                   physics: const AlwaysScrollableScrollPhysics(),
                   scrollDirection: Axis.vertical,
-                  // We add a minimum height so the refresh indicator always has space to pull
                   child: Container(
                     constraints: BoxConstraints(
                       minHeight: MediaQuery.of(context).size.height,
@@ -335,153 +367,10 @@ class _PaidFreeScreenState extends State<PaidFreeScreen> {
                                     image: "assets/images/oops.png",
                                   ),
                                 )
-                              : Padding(
-                                  padding: const EdgeInsets.all(10.0),
-                                  child: Column(
-                                    children: [
-                                      // Center(
-                                      //     child: AutoSizeText(
-                                      //         S
-                                      //             .of(context)
-                                      //             .topUpYourUniversalTouristSaversToGainExtraCreditAndEnjoyMoreOffersFromYourFavouriteMerchants,
-                                      //         textAlign: TextAlign.center,
-                                      //         style: textStyle15)),
-                                      // const SizedBox(height: 30),
-                                      piiinkLoaded(memPackAll, countryId),
-                                      Center(
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                              10), // Optional rounded corners
-                                          child: Image.asset(
-                                            "assets/images/dreamworld.png",
-                                            fit: BoxFit.contain,
-                                          ),
-                                        ),
-                                      )
-
-                                      // 👉 Check if Premium Data exists. If yes, show Image. If no, show the input field.
-                                      // (premiumData != null &&
-                                      //         premiumData.toString() != "[]" &&
-                                      //         premiumData.toString() != "{}")
-                                      //     ? Center(
-                                      //         child: ClipRRect(
-                                      //           borderRadius: BorderRadius.circular(
-                                      //               10), // Optional rounded corners
-                                      //           child: Image.asset(
-                                      //             "assets/images/dreamworld.png",
-                                      //             fit: BoxFit.contain,
-                                      //           ),
-                                      //         ),
-                                      //       )
-                                      //     : Column(
-                                      //         children: [
-                                      //           Center(
-                                      //               child: Text(
-                                      //                   S.of(context).or,
-                                      //                   textAlign:
-                                      //                       TextAlign.center,
-                                      //                   style: topicStyle)),
-                                      //           const SizedBox(height: 30),
-                                      //           Center(
-                                      //               child: Text(
-                                      //                   S
-                                      //                       .of(context)
-                                      //                       .applyPremiumCode,
-                                      //                   textAlign:
-                                      //                       TextAlign.center,
-                                      //                   style: textStyle15)),
-                                      //           const SizedBox(height: 20),
-                                      //           Row(
-                                      //             mainAxisAlignment:
-                                      //                 MainAxisAlignment
-                                      //                     .spaceBetween,
-                                      //             children: [
-                                      //               SizedBox(
-                                      //                 width:
-                                      //                     MediaQuery.of(context)
-                                      //                             .size
-                                      //                             .width /
-                                      //                         1.4,
-                                      //                 height: 45.h,
-                                      //                 child: TextFormField(
-                                      //                   controller:
-                                      //                       premiumController,
-                                      //                   cursorColor:
-                                      //                       GlobalColors
-                                      //                           .appColor,
-                                      //                   decoration:
-                                      //                       textInputDecoration1
-                                      //                           .copyWith(
-                                      //                     hintText: S
-                                      //                         .of(context)
-                                      //                         .enterPremiumCode,
-                                      //                     fillColor: GlobalColors
-                                      //                         .appWhiteBackgroundColor,
-                                      //                     border:
-                                      //                         OutlineInputBorder(
-                                      //                       borderRadius:
-                                      //                           BorderRadius
-                                      //                               .circular(
-                                      //                                   5.0),
-                                      //                       borderSide:
-                                      //                           const BorderSide(
-                                      //                               width: 1,
-                                      //                               style: BorderStyle
-                                      //                                   .solid),
-                                      //                     ),
-                                      //                     focusedBorder:
-                                      //                         OutlineInputBorder(
-                                      //                       borderSide:
-                                      //                           const BorderSide(
-                                      //                               color: GlobalColors
-                                      //                                   .appColor),
-                                      //                       borderRadius:
-                                      //                           BorderRadius
-                                      //                               .circular(
-                                      //                                   5.0),
-                                      //                     ),
-                                      //                   ),
-                                      //                 ),
-                                      //               ),
-                                      //               SizedBox(width: 5.w),
-                                      //               isAppliedLoading == true
-                                      //                   ? applyButton(
-                                      //                       onPressed: () {},
-                                      //                       widget: Container(
-                                      //                         width: 24.w,
-                                      //                         height: 24.h,
-                                      //                         padding:
-                                      //                             const EdgeInsets
-                                      //                                 .all(2.0),
-                                      //                         child:
-                                      //                             const CircularProgressIndicator(
-                                      //                           color: Colors
-                                      //                               .white,
-                                      //                           strokeWidth: 3,
-                                      //                         ),
-                                      //                       ),
-                                      //                     )
-                                      //                   : applyButton(
-                                      //                       onPressed: () {
-                                      //                         applyPremium();
-                                      //                       },
-                                      //                       widget: FittedBox(
-                                      //                         child: Text(
-                                      //                           S
-                                      //                               .of(context)
-                                      //                               .apply,
-                                      //                           style:
-                                      //                               buttonText,
-                                      //                         ),
-                                      //                       ),
-                                      //                     ),
-                                      //             ],
-                                      //           ),
-                                      //         ],
-                                      //       ),
-                                      // const SizedBox(height: 20),
-                                    ],
-                                  ),
+                              : Column(
+                                  children: [
+                                    piiinkLoaded(memPackAll, countryId),
+                                  ],
                                 );
                         } else if (state is MemPackAllErrorState) {
                           return const Error1();
@@ -502,7 +391,6 @@ class _PaidFreeScreenState extends State<PaidFreeScreen> {
 }
 
 // --- CHILD WIDGET ---
-// --- CHILD WIDGET ---
 
 class TopUpWidget extends StatefulWidget {
   const TopUpWidget({
@@ -511,11 +399,13 @@ class TopUpWidget extends StatefulWidget {
     this.memPackAll,
     this.countryID,
     this.premiumData,
+    this.registrationImageUrl,
   });
   final String? countryID;
   final int? index;
   final MemberShipPackageResModel? memPackAll;
   final dynamic premiumData;
+  final String? registrationImageUrl;
 
   @override
   State<TopUpWidget> createState() => _TopUpWidgetState();
@@ -523,8 +413,8 @@ class TopUpWidget extends StatefulWidget {
 
 class _TopUpWidgetState extends State<TopUpWidget> {
   bool isLoading = false;
+
   Future<void> _handleFreeMemberShip() async {
-    // 1. Check if logged in FIRST!
     bool isLoggedIn = AppVariables.accessToken != null &&
         AppVariables.accessToken!.isNotEmpty;
 
@@ -537,16 +427,9 @@ class _TopUpWidgetState extends State<TopUpWidget> {
       isLoading = true;
     });
 
-    // Save this action to local storage so it survives app restarts!
     Pref pref = Pref();
     await pref.writeData(key: 'claimedFreeMembership', value: 'true');
 
-    // 👉 NEW: Print the entire premium data object to your debug console!
-    // debugPrint("========== PREMIUM DATA DUMP ==========");
-    // debugPrint(widget.premiumData?.toString() ?? "Premium Data is NULL");
-    // debugPrint("=======================================");
-
-    // 👉 2. Extract the Piiink amount ONLY from the Premium Code!
     String creditAmount = "0";
     if (widget.premiumData != null &&
         widget.premiumData['piiinksProvided'] != null) {
@@ -557,7 +440,6 @@ class _TopUpWidgetState extends State<TopUpWidget> {
       isLoading = false;
     });
 
-    // 👉 3. Pass the extracted Premium Code amount to the Congrats screen
     context.pushNamed(
       'congrats-screen',
       pathParameters: {
@@ -566,9 +448,7 @@ class _TopUpWidgetState extends State<TopUpWidget> {
     );
   }
 
-  // 👉 We extracted the huge payment logic into this helper function to keep the UI clean!
   Future<void> _handleTopUp() async {
-    // 1. Check if logged in FIRST!
     bool isLoggedIn = AppVariables.accessToken != null &&
         AppVariables.accessToken!.isNotEmpty;
 
@@ -586,7 +466,6 @@ class _TopUpWidgetState extends State<TopUpWidget> {
     final isDiscountedPackage =
         discountStr != null && discountStr.toString() != "0" && originalFee > 0;
 
-    // 3. Extract the code string
     final String? codeToSend =
         isDiscountedPackage ? widget.premiumData['memberPremiumCode'] : null;
 
@@ -603,7 +482,6 @@ class _TopUpWidgetState extends State<TopUpWidget> {
     if (!mounted) return;
 
     if (res is TopUpStripeResModel) {
-      // --- SCENARIO A: 100% FREE OR DISCOUNTED (No Stripe Required) ---
       if (res.clientSecret == null || res.clientSecret!.isEmpty) {
         setState(() {
           isLoading = false;
@@ -622,7 +500,6 @@ class _TopUpWidgetState extends State<TopUpWidget> {
         return;
       }
 
-      // --- SCENARIO B: STRIPE PAYMENT REQUIRED ---
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
           paymentIntentClientSecret: res.clientSecret,
@@ -635,12 +512,10 @@ class _TopUpWidgetState extends State<TopUpWidget> {
         isLoading = false;
       });
 
-      // Wait for user to complete the Stripe popup
       await displayPaymentSheet(res.clientSecret);
 
       if (!context.mounted) return;
 
-      // Check balance after successful Stripe payment
       bool canGoHome = await checkWalletBalance();
       if (!context.mounted) return;
 
@@ -649,8 +524,7 @@ class _TopUpWidgetState extends State<TopUpWidget> {
         context
             .pushReplacementNamed('bottom-bar', pathParameters: {'page': '0'});
       } else {
-        context.pushReplacementNamed(
-            'paid-free'); // Refresh the paid/free screen to show updated balance
+        context.pushReplacementNamed('paid-free');
       }
     } else {
       setState(() {
@@ -663,340 +537,6 @@ class _TopUpWidgetState extends State<TopUpWidget> {
     }
   }
 
-  Widget _buildPriceDisplay() {
-    final originalFee = widget.memPackAll!.data![widget.index!].packageFee!;
-    final currency = widget
-        .memPackAll!.data![widget.index!].packageCurrencySymbol
-        .toString();
-    final textColor = Color(
-        int.parse(widget.memPackAll!.data![widget.index!].amountTextColor!));
-
-    final discountStr = widget.premiumData?['discount'];
-
-    if (discountStr != null &&
-        discountStr.toString() != "0" &&
-        originalFee > 0) {
-      double discountPercent = double.tryParse(discountStr.toString()) ?? 0;
-      double finalFee = originalFee * (1 - (discountPercent / 100));
-
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-            decoration: BoxDecoration(
-                color: Colors.red, borderRadius: BorderRadius.circular(4)),
-            child: Text("$discountStr% OFF",
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.bold)),
-          ),
-          SizedBox(width: 8.w),
-          Text(
-            "$currency ${removeTrailingZero(numFormatter.format(originalFee))}",
-            style: TextStyle(
-                color: textColor.withOpacity(0.6),
-                decoration: TextDecoration.lineThrough,
-                fontSize: 12.sp),
-          ),
-          SizedBox(width: 8.w),
-          AutoSizeText(
-            "$currency ${removeTrailingZero(numFormatter.format(finalFee))}",
-            style: topicStyle.copyWith(
-                color: textColor, fontWeight: FontWeight.bold),
-          ),
-        ],
-      );
-    }
-    if (originalFee == 0 || originalFee == 0.0) {
-      return const SizedBox.shrink();
-    }
-
-    return AutoSizeText(
-      "$currency ${removeTrailingZero(numFormatter.format(originalFee))}",
-      style: topicStyle.copyWith(color: textColor),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final discountStr = widget.premiumData?['discount'];
-    String displayAmount = "1,000";
-    if (widget.premiumData != null &&
-        widget.premiumData['piiinksProvided'] != null) {
-      displayAmount = removeTrailingZero(
-          numFormatter.format(widget.premiumData['piiinksProvided']));
-    }
-    double discountPercent =
-        double.tryParse(discountStr?.toString() ?? "0") ?? 0;
-
-    // 👉 100% DISCOUNT UI (Free Membership Mode)
-    if (discountPercent == 100) {
-      if (widget.index != 0) {
-        return const SizedBox.shrink();
-      }
-      return Container(
-        margin: EdgeInsets.only(bottom: 12.h),
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12.r),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
-        ),
-        child: Column(
-          children: [
-            // Top Grey Box
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 12.w),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF4F4F4),
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              child: Text(
-                "Receive credits for \$$displayAmount's of dollars in savings\nAustralia wide.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade700,
-                  height: 1.4,
-                ),
-              ),
-            ),
-            SizedBox(height: 12.h),
-            // Bottom Grey Box
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 12.w),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF4F4F4),
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              child: Text(
-                "FREE 12 month membership",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade700,
-                ),
-              ),
-            ),
-            SizedBox(height: 20.h),
-            // Teal Button
-            SizedBox(
-              width: double.infinity,
-              height: 48.h,
-              child: isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                          color: GlobalColors.appColor))
-                  : ElevatedButton(
-                      onPressed: _handleFreeMemberShip,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF5ABCBF),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5.r)),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        "Continue with FREE membership",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ),
-            )
-          ],
-        ),
-      );
-    }
-
-    // 👉 DEFAULT UI (Paid Packages / Low Discount)
-    return Column(
-      children: [
-        if (widget.index == 0) ...[
-          // Header Info Box (White card with grey internal boxes)
-          Container(
-            width: double.infinity,
-            margin: EdgeInsets.only(bottom: 20.h),
-            padding: EdgeInsets.all(16.w),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12.r),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                )
-              ],
-            ),
-            child: Column(
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding:
-                      EdgeInsets.symmetric(vertical: 16.h, horizontal: 12.w),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF4F4F4),
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Text(
-                    "Receive credits for \$$displayAmount's of dollars in savings\nAustralia wide.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade700,
-                        height: 1.4),
-                  ),
-                ),
-                SizedBox(height: 12.h),
-                Container(
-                  width: double.infinity,
-                  padding:
-                      EdgeInsets.symmetric(vertical: 14.h, horizontal: 12.w),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF4F4F4),
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Text(
-                    "FREE 12 month membership",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade700),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-
-        // Package Card
-        Container(
-          margin: EdgeInsets.only(bottom: 8.h), // Reduced gap between cards
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(
-                width: 2,
-                color: Color(int.parse(
-                    '${widget.memPackAll!.data![widget.index!].boxBorderColor}'))),
-            color: Color(int.parse(
-                '${widget.memPackAll!.data![widget.index!].boxBackgroundColor}')),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  offset: const Offset(0, 4),
-                  blurRadius: 12.0)
-            ],
-            image: widget.memPackAll!.data![widget.index!].boxBackgroundImageUrl
-                            ?.isNotEmpty ==
-                        true &&
-                    widget.memPackAll!.data![widget.index!]
-                            .boxBackgroundImageUrl !=
-                        "null"
-                ? DecorationImage(
-                    image: NetworkImage(
-                        '${widget.memPackAll!.data![widget.index!].boxBackgroundImageUrl}'),
-                    fit: BoxFit.cover)
-                : null,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AutoSizeText(
-                  widget.memPackAll!.data![widget.index!].packageName
-                      .toString(),
-                  overflow: TextOverflow.ellipsis,
-                  style: topicStyle.copyWith(
-                      fontSize: 18.sp,
-                      color: Color(int.parse(widget
-                          .memPackAll!.data![widget.index!].boxTextColor!))),
-                ),
-                const SizedBox(height: 12.0),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Expanded(
-                      flex: 8,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AutoSizeText(
-                            S.of(context).loadXTouristSavers.replaceAll(
-                                '&L',
-                                removeTrailingZero(numFormatter.format(widget
-                                    .memPackAll!
-                                    .data![widget.index!]
-                                    .universalPiiinks))),
-                            style: topicStyle.copyWith(
-                                color: Color(int.parse(widget.memPackAll!
-                                    .data![widget.index!].amountTextColor!)),
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w500),
-                          ),
-                          const SizedBox(height: 6.0),
-                          _buildPriceDisplay(),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      flex: 4,
-                      child: isLoading == true
-                          ? TopUpWithCircular(
-                              buttonBackGroundColor: Color(int.parse(widget
-                                  .memPackAll!
-                                  .data![widget.index!]
-                                  .buttonColor!)),
-                              buttonSideColor: Color(int.parse(
-                                  '${widget.memPackAll!.data![widget.index!].boxBorderColor}')),
-                              circleColor: Color(int.parse(widget.memPackAll!
-                                  .data![widget.index!].buttonTextColor!)),
-                            )
-                          : TopUpButton(
-                              buttonBackGroundColor: Color(int.parse(widget
-                                  .memPackAll!
-                                  .data![widget.index!]
-                                  .buttonColor!)),
-                              buttonSideColor: Color(int.parse(
-                                  '${widget.memPackAll!.data![widget.index!].boxBorderColor}')),
-                              buttonTextColor: Color(int.parse(widget
-                                  .memPackAll!
-                                  .data![widget.index!]
-                                  .buttonTextColor!)),
-                              text: (widget.memPackAll!.data![widget.index!]
-                                          .packageFee! <=
-                                      0)
-                                  ? S.of(context).continueL
-                                  : S.of(context).pay,
-                              onPressed: _handleTopUp,
-                            ),
-                    )
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // --- Display Payment Sheet remains the same ---
   Future<void> displayPaymentSheet(String? clientSecret) async {
     try {
       await Stripe.instance.presentPaymentSheet().then((value) async {
@@ -1043,5 +583,217 @@ class _TopUpWidgetState extends State<TopUpWidget> {
     } catch (e) {
       return;
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final originalFee = widget.memPackAll!.data![widget.index!].packageFee!;
+    String currency = "\$";
+
+    final discountStr = widget.premiumData?['discount'];
+    debugPrint("====== CURRENT DISCOUNT PERCENT: $discountStr% ======");
+
+    String displayAmount = "1000";
+    if (widget.premiumData != null &&
+        widget.premiumData['piiinksProvided'] != null) {
+      displayAmount = removeTrailingZero(
+          numFormatter.format(widget.premiumData['piiinksProvided']));
+    }
+    double discountPercent =
+        double.tryParse(discountStr?.toString() ?? "0") ?? 0;
+    debugPrint("====== CURRENT DISCOUNT PERCENT: $discountPercent% ======");
+    double finalFee = originalFee * (1 - (discountPercent / 100));
+
+    String discountedPriceText = "$currency${finalFee.toStringAsFixed(2)}";
+
+    String originalPriceText =
+        "$currency${removeTrailingZero(numFormatter.format(originalFee))}";
+
+    // Colors extracted from your mock image
+    const Color primaryBlue = Color(0xFF5775FF);
+    const Color accentYellow = Color(0xFFF7E015);
+
+    return Column(
+      children: [
+        // 👉 1. The Collage Image at the top (Only shows on the first package)
+        if (widget.index == 0)
+          Padding(
+            padding: EdgeInsets.only(bottom: 10.h),
+            child: widget.registrationImageUrl != null &&
+                    widget.registrationImageUrl!.isNotEmpty
+                ? Image.network(
+                    widget.registrationImageUrl!, // Use the dynamic URL!
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    // Show a loading spinner while the image downloads
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return SizedBox(
+                        height: 200.h,
+                        child: const Center(child: CircularProgressIndicator()),
+                      );
+                    },
+                    // If the URL is broken, show your local asset as a fallback
+                    errorBuilder: (context, error, stackTrace) {
+                      return Image.asset(
+                        "assets/images/newimage.png",
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      );
+                    },
+                  )
+                : Image.asset(
+                    "assets/images/newimage.png", // Fallback while API is loading
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+          ),
+
+        // 👉 2. The Text and Buttons
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.w),
+          child: Column(
+            children: [
+              SizedBox(height: 20.h),
+              // Top Blue Text
+              Text(
+                "Save \$$displayAmount's of dollars\nAustralia wide",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.nunito(
+                  color: primaryBlue,
+                  fontSize: 22.sp,
+                  fontWeight: FontWeight.w800, // Black/Boldest weight
+                  height: 1.3,
+                ),
+              ),
+              SizedBox(height: 15.h),
+
+              // Subtitle Blue Text
+              Text(
+                discountPercent == 100
+                    ? "Free 12 month membership"
+                    : (discountPercent > 0 && discountPercent < 100)
+                        ? "Premium 12 month's membership"
+                        : "12 month's membership only $originalPriceText",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.nunito(
+                  color: primaryBlue,
+                  fontSize: 22.sp,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+
+              // 👉 FIX 1: Only add this gap AND the Row if there is a partial discount.
+              if (discountPercent > 0 && discountPercent < 100) ...[
+                SizedBox(height: 20.h),
+                // 👉 Pricing Row (Yellow Badges and Strikethrough)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Yellow Discount Box
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 20.w, vertical: 15.h),
+                      decoration: BoxDecoration(
+                        color: accentYellow,
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
+                      child: Text(
+                        "${removeTrailingZero(numFormatter.format(discountPercent))}% OFF",
+                        style: GoogleFonts.nunito(
+                          color: Colors.black,
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+
+                    // Grey Strikethrough Price
+                    Text(
+                      originalPriceText,
+                      style: TextStyle(
+                        fontSize: 23.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade500,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+
+                    // Final Price Yellow Box
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 25.w, vertical: 15.h),
+                      decoration: BoxDecoration(
+                        color: accentYellow,
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
+                      child: Text(
+                        discountedPriceText,
+                        style: GoogleFonts.nunito(
+                          color: Colors.black,
+                          fontSize: 23.sp,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+
+              // 👉 Master gap between text/pricing and the button
+              SizedBox(height: 28.h),
+
+              // 👉 PAY Button
+              SizedBox(
+                width: 320.w,
+                // 👉 FIX 2: Removed hardcoded heights. Let the internal padding define the button height dynamically.
+                child: ElevatedButton(
+                  onPressed: isLoading
+                      ? null
+                      : (discountPercent == 100
+                          ? _handleFreeMemberShip
+                          : _handleTopUp),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: accentYellow,
+                    disabledBackgroundColor: accentYellow,
+                    // 👉 FIX 3: Added symmetric padding. This guarantees a perfect
+                    // professional gap around the text, even if it wraps to two lines!
+                    padding:
+                        EdgeInsets.symmetric(vertical: 16.h, horizontal: 20.w),
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(50.r), // Perfect pill shape
+                    ),
+                    elevation: 0,
+                  ),
+                  child: isLoading
+                      ? const CircularProgressIndicator(color: primaryBlue)
+                      // 👉 FIX 4: Used AutoSizeText so the text shrinks slightly instead of breaking awkwardly.
+                      : AutoSizeText(
+                          discountPercent == 100
+                              ? "Continue with FREE membership"
+                              : (discountPercent > 0 && discountPercent < 100)
+                                  ? "PAY now $discountedPriceText"
+                                  : "PAY now $originalPriceText",
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          style: GoogleFonts.nunito(
+                            color: Colors.black,
+                            fontSize: 22.sp,
+                            fontWeight: FontWeight.w800,
+                            height:
+                                1.2, // Gives breathing room between lines if it wraps
+                          ),
+                        ),
+                ),
+              ),
+              SizedBox(height: 20.h),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }

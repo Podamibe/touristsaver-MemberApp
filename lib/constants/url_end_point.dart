@@ -21,6 +21,7 @@ const surApplyPiiink = '/member/transaction/applyPiiink';
 
 const memberPremiumGetOne = '/memberPremiumCode/getOne';
 const showCharityGetOne = '/showCharity/getOne';
+const registrationImageGetOne = 'registrationImage/getOne/';
 
 const universalGetMyWallet = '/wallet/universal/getMyWallet';
 const merchantGetMyWallet = '/wallet/merchant/getMyWallet';

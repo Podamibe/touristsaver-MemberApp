@@ -13,6 +13,9 @@ class CustomAppBar extends StatelessWidget {
   final VoidCallback? onPressed2;
   final PreferredSizeWidget? tabs;
   final Color? icon2Color;
+  final Color? textColor;
+  final double? fontSize;
+  final FontWeight? fontWeight;
 
   const CustomAppBar({
     super.key,
@@ -25,6 +28,9 @@ class CustomAppBar extends StatelessWidget {
     this.onPressed2,
     this.tabs,
     this.icon2Color,
+    this.textColor,
+    this.fontSize,
+    this.fontWeight,
   });
 
   @override
@@ -53,7 +59,14 @@ class CustomAppBar extends StatelessWidget {
           message: text,
           child: AutoSizeText(
             text,
-            style: appbarTitleStyle,
+            // 👉 Apply the color if it exists, otherwise use default
+            style: textColor != null
+                ? appbarTitleStyle.copyWith(
+                    color: textColor,
+                    fontSize: fontSize,
+                    fontWeight: fontWeight,
+                  )
+                : appbarTitleStyle,
             overflow: TextOverflow.ellipsis,
           )),
 
@@ -87,6 +100,8 @@ class CustomAppBar1 extends StatelessWidget {
   final VoidCallback? onInfoTap;
   final String? infoImage;
   final PreferredSizeWidget? tabs;
+  final Color? textColor; // 👉 Added here too just in case
+
   const CustomAppBar1({
     super.key,
     required this.text,
@@ -95,6 +110,7 @@ class CustomAppBar1 extends StatelessWidget {
     this.onInfoTap,
     this.infoImage,
     this.tabs,
+    this.textColor,
   });
 
   @override
@@ -117,19 +133,17 @@ class CustomAppBar1 extends StatelessWidget {
         color: Colors.black.withValues(alpha: 0.8),
         onPressed: onPressed,
         iconSize: 20,
-      ), //Leading = for the left Sided
-
+      ),
       title: Tooltip(
           message: text,
           child: AutoSizeText(
             text,
-            style: appbarTitleStyle,
+            style: textColor != null
+                ? appbarTitleStyle.copyWith(color: textColor)
+                : appbarTitleStyle,
             overflow: TextOverflow.ellipsis,
           )),
-
       centerTitle: true,
-
-      // For icon is right side
       actions: [
         GestureDetector(
           onTap: onInfoTap,
@@ -152,7 +166,6 @@ class CustomAppBar1 extends StatelessWidget {
           ),
         ),
       ],
-
       bottom: tabs,
     );
   }
@@ -166,6 +179,8 @@ class CustomAppBar2 extends StatelessWidget {
   final Widget? deleteWidget;
   final VoidCallback? onDeleteTap;
   final PreferredSizeWidget? tabs;
+  final Color? textColor; // 👉 Added here too
+
   const CustomAppBar2({
     super.key,
     required this.text,
@@ -174,6 +189,7 @@ class CustomAppBar2 extends StatelessWidget {
     this.deleteWidget,
     this.onDeleteTap,
     this.tabs,
+    this.textColor,
   });
 
   @override
@@ -196,19 +212,17 @@ class CustomAppBar2 extends StatelessWidget {
         color: Colors.black.withValues(alpha: 0.8),
         onPressed: onPressed,
         iconSize: 20,
-      ), //Leading = for the left Sided
-
+      ),
       title: Tooltip(
           message: text,
           child: AutoSizeText(
             text,
-            style: appbarTitleStyle,
+            style: textColor != null
+                ? appbarTitleStyle.copyWith(color: textColor)
+                : appbarTitleStyle,
             overflow: TextOverflow.ellipsis,
           )),
-
       centerTitle: true,
-
-      // For icon in right side
       actions: [
         GestureDetector(
           onTap: onDeleteTap,
@@ -220,7 +234,6 @@ class CustomAppBar2 extends StatelessWidget {
           ),
         ),
       ],
-
       bottom: tabs,
     );
   }

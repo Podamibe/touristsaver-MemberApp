@@ -187,7 +187,7 @@ class _BottomBarState extends State<BottomBar> {
         landscapeLayout: BottomNavigationBarLandscapeLayout.centered,
         elevation: 0,
         currentIndex: _page,
-        selectedItemColor: GlobalColors.appColor,
+        selectedItemColor: const Color(0xFFF146EA),
         selectedFontSize: 13.sp,
         unselectedFontSize: 13.sp,
         unselectedItemColor: Colors.grey,
@@ -226,7 +226,7 @@ class _BottomBarState extends State<BottomBar> {
           BottomNavigationBarItem(
             icon: Icon(
               Icons.account_balance_wallet,
-              color: _page == 2 ? GlobalColors.appColor : Colors.grey,
+              color: _page == 2 ? const Color(0xFFF146EA) : Colors.grey,
             ),
             // SvgPicture.asset(
             //   "assets/images/pay.svg",
