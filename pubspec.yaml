@@ -3,7 +3,7 @@ description: A new Flutter project.
 
 publish_to: "none"
 
-version: 1.0.1+28
+version: 1.0.1+30
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -33,7 +33,7 @@ dependencies:
   # intl: ^0.18.0
   location: ^8.0.0
   carousel_slider: ^5.0.0
-  flutter_stripe: ^11.4.0
+  flutter_stripe: ^12.6.0
   flutter_html: ^3.0.0-alpha.3
   google_maps_flutter: ^2.2.2
   upgrader: ^11.3.1

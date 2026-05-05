@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -62,7 +64,7 @@ class _PaidFreeScreenState extends State<PaidFreeScreen> {
   // Premium data mapping
   dynamic premiumData;
   String? registrationImageUrl;
-
+  bool isGlobalLoading = false; // Add this at the top with your other variables
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -300,6 +302,7 @@ class _PaidFreeScreenState extends State<PaidFreeScreen> {
         discountPercent == 100 ? "Free Membership" : "Join now";
     const Color primaryBlue = Color(0xFF5871FF);
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: FutureBuilder<bool>(
@@ -313,7 +316,8 @@ class _PaidFreeScreenState extends State<PaidFreeScreen> {
                     textColor: primaryBlue,
                     fontSize: 24.sp,
                     fontWeight: FontWeight.w900,
-                  )
+                    icon: Icons.person_outlined,
+                    onPressed: () => context.push('/log-profile'))
                 : CustomAppBar(
                     text: appBarTitle,
                     textColor: primaryBlue,
@@ -324,68 +328,85 @@ class _PaidFreeScreenState extends State<PaidFreeScreen> {
           },
         ),
       ),
-      body: BlocProvider(
-        lazy: false,
-        create: (context) =>
-            MemPackAllBloc(RepositoryProvider.of<DioTopUpStripe>(context))
-              ..add(LoadMemPackAllEvent()),
-        child: Builder(
-          builder: (context) {
-            return RefreshIndicator(
-              color: GlobalColors.appColor,
-              onRefresh: () async {
-                await fetchRegistrationImage();
-                await fetchMemberPremiumGetOne();
-                context.read<MemPackAllBloc>().add(LoadMemPackAllEvent());
-              },
-              child: ScrollConfiguration(
-                behavior: const ScrollBehavior(),
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  scrollDirection: Axis.vertical,
-                  child: Container(
-                    constraints: BoxConstraints(
-                      minHeight: MediaQuery.of(context).size.height,
-                    ),
-                    alignment: Alignment.topCenter,
-                    child: BlocBuilder<MemPackAllBloc, MemPackAllState>(
-                      builder: (context, state) {
-                        if (state is MemPackAllLoadingState) {
-                          return const CustomAllLoader();
-                        } else if (state is MemPackAllLoadedState) {
-                          MemberShipPackageResModel memPackAll =
-                              state.memPackAll;
-                          return memPackAll.data!.isEmpty
-                              ? Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 10.0, horizontal: 10.0),
-                                  child: NoDataFound(
-                                    titleText: S.of(context).noTopUpAvailable,
-                                    bodyText: S
-                                        .of(context)
-                                        .noTopupPacakgeAvailableForNow,
-                                    image: "assets/images/oops.png",
-                                  ),
-                                )
-                              : Column(
-                                  children: [
-                                    piiinkLoaded(memPackAll, countryId),
-                                  ],
-                                );
-                        } else if (state is MemPackAllErrorState) {
-                          return const Error1();
-                        } else {
-                          return const SizedBox();
-                        }
-                      },
+      body: Stack(children: [
+        BlocProvider(
+          lazy: false,
+          create: (context) =>
+              MemPackAllBloc(RepositoryProvider.of<DioTopUpStripe>(context))
+                ..add(LoadMemPackAllEvent()),
+          child: Builder(
+            builder: (context) {
+              return RefreshIndicator(
+                color: GlobalColors.appColor,
+                onRefresh: () async {
+                  await fetchRegistrationImage();
+                  await fetchMemberPremiumGetOne();
+                  context.read<MemPackAllBloc>().add(LoadMemPackAllEvent());
+                },
+                child: ScrollConfiguration(
+                  behavior: const ScrollBehavior(),
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    scrollDirection: Axis.vertical,
+                    child: Container(
+                      constraints: BoxConstraints(
+                        minHeight: MediaQuery.of(context).size.height,
+                      ),
+                      alignment: Alignment.topCenter,
+                      child: BlocBuilder<MemPackAllBloc, MemPackAllState>(
+                        builder: (context, state) {
+                          if (state is MemPackAllLoadingState) {
+                            return const CustomAllLoader();
+                          } else if (state is MemPackAllLoadedState) {
+                            MemberShipPackageResModel memPackAll =
+                                state.memPackAll;
+                            return memPackAll.data!.isEmpty
+                                ? Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 10.0, horizontal: 10.0),
+                                    child: NoDataFound(
+                                      titleText: S.of(context).noTopUpAvailable,
+                                      bodyText: S
+                                          .of(context)
+                                          .noTopupPacakgeAvailableForNow,
+                                      image: "assets/images/oops.png",
+                                    ),
+                                  )
+                                : Column(
+                                    children: [
+                                      piiinkLoaded(memPackAll, countryId),
+                                    ],
+                                  );
+                          } else if (state is MemPackAllErrorState) {
+                            return const Error1();
+                          } else {
+                            return const SizedBox();
+                          }
+                        },
+                      ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
-      ),
+        if (isGlobalLoading)
+          Positioned.fill(
+            child: GestureDetector(
+              onTap:
+                  () {}, // This empty callback blocks taps from reaching the buttons below
+              child: Container(
+                color: Colors.black.withOpacity(0.5),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ]),
     );
   }
 }
@@ -449,6 +470,9 @@ class _TopUpWidgetState extends State<TopUpWidget> {
   }
 
   Future<void> _handleTopUp() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    await Future.delayed(const Duration(milliseconds: 300));
+
     bool isLoggedIn = AppVariables.accessToken != null &&
         AppVariables.accessToken!.isNotEmpty;
 
@@ -504,84 +528,86 @@ class _TopUpWidgetState extends State<TopUpWidget> {
         paymentSheetParameters: SetupPaymentSheetParameters(
           paymentIntentClientSecret: res.clientSecret,
           merchantDisplayName: 'Prospects',
-          style: ThemeMode.dark,
+          style: ThemeMode.light,
+          appearance: const PaymentSheetAppearance(
+            colors: PaymentSheetAppearanceColors(
+              primary: Colors.blue,
+            ),
+          ),
         ),
       );
 
+      // Turn off loading spinner before showing the sheet
       setState(() {
         isLoading = false;
       });
 
-      await displayPaymentSheet(res.clientSecret);
+      // WAIT for the payment to completely finish
+      bool paymentSuccess = await displayPaymentSheet(res.clientSecret);
 
-      if (!context.mounted) return;
+      if (!mounted) return;
 
-      bool canGoHome = await checkWalletBalance();
-      if (!context.mounted) return;
+      if (paymentSuccess) {
+        // 👉 1. Show the global circular loader immediately
+        final parentState =
+            context.findAncestorStateOfType<_PaidFreeScreenState>();
+        parentState?.setState(() {
+          parentState.isGlobalLoading = true;
+        });
 
-      if (canGoHome) {
         GlobalSnackBar.showSuccess(context, S.of(context).paymentSuccessful);
+
+        // 👉 2. CHANGE: Use 'await' so the loader stays until balance is updated
+        await checkWalletBalance();
+
+        if (!mounted) return;
+
+        // 👉 3. Navigate Home - the loader will disappear as the screen is destroyed
         context
             .pushReplacementNamed('bottom-bar', pathParameters: {'page': '0'});
       } else {
-        context.pushReplacementNamed('paid-free');
+        setState(() {
+          isLoading = false;
+        });
       }
-    } else {
-      setState(() {
-        isLoading = false;
-      });
-
-      if (!context.mounted) return;
-      GlobalSnackBar.showError(
-          context, "You are not eligible for this free package.");
     }
   }
 
-  Future<void> displayPaymentSheet(String? clientSecret) async {
+  Future<bool> displayPaymentSheet(String? clientSecret) async {
     try {
-      await Stripe.instance.presentPaymentSheet().then((value) async {
-        var res = await Stripe.instance.retrievePaymentIntent(clientSecret!);
-        if (res.status == PaymentIntentsStatus.Succeeded) {
+      await Stripe.instance.presentPaymentSheet();
+
+      // Retrieve status from Stripe Native SDK
+      var res = await Stripe.instance.retrievePaymentIntent(clientSecret!);
+
+      if (res.status == PaymentIntentsStatus.Succeeded) {
+        try {
           var confirm = await DioTopUpStripe().confirmTopUp(
               confirmTopUpReqModel: ConfirmTopUpReqModel(
                   paymentIntent: res.id,
                   paymentIntentClientSecret: res.clientSecret));
-          if (!mounted) return;
-          if (confirm is ConfirmTopUpResModel) {
-            if (confirm.status == 'success') {
-              context.pop();
-              GlobalSnackBar.showSuccess(
-                  context, S.of(context).paymentSuccessful);
-            } else {
-              GlobalSnackBar.showError(context, S.of(context).paymentFailed);
-            }
-          } else {
-            GlobalSnackBar.showError(context, S.of(context).serverError);
+
+          if (confirm is ConfirmTopUpResModel && confirm.status == 'success') {
+            return true;
           }
-        } else {
-          if (!mounted) return;
-          GlobalSnackBar.showError(context, S.of(context).stripePaymentFail);
+        } catch (e) {
+          // 👉 FIX: Catch ANY error (208 Already Reported, 500, etc.)
+          // Because Stripe's native UI said it succeeded, we ignore the backend
+          // conflict and check if the wallet got the money from the webhook!
+          debugPrint(
+              "⚠️ Backend confirm conflict, checking wallet directly...");
+          return await checkWalletBalance();
         }
-      });
-    } on Exception catch (e) {
-      if (e is StripeException) {
-        var res = await Stripe.instance.retrievePaymentIntent(clientSecret!);
-        var confirm = await DioTopUpStripe().confirmTopUp(
-            confirmTopUpReqModel: ConfirmTopUpReqModel(
-                paymentIntent: res.id,
-                paymentIntentClientSecret: res.clientSecret));
-        if (!mounted) return;
-        if (confirm is ConfirmTopUpResModel) {
-          return;
-        } else {
-          GlobalSnackBar.showError(
-              context, S.of(context).thePaymentHasBeenCanceled);
-        }
-      } else {
-        return;
+        return await checkWalletBalance();
       }
+      return false;
+    } on StripeException catch (e) {
+      if (!mounted) return false;
+      GlobalSnackBar.showError(
+          context, S.of(context).thePaymentHasBeenCanceled);
+      return false;
     } catch (e) {
-      return;
+      return false;
     }
   }
 

@@ -680,8 +680,8 @@ class _TopUpWidgetState extends State<TopUpWidget> {
                                   });
 
                                   if (!context.mounted) return;
-                                  GlobalSnackBar.showError(context,
-                                      "You are not eligible for this free package.");
+                                  // GlobalSnackBar.showError(context,
+                                  //     "You are not eligible for this free package.");
                                   setState(() {
                                     isLoading = false;
                                   });

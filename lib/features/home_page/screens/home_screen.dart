@@ -410,7 +410,7 @@ class _HomeScreenState extends State<HomeScreen>
                               isLabelVisible: value != 0,
                               child: const Icon(
                                 Icons.notifications_outlined,
-                                color: GlobalColors.appColor,
+                                color: Color(0xFFF146EA),
                                 size: 30,
                               ),
                             );
