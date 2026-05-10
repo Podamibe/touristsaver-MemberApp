@@ -1046,146 +1046,147 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               const SizedBox(height: 15),
 
                               // Select Charity
-                              FutureBuilder<NearByCharityListResModel?>(
-                                  future: nearByCharityForReg,
-                                  builder: (context, snapshot) {
-                                    if (!snapshot.hasData) {
-                                      return Container(
-                                        padding: const EdgeInsets.only(
-                                            left: 25, right: 25, top: 15),
-                                        height: 50.h,
-                                        width: double.infinity,
-                                        decoration: BoxDecoration(
-                                          color: GlobalColors.paleGray,
-                                          borderRadius:
-                                              BorderRadius.circular(5.0),
-                                        ),
-                                        child: InkWell(
-                                          onTap: () {
-                                            if (selectedCountryID == null) {
-                                              GlobalSnackBar.valid(
-                                                  context,
-                                                  S
-                                                      .of(context)
-                                                      .pleaseSelectCountryFirstToSelectCharity);
-                                            } else if (AppVariables
-                                                    .locationEnabledStatus
-                                                    .value <
-                                                2) {
-                                              LocationService()
-                                                  .enableLocationAndFetchCountry()
-                                                  .then((value) {
-                                                if (value == true) {
-                                                  setState(() {
-                                                    nearByCharityForReg =
-                                                        getNearByCharityForReg(
-                                                            selectedCountryID!);
-                                                  });
-                                                }
-                                              });
-                                            }
-                                          },
-                                          child: AutoSizeText(
-                                            S.of(context).selectCharity,
-                                            // 'Select Charity',
-                                            style: TextStyle(
-                                                color: GlobalColors.gray
-                                                    .withValues(alpha: 0.8),
-                                                fontSize: 15.sp,
-                                                fontWeight: FontWeight.w500),
-                                          ),
-                                        ),
-                                      );
-                                    } else {
-                                      return Container(
-                                        height: 50.h,
-                                        width: double.infinity,
-                                        decoration: BoxDecoration(
-                                          color: GlobalColors.paleGray,
-                                          borderRadius:
-                                              BorderRadius.circular(5.0),
-                                        ),
-                                        child: snapshot.data!.data!.isEmpty
-                                            ? Padding(
-                                                padding: const EdgeInsets.only(
-                                                    top: 15.0,
-                                                    left: 25.0,
-                                                    right: 25.0),
-                                                child: AutoSizeText(
-                                                  S
-                                                      .of(context)
-                                                      .noCharityAvailable,
-                                                  style: locationStyle.copyWith(
-                                                      fontWeight:
-                                                          FontWeight.w500),
-                                                ),
-                                              )
-                                            : iscountryChanged == true
-                                                ? Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            top: 15,
-                                                            left: 25,
-                                                            right: 25),
-                                                    child: AutoSizeText(
-                                                      S.of(context).pleaseWait,
-                                                      style: locationStyle
-                                                          .copyWith(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w500),
-                                                    ),
-                                                  )
-                                                : DropdownButtonWidget(
-                                                    label: S
-                                                        .of(context)
-                                                        .selectCharity,
-                                                    searchController:
-                                                        stateSearchController,
-                                                    isExpanded: true,
-                                                    bWidth: double.infinity,
-                                                    iHeight: 35,
-                                                    dropHeight: 175,
-                                                    searchHeight: 40,
-                                                    items: snapshot.data!.data!
-                                                        .map((e) {
-                                                      return DropdownMenuItem(
-                                                        value: e.charityName,
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                            left: 25,
-                                                            top: 0,
-                                                            bottom: 0,
-                                                          ),
-                                                          child: AutoSizeText(
-                                                            e.charityName!,
-                                                            style:
-                                                                dopdownTextStyle,
-                                                          ),
-                                                        ),
-                                                      );
-                                                    }).toList(),
-                                                    onChanged: (newVal) async {
-                                                      setState(() {
-                                                        selectedCharity =
-                                                            newVal as String;
-                                                      });
-                                                      final charityIDD = snapshot
-                                                          .data!.data!
-                                                          .firstWhere((element) =>
-                                                              element
-                                                                  .charityName ==
-                                                              selectedCharity);
-                                                      selectedCharityID =
-                                                          charityIDD.id;
-                                                    },
-                                                    value: selectedCharity,
-                                                  ),
-                                      );
-                                    }
-                                  }),
+
+                              // FutureBuilder<NearByCharityListResModel?>(
+                              //     future: nearByCharityForReg,
+                              //     builder: (context, snapshot) {
+                              //       if (!snapshot.hasData) {
+                              //         return Container(
+                              //           padding: const EdgeInsets.only(
+                              //               left: 25, right: 25, top: 15),
+                              //           height: 50.h,
+                              //           width: double.infinity,
+                              //           decoration: BoxDecoration(
+                              //             color: GlobalColors.paleGray,
+                              //             borderRadius:
+                              //                 BorderRadius.circular(5.0),
+                              //           ),
+                              //           child: InkWell(
+                              //             onTap: () {
+                              //               if (selectedCountryID == null) {
+                              //                 GlobalSnackBar.valid(
+                              //                     context,
+                              //                     S
+                              //                         .of(context)
+                              //                         .pleaseSelectCountryFirstToSelectCharity);
+                              //               } else if (AppVariables
+                              //                       .locationEnabledStatus
+                              //                       .value <
+                              //                   2) {
+                              //                 LocationService()
+                              //                     .enableLocationAndFetchCountry()
+                              //                     .then((value) {
+                              //                   if (value == true) {
+                              //                     setState(() {
+                              //                       nearByCharityForReg =
+                              //                           getNearByCharityForReg(
+                              //                               selectedCountryID!);
+                              //                     });
+                              //                   }
+                              //                 });
+                              //               }
+                              //             },
+                              //             child: AutoSizeText(
+                              //               S.of(context).selectCharity,
+                              //               // 'Select Charity',
+                              //               style: TextStyle(
+                              //                   color: GlobalColors.gray
+                              //                       .withValues(alpha: 0.8),
+                              //                   fontSize: 15.sp,
+                              //                   fontWeight: FontWeight.w500),
+                              //             ),
+                              //           ),
+                              //         );
+                              //       } else {
+                              //         return Container(
+                              //           height: 50.h,
+                              //           width: double.infinity,
+                              //           decoration: BoxDecoration(
+                              //             color: GlobalColors.paleGray,
+                              //             borderRadius:
+                              //                 BorderRadius.circular(5.0),
+                              //           ),
+                              //           child: snapshot.data!.data!.isEmpty
+                              //               ? Padding(
+                              //                   padding: const EdgeInsets.only(
+                              //                       top: 15.0,
+                              //                       left: 25.0,
+                              //                       right: 25.0),
+                              //                   child: AutoSizeText(
+                              //                     S
+                              //                         .of(context)
+                              //                         .noCharityAvailable,
+                              //                     style: locationStyle.copyWith(
+                              //                         fontWeight:
+                              //                             FontWeight.w500),
+                              //                   ),
+                              //                 )
+                              //               : iscountryChanged == true
+                              //                   ? Padding(
+                              //                       padding:
+                              //                           const EdgeInsets.only(
+                              //                               top: 15,
+                              //                               left: 25,
+                              //                               right: 25),
+                              //                       child: AutoSizeText(
+                              //                         S.of(context).pleaseWait,
+                              //                         style: locationStyle
+                              //                             .copyWith(
+                              //                                 fontWeight:
+                              //                                     FontWeight
+                              //                                         .w500),
+                              //                       ),
+                              //                     )
+                              //                   : DropdownButtonWidget(
+                              //                       label: S
+                              //                           .of(context)
+                              //                           .selectCharity,
+                              //                       searchController:
+                              //                           stateSearchController,
+                              //                       isExpanded: true,
+                              //                       bWidth: double.infinity,
+                              //                       iHeight: 35,
+                              //                       dropHeight: 175,
+                              //                       searchHeight: 40,
+                              //                       items: snapshot.data!.data!
+                              //                           .map((e) {
+                              //                         return DropdownMenuItem(
+                              //                           value: e.charityName,
+                              //                           child: Padding(
+                              //                             padding:
+                              //                                 const EdgeInsets
+                              //                                     .only(
+                              //                               left: 25,
+                              //                               top: 0,
+                              //                               bottom: 0,
+                              //                             ),
+                              //                             child: AutoSizeText(
+                              //                               e.charityName!,
+                              //                               style:
+                              //                                   dopdownTextStyle,
+                              //                             ),
+                              //                           ),
+                              //                         );
+                              //                       }).toList(),
+                              //                       onChanged: (newVal) async {
+                              //                         setState(() {
+                              //                           selectedCharity =
+                              //                               newVal as String;
+                              //                         });
+                              //                         final charityIDD = snapshot
+                              //                             .data!.data!
+                              //                             .firstWhere((element) =>
+                              //                                 element
+                              //                                     .charityName ==
+                              //                                 selectedCharity);
+                              //                         selectedCharityID =
+                              //                             charityIDD.id;
+                              //                       },
+                              //                       value: selectedCharity,
+                              //                     ),
+                              //         );
+                              //       }
+                              //     }),
 
                               const SizedBox(height: 15),
                               // I agree with the Term and Condition
