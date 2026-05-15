@@ -64,6 +64,17 @@ class IntroScreen extends StatelessWidget {
           padding: const EdgeInsets.all(10.0),
           child: IntroductionScreen(
             globalBackgroundColor: GlobalColors.appWhiteBackgroundColor,
+            globalFooter: TextButton(
+              onPressed: () => context.pushNamed('video-screen'),
+              child: AutoSizeText(
+                'Watch 1-minute intro',
+                style: TextStyle(
+                  color: GlobalColors.appColor1,
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
             isProgress: false,
             pages: [
               // First

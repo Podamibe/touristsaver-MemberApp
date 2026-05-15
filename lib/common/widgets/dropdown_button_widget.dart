@@ -22,6 +22,15 @@ class DropdownButtonWidget extends StatelessWidget {
     this.isExpanded,
     this.bWidth,
     this.searchHeight,
+    this.selectedItemBuilder,
+    this.fillColor,
+    this.borderColor,
+    this.borderRadius,
+    this.iconColor,
+    this.hintStyle,
+    this.height,
+    this.buttonHeight,
+    this.buttonPadding,
   });
 
   final String label;
@@ -36,15 +45,25 @@ class DropdownButtonWidget extends StatelessWidget {
   final double? searchHeight;
   final double? bWidth;
   final bool? isExpanded;
+  final DropdownButtonBuilder? selectedItemBuilder;
+  final Color? fillColor;
+  final Color? borderColor;
+  final double? borderRadius;
+  final Color? iconColor;
+  final TextStyle? hintStyle;
+  final double? height;
+  final double? buttonHeight;
+  final EdgeInsetsGeometry? buttonPadding;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 55,
-      width: MediaQuery.of(context).size.width / 1.2,
+      height: height ?? 55,
+      width: bWidth ?? MediaQuery.of(context).size.width / 1.2,
       decoration: BoxDecoration(
-        color: GlobalColors.paleGray,
-        borderRadius: BorderRadius.circular(5.0),
+        color: fillColor ?? GlobalColors.paleGray,
+        borderRadius: BorderRadius.circular(borderRadius ?? 5.0),
+        border: borderColor == null ? null : Border.all(color: borderColor!),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton2<Object>(
@@ -53,21 +72,23 @@ class DropdownButtonWidget extends StatelessWidget {
             padding: EdgeInsets.only(left: lPadding ?? 25),
             child: AutoSizeText(
               label,
-              style: dopdownTextStyle.copyWith(
-                  color: GlobalColors.gray.withValues(alpha: 0.8)),
+              style: hintStyle ??
+                  dopdownTextStyle.copyWith(
+                      color: GlobalColors.gray.withValues(alpha: 0.8)),
             ),
           ),
           buttonStyleData: ButtonStyleData(
-            padding: EdgeInsets.symmetric(horizontal: 10),
-            height: 55,
+            padding:
+                buttonPadding ?? const EdgeInsets.symmetric(horizontal: 10),
+            height: buttonHeight ?? 55,
             width: bWidth ?? 250,
           ),
           dropdownStyleData: DropdownStyleData(
             maxHeight: dropHeight ?? MediaQuery.of(context).size.height * 0.4,
             width: dropWidth ?? MediaQuery.of(context).size.width / 1.2,
             decoration: BoxDecoration(
-              color: GlobalColors.paleGray,
-              borderRadius: BorderRadius.circular(5.0),
+              color: fillColor ?? GlobalColors.paleGray,
+              borderRadius: BorderRadius.circular(borderRadius ?? 5.0),
             ),
           ),
           menuItemStyleData: MenuItemStyleData(
@@ -76,16 +97,16 @@ class DropdownButtonWidget extends StatelessWidget {
           iconStyleData: IconStyleData(
             icon: Padding(
               padding: EdgeInsets.only(right: lPadding ?? 25),
-              child: const Icon(
+              child: Icon(
                 Icons.expand_more,
-                color: GlobalColors.appColor,
+                color: iconColor ?? GlobalColors.appColor,
               ),
             ),
             openMenuIcon: Padding(
               padding: EdgeInsets.only(right: lPadding ?? 25),
-              child: const Icon(
+              child: Icon(
                 Icons.expand_less,
-                color: GlobalColors.appColor,
+                color: iconColor ?? GlobalColors.appColor,
               ),
             ),
           ),
@@ -135,66 +156,67 @@ class DropdownButtonWidget extends StatelessWidget {
           items: items,
           onChanged: onChanged,
           value: value,
+          selectedItemBuilder: selectedItemBuilder,
         ),
       ),
     );
   }
 }
-      // searchMatchFn: (item, searchValue) {
-            //   return item.value
-            //       .toString()
-            //       .toLowerCase()
-            //       .contains(searchValue.toLowerCase());
-            // },
-            // itemHeight: iHeight ?? kMinInteractiveDimension,
-            // dropdownMaxHeight:
-            //     dropHeight ?? MediaQuery.of(context).size.height * 0.4,
-            // dropdownWidth: dropWidth ?? MediaQuery.of(context).size.width / 1.2,
-   // icon: Padding(
-            //   padding: EdgeInsets.only(right: lPadding ?? 25),
-            //   child: const Icon(
-            //     Icons.expand_more,
-            //     color: GlobalColors.appColor,
-            //   ),
-            // ),
-            // iconOnClick: Padding(
-            //   padding: EdgeInsets.only(right: lPadding ?? 25),
-            //   child: const Icon(
-            //     Icons.expand_less,
-            //     color: GlobalColors.appColor,
-            //   ),
-            // ),
-            // searchController: searchController,
-            // searchInnerWidgetHeight: 20,
-            // searchInnerWidget: Padding(
-            //   padding: const EdgeInsets.only(
-            //     top: 8,
-            //     bottom: 4,
-            //     right: 8,
-            //     left: 8,
-            //   ),
-            //   child: SizedBox(
-            //     height: searchHeight,
-            //     child: TextFormField(
-            //       controller: searchController,
-            //       decoration: textInputDecoration1.copyWith(
-            //         hintText: S.of(context).search,
-            //         fillColor: GlobalColors.paleGray,
-            //         border: OutlineInputBorder(
-            //           borderRadius: BorderRadius.circular(5.0),
-            //           borderSide: const BorderSide(
-            //             width: 2,
-            //             color: GlobalColors.appGreyBackgroundColor,
-            //           ),
-            //         ),
-            //         focusedBorder: OutlineInputBorder(
-            //           borderRadius: BorderRadius.circular(5.0),
-            //           borderSide: BorderSide(
-            //             width: 2,
-            //             color: Colors.grey.shade300,
-            //           ),
-            //         ),
-            //       ),
-            //     ),
-            //   ),
-            // ),
+// searchMatchFn: (item, searchValue) {
+//   return item.value
+//       .toString()
+//       .toLowerCase()
+//       .contains(searchValue.toLowerCase());
+// },
+// itemHeight: iHeight ?? kMinInteractiveDimension,
+// dropdownMaxHeight:
+//     dropHeight ?? MediaQuery.of(context).size.height * 0.4,
+// dropdownWidth: dropWidth ?? MediaQuery.of(context).size.width / 1.2,
+// icon: Padding(
+//   padding: EdgeInsets.only(right: lPadding ?? 25),
+//   child: const Icon(
+//     Icons.expand_more,
+//     color: GlobalColors.appColor,
+//   ),
+// ),
+// iconOnClick: Padding(
+//   padding: EdgeInsets.only(right: lPadding ?? 25),
+//   child: const Icon(
+//     Icons.expand_less,
+//     color: GlobalColors.appColor,
+//   ),
+// ),
+// searchController: searchController,
+// searchInnerWidgetHeight: 20,
+// searchInnerWidget: Padding(
+//   padding: const EdgeInsets.only(
+//     top: 8,
+//     bottom: 4,
+//     right: 8,
+//     left: 8,
+//   ),
+//   child: SizedBox(
+//     height: searchHeight,
+//     child: TextFormField(
+//       controller: searchController,
+//       decoration: textInputDecoration1.copyWith(
+//         hintText: S.of(context).search,
+//         fillColor: GlobalColors.paleGray,
+//         border: OutlineInputBorder(
+//           borderRadius: BorderRadius.circular(5.0),
+//           borderSide: const BorderSide(
+//             width: 2,
+//             color: GlobalColors.appGreyBackgroundColor,
+//           ),
+//         ),
+//         focusedBorder: OutlineInputBorder(
+//           borderRadius: BorderRadius.circular(5.0),
+//           borderSide: BorderSide(
+//             width: 2,
+//             color: Colors.grey.shade300,
+//           ),
+//         ),
+//       ),
+//     ),
+//   ),
+// ),

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:new_piiink/constants/pref.dart';
 import 'package:new_piiink/constants/pref_key.dart';
@@ -142,7 +141,7 @@ class _MySplashScreenState extends State<MySplashScreen> {
             showlogin();
           }
         } else {
-          showIntroVideo();
+          showIntro();
         }
       });
     });
@@ -176,19 +175,13 @@ class _MySplashScreenState extends State<MySplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
+      backgroundColor: Colors.white,
       body: Container(
         alignment: Alignment.center,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          //vertically align center
-          children: <Widget>[
-            SizedBox(
-              child: SizedBox(
-                  height: 200.h,
-                  width: 180.w,
-                  child: Image.asset("assets/images/tourist.png")),
-            ),
-          ],
+        child: Image.asset(
+          "assets/images/touristsaver_splash.webp",
+          width: MediaQuery.of(context).size.width * 0.75,
+          fit: BoxFit.contain,
         ),
       ),
     );

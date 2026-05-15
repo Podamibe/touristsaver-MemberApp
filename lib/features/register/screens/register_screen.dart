@@ -7,9 +7,8 @@ import 'package:flutter/services.dart';
 // import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:new_piiink/common/services/location_service.dart';
-import 'package:new_piiink/common/widgets/custom_app_bar.dart';
 import 'package:new_piiink/common/widgets/custom_button.dart';
 import 'package:new_piiink/common/widgets/custom_loader.dart';
 import 'package:new_piiink/common/widgets/custom_snackbar.dart';
@@ -88,11 +87,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   //For stopping selection of state when country is changed
   bool iscountryChanged = false;
+  bool _isPromoExpanded = false;
+
+  static const Color _primaryBlue = Color(0xFF0009FE);
+  static const Color _ctaCyan = Color(0xFF18C6FF);
+  static const Color _fieldBorder = Color(0xFFD8DEEC);
+  static const Color _softText = Color(0xFF65708D);
+  static const double _inputHeight = 55;
 
   // For dropDown of selecting country
   String? selectedCountry;
   int? selectedCountryID;
   String? selectedPhonePrefix;
+  String? selectedPhonePrefixKey;
   String? previousPhonePrefix;
   String? selectedSmsValType;
   String? smsOtpMedium;
@@ -184,6 +191,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } else {
       providerController.text = value == '-1' ? '' : value;
     }
+    if (mounted) setState(() {});
     // });
   }
 
@@ -203,6 +211,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } else {
       referralCodeController.text = value == '-1' ? '' : value;
     }
+    if (mounted) setState(() {});
     // });
   }
 
@@ -254,22 +263,838 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  Widget _appliedAttributionLabel(String text) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F7FF),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: const Color(0xFFE1E9FA)),
+          ),
+          child: AutoSizeText(
+            text,
+            style: TextStyle(
+              color: _softText,
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _registrationHeader(BuildContext context) {
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double headerHeight = screenHeight * 0.32;
+
+    return SizedBox(
+      height: headerHeight.clamp(230.0, 310.0).toDouble(),
+      width: double.infinity,
+      child: ClipRRect(
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30.r),
+          bottomRight: Radius.circular(30.r),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(
+              'assets/images/onboarding/header_au.webp',
+              fit: BoxFit.cover,
+            ),
+            Positioned(
+              top: 12.h,
+              left: 16.w,
+              child: Material(
+                color: Colors.white.withValues(alpha: 0.9),
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () => context.pop(),
+                  child: Padding(
+                    padding: EdgeInsets.all(9.w),
+                    child: const Icon(
+                      Icons.arrow_back_ios_new,
+                      color: Color(0xFF0D1A4A),
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionHeader(IconData icon, String title) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 14.h),
+      child: Row(
+        children: [
+          Icon(icon, color: _primaryBlue, size: 22.sp),
+          SizedBox(width: 10.w),
+          Text(
+            title,
+            style: TextStyle(
+              color: _primaryBlue,
+              fontSize: 17.sp,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _modernInputDecoration({
+    required String hintText,
+    IconData? icon,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: TextStyle(
+        color: _softText.withValues(alpha: 0.82),
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w500,
+      ),
+      prefixIcon: icon == null ? null : Icon(icon, color: _softText, size: 20),
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 15.h),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.r),
+        borderSide: const BorderSide(color: _fieldBorder),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.r),
+        borderSide: const BorderSide(color: _primaryBlue, width: 1.4),
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.r),
+        borderSide: const BorderSide(color: _fieldBorder),
+      ),
+    );
+  }
+
+  TextStyle get _dropdownHintStyle => TextStyle(
+        color: _softText.withValues(alpha: 0.82),
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w500,
+      );
+
+  Widget _placeholderField(String text) {
+    return Container(
+      width: double.infinity,
+      height: _inputHeight,
+      alignment: Alignment.centerLeft,
+      padding: EdgeInsets.symmetric(horizontal: 18.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: _fieldBorder),
+      ),
+      child: AutoSizeText(
+        text,
+        style: TextStyle(
+          color: _softText.withValues(alpha: 0.82),
+          fontSize: 14.sp,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  Widget _promoCodeSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          borderRadius: BorderRadius.circular(14.r),
+          onTap: () {
+            setState(() {
+              _isPromoExpanded = !_isPromoExpanded;
+            });
+          },
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F8FF),
+              borderRadius: BorderRadius.circular(14.r),
+              border: Border.all(color: const Color(0xFFE4ECFB)),
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 32.w,
+                  child: Icon(
+                    Icons.sell_outlined,
+                    color: _primaryBlue,
+                    size: 26.sp,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Have a promo code?',
+                        style: TextStyle(
+                          color: const Color(0xFF101B4D),
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      SizedBox(height: 3.h),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Your discount will be applied on the payment screen',
+                          maxLines: 1,
+                          style: TextStyle(
+                            color: _softText,
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  _isPromoExpanded
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
+                  color: _primaryBlue,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_isPromoExpanded) ...[
+          SizedBox(height: 12.h),
+          TextFormField(
+            controller: premiumController,
+            cursorColor: _primaryBlue,
+            decoration: _modernInputDecoration(
+              hintText: S.of(context).preCode,
+              icon: Icons.sell_outlined,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  String _countryDisplayName(Object? countryName) {
+    final String name = countryName?.toString() ?? '';
+    return name == 'United States of America' ? 'USA' : name;
+  }
+
+  String? _countryCodeForFlag(Object? countryName) {
+    switch (countryName?.toString()) {
+      case 'Australia':
+        return 'AU';
+      case 'Canada':
+        return 'CA';
+      case 'China':
+        return 'CN';
+      case 'Fiji':
+        return 'FJ';
+      case 'Germany':
+        return 'DE';
+      case 'India':
+        return 'IN';
+      case 'Indonesia':
+        return 'ID';
+      case 'Ireland':
+        return 'IE';
+      case 'Lao':
+        return 'LA';
+      case 'Malaysia':
+        return 'MY';
+      case 'New Zealand':
+        return 'NZ';
+      case 'Philippines':
+        return 'PH';
+      case 'Singapore':
+        return 'SG';
+      case 'South Africa':
+        return 'ZA';
+      case 'Thailand':
+        return 'TH';
+      case 'United Kingdom':
+        return 'GB';
+      case 'United States of America':
+        return 'US';
+      case 'Vietnam':
+        return 'VN';
+    }
+    return null;
+  }
+
+  String? _flagEmoji(Object? countryName) {
+    final String? countryCode = _countryCodeForFlag(countryName);
+    if (countryCode == null || countryCode.length != 2) return null;
+
+    final int firstLetter = countryCode.codeUnitAt(0) - 0x41 + 0x1F1E6;
+    final int secondLetter = countryCode.codeUnitAt(1) - 0x41 + 0x1F1E6;
+    return String.fromCharCodes([firstLetter, secondLetter]);
+  }
+
+  Widget _fallbackFlag(Object? countryName) {
+    final String? emoji = _flagEmoji(countryName);
+    if (emoji != null) {
+      return Center(
+        child: Text(
+          emoji,
+          style: TextStyle(fontSize: 17.sp),
+        ),
+      );
+    }
+
+    return Container(
+      color: const Color(0xFFEAF0F8),
+      alignment: Alignment.center,
+      child: Icon(
+        Icons.flag_outlined,
+        color: _softText,
+        size: 15.sp,
+      ),
+    );
+  }
+
+  Widget _prefixFlag(Object? logoUrl, Object? countryName) {
+    final String flagUrl = logoUrl?.toString().trim() ?? '';
+    if (flagUrl.isEmpty) return _fallbackFlag(countryName);
+
+    final String imageUrl = flagUrl;
+    final bool isSvg = imageUrl.toLowerCase().contains('.svg');
+
+    if (isSvg) {
+      return SvgPicture.network(
+        imageUrl,
+        height: 20,
+        width: 25,
+        fit: BoxFit.cover,
+        placeholderBuilder: (_) => _fallbackFlag(countryName),
+        errorBuilder: (_, __, ___) => _fallbackFlag(countryName),
+      );
+    }
+
+    return Image.network(
+      imageUrl,
+      height: 20,
+      width: 25,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return _fallbackFlag(countryName);
+      },
+    );
+  }
+
+  String _prefixDropdownKey(dynamic item, int index) {
+    final String countryName = item.countryName?.toString() ?? '';
+    final String displayName = _countryDisplayName(countryName);
+    final String phonePrefix = item.phonePrefix?.toString() ?? '';
+    final String id = item.id?.toString() ?? index.toString();
+    return '$displayName $countryName $phonePrefix $id';
+  }
+
+  String? _selectedPrefixKey(List<dynamic> prefixItems) {
+    if (selectedPhonePrefix == null) return null;
+
+    for (var index = 0; index < prefixItems.length; index++) {
+      if (_prefixDropdownKey(prefixItems[index], index) ==
+          selectedPhonePrefixKey) {
+        return selectedPhonePrefixKey;
+      }
+    }
+
+    final int countryMatchIndex = prefixItems.indexWhere((item) =>
+        item.phonePrefix?.toString() == selectedPhonePrefix &&
+        item.countryName?.toString() == selectedCountry);
+    if (countryMatchIndex >= 0) {
+      return _prefixDropdownKey(
+          prefixItems[countryMatchIndex], countryMatchIndex);
+    }
+
+    final int prefixMatchIndex = prefixItems.indexWhere(
+        (item) => item.phonePrefix?.toString() == selectedPhonePrefix);
+    if (prefixMatchIndex >= 0) {
+      return _prefixDropdownKey(
+          prefixItems[prefixMatchIndex], prefixMatchIndex);
+    }
+
+    return null;
+  }
+
+  Widget _phoneNumberFields() {
+    final double prefixWidth = (MediaQuery.of(context).size.width * 0.32)
+        .clamp(118.0, 145.0)
+        .toDouble();
+    const double prefixFieldHeight = _inputHeight - 2;
+
+    return FutureBuilder<CountryWisePrefixResModel?>(
+        future: phonePrefixList,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Error1();
+          } else if (!snapshot.hasData) {
+            return Row(
+              children: [
+                SizedBox(
+                  width: prefixWidth,
+                  child: AutoSizeText(
+                    S.of(context).pleaseWaitD,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        color: GlobalColors.gray.withValues(alpha: 0.8),
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w500),
+                  ),
+                ),
+                const SizedBox(width: 10.0),
+                Expanded(
+                  child: AutoSizeText(
+                    S.of(context).pleaseWaitD,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        color: GlobalColors.gray.withValues(alpha: 0.8),
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            );
+          } else {
+            final prefixItems = [...snapshot.data!.data!]..sort((a, b) =>
+                (a.countryName ?? '')
+                    .toString()
+                    .toLowerCase()
+                    .compareTo((b.countryName ?? '').toString().toLowerCase()));
+            final prefixItemsByKey = <String, dynamic>{
+              for (var index = 0; index < prefixItems.length; index++)
+                _prefixDropdownKey(prefixItems[index], index):
+                    prefixItems[index],
+            };
+
+            return Row(
+              children: [
+                SizedBox(
+                  width: prefixWidth,
+                  height: prefixFieldHeight,
+                  child: DropdownButtonWidget(
+                    label: S.of(context).prefix,
+                    bWidth: prefixWidth,
+                    dropWidth: 190.w,
+                    lPadding: 3,
+                    fillColor: Colors.white,
+                    borderColor: _fieldBorder,
+                    borderRadius: 12.r,
+                    iconColor: _primaryBlue,
+                    hintStyle: _dropdownHintStyle,
+                    height: prefixFieldHeight,
+                    buttonHeight: prefixFieldHeight - 2,
+                    buttonPadding: EdgeInsets.only(left: 10.w, right: 0),
+                    searchController: phonePrefixSearchController,
+                    items: prefixItems.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final e = entry.value;
+                      return DropdownMenuItem(
+                        value: _prefixDropdownKey(e, index),
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Row(
+                            children: [
+                              Container(
+                                height: 20,
+                                width: 25,
+                                decoration: BoxDecoration(
+                                    border: Border.all(
+                                        color: Colors.grey
+                                            .withValues(alpha: 0.4))),
+                                clipBehavior: Clip.antiAlias,
+                                child: _prefixFlag(e.logoUrl, e.countryName),
+                              ),
+                              const SizedBox(width: 5.0),
+                              Expanded(
+                                child: AutoSizeText(
+                                  '${_countryDisplayName(e.countryName)} ${e.phonePrefix ?? ''}',
+                                  maxLines: 1,
+                                  style: dopdownTextStyle,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    selectedItemBuilder: (context) {
+                      return prefixItems.map((e) {
+                        return Row(
+                          children: [
+                            Container(
+                              height: 20,
+                              width: 25,
+                              decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color:
+                                          Colors.grey.withValues(alpha: 0.4))),
+                              clipBehavior: Clip.antiAlias,
+                              child: _prefixFlag(e.logoUrl, e.countryName),
+                            ),
+                            SizedBox(width: 6.w),
+                            Flexible(
+                              child: AutoSizeText(
+                                e.phonePrefix ?? '',
+                                maxLines: 1,
+                                style: dopdownTextStyle,
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList();
+                    },
+                    onChanged: (newVal) async {
+                      final String key = newVal as String;
+                      final selectedPrefixItem = prefixItemsByKey[key];
+                      setState(() {
+                        selectedPhonePrefix =
+                            selectedPrefixItem?.phonePrefix?.toString();
+                        selectedPhonePrefixKey = key;
+                        phonePrefixSearchController.clear();
+                      });
+                      otpTypeList = getOtpTypeDropDown();
+                    },
+                    value: _selectedPrefixKey(prefixItems),
+                  ),
+                ),
+                const SizedBox(width: 10.0),
+                Expanded(
+                  child: SizedBox(
+                    height: _inputHeight,
+                    child: TextFormField(
+                      controller: mobileNumberController,
+                      cursorColor: _primaryBlue,
+                      decoration: _modernInputDecoration(
+                        hintText: 'Mobile number',
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: <TextInputFormatter>[
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9]*'))
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+        });
+  }
+
+  Widget _postalCodeField() {
+    return TextFormField(
+      controller: postalCodeController,
+      cursorColor: _primaryBlue,
+      decoration: _modernInputDecoration(
+        hintText: 'Postal/Zip Code (optional)',
+        icon: Icons.location_on_outlined,
+      ),
+    );
+  }
+
+  Widget _countryStateFields(LocationGetAllResModel locationList) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double fieldWidth = (constraints.maxWidth - 12.w) / 2;
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: fieldWidth,
+              child: DropdownButtonWidget(
+                label: 'Country',
+                bWidth: fieldWidth,
+                dropWidth: fieldWidth,
+                lPadding: 8,
+                fillColor: Colors.white,
+                borderColor: _fieldBorder,
+                borderRadius: 12.r,
+                iconColor: _primaryBlue,
+                hintStyle: _dropdownHintStyle,
+                searchController: countrySearchController,
+                items: locationList.data!.map((e) {
+                  return DropdownMenuItem(
+                    value: e.countryName,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 10),
+                      child: AutoSizeText(
+                        e.countryName!,
+                        maxLines: 1,
+                        style: dopdownTextStyle,
+                      ),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (newVal) async {
+                  setState(() {
+                    selectedCountry = newVal as String;
+                    iscountryChanged = true;
+                    countrySearchController.clear();
+                  });
+                  final locationID = locationList.data!.firstWhere(
+                      (element) => element.countryName == selectedCountry);
+                  previousPhonePrefix = locationID.phonePrefix;
+                  selectedPhonePrefix = locationID.phonePrefix;
+                  selectedPhonePrefixKey = null;
+                  selectedCountryID = locationID.id!;
+                  selectedCountryShortName = locationID.countryShortName;
+                  setState(() {
+                    selectedState = null;
+                    stateList = getState();
+                    if (AppVariables.locationEnabledStatus.value >= 2) {
+                      setState(() {
+                        nearByCharityForReg =
+                            getNearByCharityForReg(selectedCountryID!);
+                      });
+                    }
+                  });
+                },
+                value: selectedCountry,
+              ),
+            ),
+            SizedBox(width: 12.w),
+            SizedBox(
+              width: fieldWidth,
+              child: FutureBuilder<StateGetAllResModel?>(
+                future: stateList,
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return _placeholderField('State/Province');
+                  }
+
+                  if (snapshot.data!.data!.isEmpty) {
+                    return _placeholderField(S.of(context).noStateAvailable);
+                  }
+
+                  if (iscountryChanged == true) {
+                    return _placeholderField(S.of(context).pleaseWait);
+                  }
+
+                  return DropdownButtonWidget(
+                    label: 'State/Province',
+                    searchController: stateSearchController,
+                    bWidth: fieldWidth,
+                    dropWidth: fieldWidth,
+                    lPadding: 8,
+                    fillColor: Colors.white,
+                    borderColor: _fieldBorder,
+                    borderRadius: 12.r,
+                    iconColor: _primaryBlue,
+                    hintStyle: _dropdownHintStyle,
+                    items: snapshot.data!.data!.map((e) {
+                      return DropdownMenuItem(
+                        value: e.stateName,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 10),
+                          child: AutoSizeText(
+                            e.stateName!,
+                            maxLines: 1,
+                            style: dopdownTextStyle,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (newVal) async {
+                      setState(() {
+                        selectedState = newVal as String;
+                      });
+                      final stateID = snapshot.data!.data!.firstWhere(
+                          (element) => element.stateName == selectedState);
+                      selectedStateID = stateID.id;
+                    },
+                    value: selectedState,
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _gradientContinueButton() {
+    return Container(
+      width: double.infinity,
+      height: 54.h,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18.r),
+        gradient: const LinearGradient(
+          colors: [_primaryBlue, _ctaCyan],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _primaryBlue.withValues(alpha: 0.22),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18.r),
+          onTap: isLoading ? null : _submitRegistration,
+          child: Center(
+            child: isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 3,
+                    ),
+                  )
+                : Text(
+                    'Continue',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _submitRegistration() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    if (selectedCountry == null) {
+      GlobalSnackBar.valid(context, S.of(context).selectTheCountry);
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    } else if (selectedState == null) {
+      GlobalSnackBar.valid(context, S.of(context).pleaseSelectTheState);
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    } else if (firstNameController.text.isEmpty) {
+      GlobalSnackBar.valid(context, S.of(context).pleaseFillFirstName);
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    } else if (lastNameController.text.isEmpty) {
+      GlobalSnackBar.valid(context, S.of(context).pleaseFillLastName);
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    } else if (!reg.hasMatch(emailController.text) ||
+        emailController.text.isEmpty) {
+      GlobalSnackBar.valid(context, S.of(context).pleaseFillTheCorrectEmail);
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    } else if (passwordController.text.isEmpty) {
+      GlobalSnackBar.valid(context, S.of(context).pleaseFillThePassword);
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    } else if (confirmPassowrdController.text.isEmpty) {
+      GlobalSnackBar.valid(context, S.of(context).pleaseFillConfirmPassword);
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    } else if (confirmPassowrdController.text !=
+        passwordController.text.trim()) {
+      GlobalSnackBar.valid(context, S.of(context).confirmPasswordDoesNotMatch);
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    } else if (selectedPhonePrefix == null) {
+      GlobalSnackBar.valid(context, S.of(context).pleaseSelectPhonePrefix);
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    } else if (mobileNumberController.text.isEmpty) {
+      GlobalSnackBar.valid(
+          context, S.of(context).pleaseFillCorrectMobileNumber);
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    } else if (mobileNumberController.text.trim().length < 7) {
+      GlobalSnackBar.valid(
+          context, S.of(context).phoneNumberShouldBeAtLeast7Digits);
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    } else if ((previousPhonePrefix != selectedPhonePrefix) &&
+        selectedSmsValType == null) {
+      GlobalSnackBar.valid(
+          context, S.of(context).pleaseSelectSMSvalidationType);
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    } else if (postalCodeController.text.isNotEmpty &&
+        postalCodeController.text.length < 4) {
+      GlobalSnackBar.valid(
+          context, S.of(context).postalCodeShouldBeGreaterThan4Digits);
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    } else if (isChecked == false) {
+      GlobalSnackBar.valid(context, S.of(context).pleaseAcceptTermsConditions);
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    } else {
+      FocusManager.instance.primaryFocus?.unfocus();
+      checkProvider();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // List arr = S.of(context).iAgreeWithTheTermsAndCondition.split(" ");
     // List iagree = S.of(context).iAgreeWithTheTermsAndCondition.split("&");
     return SafeArea(
       child: Scaffold(
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: CustomAppBar(
-            text: S.of(context).registration,
-            icon: Icons.arrow_back_ios,
-            onPressed: (() {
-              context.pop();
-            }),
-          ),
-        ),
+        backgroundColor: const Color(0xFFF8FAFE),
         body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
           builder: (context, state) {
             if (state == ConnectivityState.loading) {
@@ -299,1161 +1124,503 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           locationState.locationGetAll; //Location
                       return SingleChildScrollView(
                         padding: const EdgeInsets.only(bottom: 30),
-                        child: Container(
-                          margin: const EdgeInsets.all(10.0),
-                          padding: const EdgeInsets.all(20.0),
-                          decoration: BoxDecoration(
-                              color: GlobalColors.appWhiteBackgroundColor,
-                              borderRadius: BorderRadius.circular(5),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withValues(alpha: 0.2),
-                                  blurRadius: 4,
-                                  spreadRadius: 1,
-                                  offset: const Offset(2, 2),
-                                )
-                              ]),
-                          child: Column(
-                            children: [
-                              // Select Country
-                              SizedBox(
-                                width: double.infinity,
-                                child: DropdownButtonWidget(
-                                  label: S
-                                      .of(context)
-                                      .selectCountryA
-                                      .replaceFirst('Prefix', ''),
-                                  lPadding: 15,
-                                  searchController: countrySearchController,
-                                  items: locationList.data!.map((e) {
-                                    return DropdownMenuItem(
-                                      value: e.countryName,
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 20),
-                                        child: AutoSizeText(
-                                          e.countryName!,
-                                          style: dopdownTextStyle,
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: (newVal) async {
-                                    setState(() {
-                                      selectedCountry = newVal as String;
-                                      iscountryChanged = true;
-                                      countrySearchController.clear();
-                                    });
-                                    final locationID = locationList.data!
-                                        .firstWhere((element) =>
-                                            element.countryName ==
-                                            selectedCountry);
-                                    previousPhonePrefix =
-                                        locationID.phonePrefix;
-                                    selectedPhonePrefix =
-                                        locationID.phonePrefix;
-                                    selectedCountryID = locationID.id!;
-                                    selectedCountryShortName =
-                                        locationID.countryShortName;
-                                    //calling the state api
-                                    setState(() {
-                                      selectedState = null;
-                                      stateList = getState();
-                                      if (AppVariables
-                                              .locationEnabledStatus.value >=
-                                          2) {
-                                        setState(() {
-                                          nearByCharityForReg =
-                                              getNearByCharityForReg(
-                                                  selectedCountryID!);
-                                        });
-                                      }
-                                    });
-                                  },
-                                  value: selectedCountry,
+                        child: Column(
+                          children: [
+                            _registrationHeader(context),
+                            Transform.translate(
+                              offset: const Offset(0, -20),
+                              child: Container(
+                                margin: EdgeInsets.symmetric(horizontal: 16.w),
+                                padding:
+                                    EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 22.h),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(24.r),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          Colors.black.withValues(alpha: 0.08),
+                                      blurRadius: 24,
+                                      offset: const Offset(0, 12),
+                                    )
+                                  ],
                                 ),
-                              ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    _sectionHeader(
+                                        Icons.person_outline, 'Your Details'),
+                                    _countryStateFields(locationList),
+                                    const SizedBox(height: 15),
+                                    _postalCodeField(),
+                                    const SizedBox(height: 15),
 
-                              const SizedBox(height: 15),
-
-                              // Select State
-                              FutureBuilder<StateGetAllResModel?>(
-                                  future: stateList,
-                                  builder: (context, snapshot) {
-                                    if (!snapshot.hasData) {
-                                      return Container(
-                                        padding: const EdgeInsets.only(
-                                            left: 25, right: 25, top: 15),
-                                        height: 50.h,
-                                        width: double.infinity,
-                                        decoration: BoxDecoration(
-                                          color: GlobalColors.paleGray,
-                                          borderRadius:
-                                              BorderRadius.circular(5.0),
-                                        ),
-                                        child: AutoSizeText(
-                                          S.of(context).selectStateProvince,
-                                          style: TextStyle(
-                                              color: GlobalColors.gray
-                                                  .withValues(alpha: 0.8),
-                                              fontSize: 15.sp,
-                                              fontWeight: FontWeight.w500),
-                                        ),
-                                      );
-                                    } else {
-                                      return Container(
-                                        height: 50.h,
-                                        width: double.infinity,
-                                        decoration: BoxDecoration(
-                                          color: GlobalColors.paleGray,
-                                          borderRadius:
-                                              BorderRadius.circular(5.0),
-                                        ),
-                                        child: snapshot.data!.data!.isEmpty
-                                            ? Padding(
-                                                padding: const EdgeInsets.only(
-                                                    top: 15.0,
-                                                    left: 25.0,
-                                                    right: 25.0),
-                                                child: AutoSizeText(
-                                                  S
-                                                      .of(context)
-                                                      .noStateAvailable,
-                                                  style: locationStyle.copyWith(
-                                                      fontWeight:
-                                                          FontWeight.w500),
-                                                ),
-                                              )
-                                            : iscountryChanged == true
-                                                ? Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            top: 15,
-                                                            left: 25,
-                                                            right: 25),
-                                                    child: AutoSizeText(
-                                                      S.of(context).pleaseWait,
-                                                      style: locationStyle
-                                                          .copyWith(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w500),
-                                                    ),
-                                                  )
-                                                : DropdownButtonWidget(
-                                                    label: S
-                                                        .of(context)
-                                                        .selectStateProvince,
-                                                    searchController:
-                                                        stateSearchController,
-                                                    lPadding: 15,
-                                                    items: snapshot.data!.data!
-                                                        .map((e) {
-                                                      return DropdownMenuItem(
-                                                        value: e.stateName,
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  left: 20),
-                                                          child: Text(
-                                                            e.stateName!,
-                                                            style:
-                                                                dopdownTextStyle,
-                                                          ),
-                                                        ),
-                                                      );
-                                                    }).toList(),
-                                                    onChanged: (newVal) async {
-                                                      setState(() {
-                                                        selectedState =
-                                                            newVal as String;
-                                                      });
-                                                      final stateID = snapshot
-                                                          .data!.data!
-                                                          .firstWhere((element) =>
-                                                              element
-                                                                  .stateName ==
-                                                              selectedState);
-                                                      selectedStateID =
-                                                          stateID.id;
-                                                    },
-                                                    value: selectedState,
-                                                  ),
-                                      );
-                                    }
-                                  }),
-                              const SizedBox(height: 15),
-
-                              // Scan Provider code
-                              Row(
-                                children: [
-                                  Expanded(
-                                    flex: 15,
-                                    child: TextFormField(
-                                      controller: providerController,
-                                      cursorColor: GlobalColors.appColor,
-                                      decoration: textInputDecoration1.copyWith(
-                                          // label: GestureDetector(
-                                          //   onTap: () {
-                                          //     log('he');
-                                          //     const Tooltip(
-                                          //       message: 'Hello this is issuer code s',
-                                          //     );
-                                          //   },
-                                          //   child: const Icon(
-                                          //     Icons.info,
-                                          //     size: 30,
-                                          //     color: GlobalColors.appColor,
-                                          //   ),
-                                          // ),
-                                          // floatingLabelBehavior:
-                                          //     FloatingLabelBehavior.always,
-                                          hintText: S
-                                              .of(context)
-                                              .enterOrScanIssuerCode,
-                                          suffixIcon: GestureDetector(
-                                            onTap: () {
-                                              context.pushNamed('qr_screen',
-                                                  extra: {
-                                                    'title': S
-                                                        .of(context)
-                                                        .scanIssuerCode
-                                                  }).then((value) {
-                                                // log(value.toString());
-                                                if (value != null) {
-                                                  providerScanResult(
-                                                      value.toString());
-                                                }
-                                              });
-                                            },
-                                            // providerScanResult(),
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 20),
-                                              child: Image.asset(
-                                                "assets/images/icon_qr_code.png",
-                                                color: GlobalColors.appColor,
-                                                height: 20,
-                                                width: 20,
-                                              ),
-                                            ),
-                                          )),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: isSlugLoading
-                                        ? const SizedBox(
-                                            height: 20,
-                                            width: 20,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 1,
-                                              color: GlobalColors.appColor,
-                                              backgroundColor:
-                                                  GlobalColors.appColor1,
-                                            ),
-                                          )
-                                        : GestureDetector(
-                                            onTap: () async {
-                                              await getAppSlugs('issuer-code');
-                                              dialogInfo(infoMessage ?? '__');
-                                              FocusManager.instance.primaryFocus
-                                                  ?.unfocus();
-                                            },
-                                            child: const Icon(
-                                              Icons.info,
-                                              size: 25,
-                                              color: GlobalColors.appColor,
-                                            )),
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(height: 15),
-
-                              // First Name
-                              TextFormField(
-                                controller: firstNameController,
-                                cursorColor: GlobalColors.appColor,
-                                decoration: textInputDecoration1.copyWith(
-                                    hintText: S.of(context).firstName),
-                              ),
-
-                              const SizedBox(height: 15),
-
-                              // Last Name
-                              TextFormField(
-                                controller: lastNameController,
-                                cursorColor: GlobalColors.appColor,
-                                decoration: textInputDecoration1.copyWith(
-                                    hintText: S.of(context).lastName),
-                              ),
-                              const SizedBox(height: 15),
-
-                              // E-mail
-                              TextFormField(
-                                controller: emailController,
-                                cursorColor: GlobalColors.appColor,
-                                decoration: textInputDecoration1.copyWith(
-                                    hintText: S.of(context).email),
-                              ),
-                              const SizedBox(height: 15),
-
-                              // Password
-                              TextFormField(
-                                controller: passwordController,
-                                cursorColor: GlobalColors.appColor,
-                                decoration: textInputDecoration1.copyWith(
-                                  hintText: S.of(context).passwordA,
-                                  suffix: GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        _isHidden = !_isHidden;
-                                      });
-                                    },
-                                    child: _isHidden
-                                        ? const Icon(
-                                            Icons.visibility_off,
-                                            size: 20,
-                                          )
-                                        : const Icon(
-                                            Icons.visibility,
-                                            size: 20,
-                                          ),
-                                  ),
-                                ),
-                                obscureText: _isHidden,
-                              ),
-
-                              const SizedBox(height: 15),
-
-                              // Confirm Password
-                              TextFormField(
-                                controller: confirmPassowrdController,
-                                cursorColor: GlobalColors.appColor,
-                                decoration: textInputDecoration1.copyWith(
-                                  hintText: S.of(context).confirmPasswordA,
-                                  suffix: GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        _isHidden1 = !_isHidden1;
-                                      });
-                                    },
-                                    child: _isHidden1
-                                        ? const Icon(
-                                            Icons.visibility_off,
-                                            size: 20,
-                                          )
-                                        : const Icon(
-                                            Icons.visibility,
-                                            size: 20,
-                                          ),
-                                  ),
-                                ),
-                                obscureText: _isHidden1,
-                              ),
-
-                              const SizedBox(height: 15),
-
-                              FutureBuilder<CountryWisePrefixResModel?>(
-                                  future: phonePrefixList,
-                                  builder: (context, snapshot) {
-                                    if (snapshot.hasError) {
-                                      return const Error1();
-                                    } else if (!snapshot.hasData) {
-                                      return Row(
-                                        children: [
-                                          Expanded(
-                                            flex: 4,
-                                            child: AutoSizeText(
-                                              S.of(context).pleaseWaitD,
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                  color: GlobalColors.gray
-                                                      .withValues(alpha: 0.8),
-                                                  fontSize: 15.sp,
-                                                  fontWeight: FontWeight.w500),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            flex: 6,
-                                            child: AutoSizeText(
-                                              S.of(context).pleaseWaitD,
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                  color: GlobalColors.gray
-                                                      .withValues(alpha: 0.8),
-                                                  fontSize: 15.sp,
-                                                  fontWeight: FontWeight.w500),
-                                            ),
-                                          ),
-                                        ],
-                                      );
-                                    } else {
-                                      return Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            flex: 4,
-                                            child: SizedBox(
-                                              height: 55.h,
-                                              child: DropdownButtonWidget(
-                                                label: S.of(context).prefix,
-                                                // 'Prefix*',
-                                                dropWidth: 140.w,
-                                                lPadding: 3,
-                                                searchController:
-                                                    phonePrefixSearchController,
-                                                items: snapshot.data!.data!
-                                                    .map((e) {
-                                                  return DropdownMenuItem(
-                                                    value: e.phonePrefix,
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              left: 8.0),
-                                                      child: Row(
-                                                        children: [
-                                                          Container(
-                                                            height: 20,
-                                                            width: 25,
-                                                            decoration: BoxDecoration(
-                                                                border: Border.all(
-                                                                    color: Colors
-                                                                        .grey
-                                                                        .withValues(
-                                                                            alpha:
-                                                                                0.4))),
-                                                            child:
-                                                                Image.network(
-                                                              e.logoUrl ??
-                                                                  '', // Pass empty string if null to trigger the errorBuilder
-                                                              fit: BoxFit.fill,
-                                                              errorBuilder:
-                                                                  (context,
-                                                                      error,
-                                                                      stackTrace) {
-                                                                // If the image fails to load, show a default flag icon instead of a broken box
-                                                                return const Icon(
-                                                                  Icons.flag,
-                                                                  size: 20,
-                                                                  color: Colors
-                                                                      .grey,
-                                                                );
-                                                              },
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                            width: 5.0,
-                                                          ),
-                                                          AutoSizeText(
-                                                            e.phonePrefix!,
-                                                            style:
-                                                                dopdownTextStyle,
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  );
-                                                }).toList(),
-                                                onChanged: (newVal) async {
-                                                  setState(() {
-                                                    selectedPhonePrefix =
-                                                        newVal as String;
-                                                    phonePrefixSearchController
-                                                        .clear();
-                                                  });
-                                                  otpTypeList =
-                                                      getOtpTypeDropDown();
-                                                },
-                                                value: selectedPhonePrefix,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(
-                                            width: 10.0,
-                                          ),
-                                          Expanded(
-                                            flex: 6,
-                                            child: TextFormField(
-                                              controller:
-                                                  mobileNumberController,
-                                              cursorColor:
-                                                  GlobalColors.appColor,
-                                              decoration:
-                                                  textInputDecoration1.copyWith(
-                                                hintText:
-                                                    S.of(context).mobNumWop,
-                                              ),
-                                              keyboardType:
-                                                  TextInputType.number,
-                                              inputFormatters: <TextInputFormatter>[
-                                                FilteringTextInputFormatter
-                                                    .allow(RegExp(r'[0-9]*'))
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      );
-                                    }
-                                  }),
-                              const SizedBox(height: 15),
-
-                              previousPhonePrefix != selectedPhonePrefix
-                                  ? Column(children: [
-                                      const SizedBox(height: 15),
-                                      AutoSizeText(
-                                        S
-                                            .of(context)
-                                            .mobileNumberPrefixIsDifferentThanTheCountryYouHaveChosenPleaseChooseOneOfTheFollowingOptionForMobileNumberVerification,
-                                        //     'Mobile Number prefix is different than the country you have chosen. Please choose one of the following option for Mobile Number Verification',
-                                        style: noteTextStyle,
-                                      ),
-                                      const SizedBox(height: 15),
-                                      // Select SMS service
-                                      FutureBuilder<SmsValidationModel?>(
-                                          future: otpTypeList,
-                                          builder: (context, snapshot) {
-                                            if (snapshot.hasError) {
-                                              return Container(
-                                                padding: const EdgeInsets.only(
-                                                    left: 25,
-                                                    right: 25,
-                                                    top: 15),
-                                                height: 50.h,
-                                                width: double.infinity,
-                                                decoration: BoxDecoration(
-                                                  color: GlobalColors.paleGray,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          5.0),
-                                                ),
-                                                child: AutoSizeText(
-                                                  S.of(context).error,
-                                                  // 'Error',
-                                                  style: TextStyle(
-                                                      color: GlobalColors.gray
-                                                          .withValues(
-                                                              alpha: 0.8),
-                                                      fontSize: 15.sp,
-                                                      fontWeight:
-                                                          FontWeight.w500),
-                                                ),
-                                              );
-                                            } else if (!snapshot.hasData) {
-                                              return Container(
-                                                padding: const EdgeInsets.only(
-                                                    left: 25,
-                                                    right: 25,
-                                                    top: 15),
-                                                height: 50.h,
-                                                width: double.infinity,
-                                                decoration: BoxDecoration(
-                                                  color: GlobalColors.paleGray,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          5.0),
-                                                ),
-                                                child: AutoSizeText(
-                                                  S.of(context).pleaseWaitD,
-                                                  // 'Please wait...',
-                                                  textAlign: TextAlign.center,
-                                                  style: TextStyle(
-                                                      color: GlobalColors.gray
-                                                          .withValues(
-                                                              alpha: 0.8),
-                                                      fontSize: 15.sp,
-                                                      fontWeight:
-                                                          FontWeight.w500),
-                                                ),
-                                              );
-                                            } else {
-                                              return Container(
-                                                height: 50.h,
-                                                width: double.infinity,
-                                                decoration: BoxDecoration(
-                                                  color: GlobalColors.paleGray,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          5.0),
-                                                ),
-                                                child: snapshot
-                                                        .data!.data!.isEmpty
-                                                    ? Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .only(
-                                                                top: 15.0,
-                                                                left: 25.0,
-                                                                right: 25.0),
-                                                        child: AutoSizeText(
-                                                          S
-                                                              .of(context)
-                                                              .noSmsTypeAvailable,
-                                                          // 'No Sms Type Available',
-                                                          style: locationStyle
-                                                              .copyWith(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w500),
-                                                        ),
-                                                      )
-                                                    : DropdownButtonWidget(
-                                                        label: S
-                                                            .of(context)
-                                                            .selectServiceForSMSValidation,
-                                                        //   'Select Service for SMS Validation*',
-                                                        searchController:
-                                                            otpSearchController,
-                                                        items: snapshot
-                                                            .data!.data!
-                                                            .map((e) {
-                                                          return DropdownMenuItem(
-                                                            value: e
-                                                                .mediumDisplayName,
-                                                            child: Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .only(
-                                                                      left: 25),
-                                                              child: Text(
-                                                                e.mediumDisplayName
-                                                                    .toString(),
-                                                                style:
-                                                                    dopdownTextStyle,
-                                                              ),
-                                                            ),
-                                                          );
-                                                        }).toList(),
-                                                        onChanged:
-                                                            (newVal) async {
-                                                          setState(() {
-                                                            selectedSmsValType =
-                                                                newVal
-                                                                    as String;
-                                                          });
-                                                          final smsID = snapshot
-                                                              .data!.data!
-                                                              .firstWhere((element) =>
-                                                                  element
-                                                                      .mediumDisplayName ==
-                                                                  selectedSmsValType);
-                                                          smsOtpMedium =
-                                                              smsID.medium;
-                                                        },
-                                                        value:
-                                                            selectedSmsValType,
-                                                      ),
-                                              );
-                                            }
-                                          }),
-                                      const SizedBox(
-                                        height: 10,
-                                      )
-                                    ])
-                                  : const SizedBox(),
-
-                              // Postal/Zip code
-                              TextFormField(
-                                controller: postalCodeController,
-                                cursorColor: GlobalColors.appColor,
-                                decoration: textInputDecoration1.copyWith(
-                                    hintText:
-                                        '${S.of(context).postalZipCode} (optional)'),
-                              ),
-                              const SizedBox(height: 15),
-
-                              // Premium member code (optional)
-                              TextFormField(
-                                controller: premiumController,
-                                cursorColor: GlobalColors.appColor,
-                                decoration: textInputDecoration1.copyWith(
-                                  hintText: S.of(context).preCode,
-                                ),
-                              ),
-                              const SizedBox(height: 15),
-
-                              // Referral Code (optional)
-                              Row(
-                                children: [
-                                  Expanded(
-                                    flex: 15,
-                                    child: TextFormField(
-                                      controller: referralCodeController,
-                                      cursorColor: GlobalColors.appColor,
-                                      decoration: textInputDecoration1.copyWith(
-                                          hintText: S.of(context).refCode,
-                                          // 'Referral Code from Your Family/Friends (optional)',
-                                          hintMaxLines: 2,
-                                          suffixIcon: GestureDetector(
-                                            onTap: () {
-                                              context.pushNamed('qr_screen',
-                                                  extra: {
-                                                    'title': S
-                                                        .of(context)
-                                                        .scanReferralCode
-                                                  }).then((vaz) {
-                                                if (vaz != null) {
-                                                  referralCodeScanResult(
-                                                      vaz.toString());
-                                                }
-                                              });
-                                            },
-                                            // =>referralCodeScanResult(),
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 20),
-                                              child: Image.asset(
-                                                "assets/images/icon_qr_code.png",
-                                                color: GlobalColors.appColor,
-                                                height: 20,
-                                                width: 20,
-                                              ),
-                                            ),
-                                          )),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: isSlugLoading1
-                                        ? const SizedBox(
-                                            height: 20,
-                                            width: 20,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 1,
-                                              color: GlobalColors.appColor,
-                                              backgroundColor:
-                                                  GlobalColors.appColor1,
-                                            ),
-                                          )
-                                        : GestureDetector(
-                                            onTap: () async {
-                                              await getAppSlugs(
-                                                  'referral-code');
-                                              dialogInfo(infoMessage ?? '__');
-                                              FocusManager.instance.primaryFocus
-                                                  ?.unfocus();
-                                            },
-                                            child: const Icon(
-                                              Icons.info,
-                                              size: 25,
-                                              color: GlobalColors.appColor,
-                                            )),
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(height: 15),
-
-                              // Select Charity
-
-                              // FutureBuilder<NearByCharityListResModel?>(
-                              //     future: nearByCharityForReg,
-                              //     builder: (context, snapshot) {
-                              //       if (!snapshot.hasData) {
-                              //         return Container(
-                              //           padding: const EdgeInsets.only(
-                              //               left: 25, right: 25, top: 15),
-                              //           height: 50.h,
-                              //           width: double.infinity,
-                              //           decoration: BoxDecoration(
-                              //             color: GlobalColors.paleGray,
-                              //             borderRadius:
-                              //                 BorderRadius.circular(5.0),
-                              //           ),
-                              //           child: InkWell(
-                              //             onTap: () {
-                              //               if (selectedCountryID == null) {
-                              //                 GlobalSnackBar.valid(
-                              //                     context,
-                              //                     S
-                              //                         .of(context)
-                              //                         .pleaseSelectCountryFirstToSelectCharity);
-                              //               } else if (AppVariables
-                              //                       .locationEnabledStatus
-                              //                       .value <
-                              //                   2) {
-                              //                 LocationService()
-                              //                     .enableLocationAndFetchCountry()
-                              //                     .then((value) {
-                              //                   if (value == true) {
-                              //                     setState(() {
-                              //                       nearByCharityForReg =
-                              //                           getNearByCharityForReg(
-                              //                               selectedCountryID!);
-                              //                     });
-                              //                   }
-                              //                 });
-                              //               }
-                              //             },
-                              //             child: AutoSizeText(
-                              //               S.of(context).selectCharity,
-                              //               // 'Select Charity',
-                              //               style: TextStyle(
-                              //                   color: GlobalColors.gray
-                              //                       .withValues(alpha: 0.8),
-                              //                   fontSize: 15.sp,
-                              //                   fontWeight: FontWeight.w500),
-                              //             ),
-                              //           ),
-                              //         );
-                              //       } else {
-                              //         return Container(
-                              //           height: 50.h,
-                              //           width: double.infinity,
-                              //           decoration: BoxDecoration(
-                              //             color: GlobalColors.paleGray,
-                              //             borderRadius:
-                              //                 BorderRadius.circular(5.0),
-                              //           ),
-                              //           child: snapshot.data!.data!.isEmpty
-                              //               ? Padding(
-                              //                   padding: const EdgeInsets.only(
-                              //                       top: 15.0,
-                              //                       left: 25.0,
-                              //                       right: 25.0),
-                              //                   child: AutoSizeText(
-                              //                     S
-                              //                         .of(context)
-                              //                         .noCharityAvailable,
-                              //                     style: locationStyle.copyWith(
-                              //                         fontWeight:
-                              //                             FontWeight.w500),
-                              //                   ),
-                              //                 )
-                              //               : iscountryChanged == true
-                              //                   ? Padding(
-                              //                       padding:
-                              //                           const EdgeInsets.only(
-                              //                               top: 15,
-                              //                               left: 25,
-                              //                               right: 25),
-                              //                       child: AutoSizeText(
-                              //                         S.of(context).pleaseWait,
-                              //                         style: locationStyle
-                              //                             .copyWith(
-                              //                                 fontWeight:
-                              //                                     FontWeight
-                              //                                         .w500),
-                              //                       ),
-                              //                     )
-                              //                   : DropdownButtonWidget(
-                              //                       label: S
-                              //                           .of(context)
-                              //                           .selectCharity,
-                              //                       searchController:
-                              //                           stateSearchController,
-                              //                       isExpanded: true,
-                              //                       bWidth: double.infinity,
-                              //                       iHeight: 35,
-                              //                       dropHeight: 175,
-                              //                       searchHeight: 40,
-                              //                       items: snapshot.data!.data!
-                              //                           .map((e) {
-                              //                         return DropdownMenuItem(
-                              //                           value: e.charityName,
-                              //                           child: Padding(
-                              //                             padding:
-                              //                                 const EdgeInsets
-                              //                                     .only(
-                              //                               left: 25,
-                              //                               top: 0,
-                              //                               bottom: 0,
-                              //                             ),
-                              //                             child: AutoSizeText(
-                              //                               e.charityName!,
-                              //                               style:
-                              //                                   dopdownTextStyle,
-                              //                             ),
-                              //                           ),
-                              //                         );
-                              //                       }).toList(),
-                              //                       onChanged: (newVal) async {
-                              //                         setState(() {
-                              //                           selectedCharity =
-                              //                               newVal as String;
-                              //                         });
-                              //                         final charityIDD = snapshot
-                              //                             .data!.data!
-                              //                             .firstWhere((element) =>
-                              //                                 element
-                              //                                     .charityName ==
-                              //                                 selectedCharity);
-                              //                         selectedCharityID =
-                              //                             charityIDD.id;
-                              //                       },
-                              //                       value: selectedCharity,
-                              //                     ),
-                              //         );
-                              //       }
-                              //     }),
-
-                              const SizedBox(height: 15),
-                              // I agree with the Term and Condition
-                              Row(
-                                children: [
-                                  Expanded(
-                                    flex: 1,
-                                    child: Checkbox(
-                                      checkColor: Colors.white,
-                                      activeColor: GlobalColors.appColor,
-                                      side: const BorderSide(
-                                          width: 2,
-                                          color: GlobalColors.appColor),
-                                      // fillColor: WidgetStateProperty.all(
-                                      //     GlobalColors.appColor),
-                                      value: isChecked,
-                                      // shape: const CircleBorder(),
-                                      onChanged: (bool? value) {
-                                        setState(() {
-                                          isChecked = value!;
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(width: 7),
-                                  Expanded(
-                                    flex: 9,
-                                    child: Row(
+                                    Row(
                                       children: [
                                         Expanded(
-                                          child: Text.rich(
-                                            TextSpan(
-                                              text: S
-                                                  .of(context)
-                                                  .iAgreeWithTheTermsAndCondition
-                                                  .replaceAll('&C', ''),
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                              children: [
-                                                TextSpan(
-                                                  text: S
-                                                      .of(context)
-                                                      .iAgreeWithTheTermsAndCondition
-                                                      .replaceAll(
-                                                          'I agree with the',
-                                                          '')
-                                                      .replaceAll(
-                                                          '&C',
-                                                          S
-                                                              .of(context)
-                                                              .termsAndConditions),
-                                                  style: const TextStyle(
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w500,
-                                                    decoration: TextDecoration
-                                                        .underline,
-                                                    color:
-                                                        GlobalColors.appColor,
-                                                  ),
-                                                  recognizer:
-                                                      TapGestureRecognizer()
-                                                        ..onTap = () {
-                                                          context.pushNamed(
-                                                              'terms-condition'); // Navigate to terms
-                                                        },
-                                                ),
-                                              ],
+                                          child: TextFormField(
+                                            controller: firstNameController,
+                                            cursorColor: _primaryBlue,
+                                            decoration: _modernInputDecoration(
+                                              hintText: S.of(context).firstName,
+                                              icon: Icons.person_outline,
                                             ),
-                                            maxLines: 2,
+                                          ),
+                                        ),
+                                        SizedBox(width: 12.w),
+                                        Expanded(
+                                          child: TextFormField(
+                                            controller: lastNameController,
+                                            cursorColor: _primaryBlue,
+                                            decoration: _modernInputDecoration(
+                                              hintText: S.of(context).lastName,
+                                            ),
                                           ),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 15),
+                                    const SizedBox(height: 15),
 
-                              // submit Registration
-                              isLoading == true
-                                  ? const CustomButtonWithCircular()
-                                  : CustomButton(
-                                      text: S.of(context).submit,
-                                      onPressed: () async {
-                                        setState(() {
-                                          isLoading = true;
-                                        });
-
-                                        if (selectedCountry == null) {
-                                          GlobalSnackBar.valid(context,
-                                              S.of(context).selectTheCountry);
-                                          setState(() {
-                                            isLoading = false;
-                                          });
-                                          return;
-                                        } else if (selectedState == null) {
-                                          GlobalSnackBar.valid(
-                                              context,
-                                              S
-                                                  .of(context)
-                                                  .pleaseSelectTheState);
-                                          setState(() {
-                                            isLoading = false;
-                                          });
-                                          return;
-                                        } else if (firstNameController
-                                            .text.isEmpty) {
-                                          GlobalSnackBar.valid(
-                                              context,
-                                              S
-                                                  .of(context)
-                                                  .pleaseFillFirstName);
-                                          setState(() {
-                                            isLoading = false;
-                                          });
-                                          return;
-                                        } else if (lastNameController
-                                            .text.isEmpty) {
-                                          GlobalSnackBar.valid(context,
-                                              S.of(context).pleaseFillLastName);
-                                          setState(() {
-                                            isLoading = false;
-                                          });
-                                          return;
-                                        } else if (!reg.hasMatch(
-                                                emailController.text) ||
-                                            emailController.text.isEmpty) {
-                                          GlobalSnackBar.valid(
-                                              context,
-                                              S
-                                                  .of(context)
-                                                  .pleaseFillTheCorrectEmail);
-                                          setState(() {
-                                            isLoading = false;
-                                          });
-                                          return;
-                                        } else if (passwordController
-                                            .text.isEmpty) {
-                                          GlobalSnackBar.valid(
-                                              context,
-                                              S
-                                                  .of(context)
-                                                  .pleaseFillThePassword);
-                                          setState(() {
-                                            isLoading = false;
-                                          });
-                                          return;
-                                        } else if (confirmPassowrdController
-                                            .text.isEmpty) {
-                                          GlobalSnackBar.valid(
-                                              context,
-                                              S
-                                                  .of(context)
-                                                  .pleaseFillConfirmPassword);
-                                          setState(() {
-                                            isLoading = false;
-                                          });
-                                          return;
-                                        } else if (confirmPassowrdController
-                                                .text !=
-                                            passwordController.text.trim()) {
-                                          GlobalSnackBar.valid(
-                                              context,
-                                              S
-                                                  .of(context)
-                                                  .confirmPasswordDoesNotMatch);
-                                          setState(() {
-                                            isLoading = false;
-                                          });
-                                          return;
-                                        } else if (selectedPhonePrefix ==
-                                            null) {
-                                          GlobalSnackBar.valid(
-                                              context,
-                                              S
-                                                  .of(context)
-                                                  .pleaseSelectPhonePrefix);
-                                          setState(() {
-                                            isLoading = false;
-                                          });
-                                          return;
-                                        } else if (mobileNumberController
-                                            .text.isEmpty) {
-                                          GlobalSnackBar.valid(
-                                              context,
-                                              S
-                                                  .of(context)
-                                                  .pleaseFillCorrectMobileNumber);
-                                          setState(() {
-                                            isLoading = false;
-                                          });
-                                          return;
-                                        } else if (mobileNumberController.text
-                                                .trim()
-                                                .length <
-                                            7) {
-                                          GlobalSnackBar.valid(
-                                              context,
-                                              S
-                                                  .of(context)
-                                                  .phoneNumberShouldBeAtLeast7Digits);
-                                          setState(() {
-                                            isLoading = false;
-                                          });
-                                          return;
-                                        } else if ((previousPhonePrefix !=
-                                                selectedPhonePrefix) &&
-                                            selectedSmsValType == null) {
-                                          GlobalSnackBar.valid(
-                                              context,
-                                              S
-                                                  .of(context)
-                                                  .pleaseSelectSMSvalidationType);
-                                          setState(() {
-                                            isLoading = false;
-                                          });
-                                          return;
-                                        } else if (postalCodeController
-                                                .text.isNotEmpty &&
-                                            postalCodeController.text.length <
-                                                4) {
-                                          GlobalSnackBar.valid(
-                                              context,
-                                              S
-                                                  .of(context)
-                                                  .postalCodeShouldBeGreaterThan4Digits);
-                                          setState(() {
-                                            isLoading = false;
-                                          });
-                                          return;
-                                        } else if (isChecked == false) {
-                                          GlobalSnackBar.valid(
-                                              context,
-                                              S
-                                                  .of(context)
-                                                  .pleaseAcceptTermsConditions);
-                                          setState(() {
-                                            isLoading = false;
-                                          });
-                                          return;
-                                        } else {
-                                          // var checkingNum = await DioCommon()
-                                          //     .checkCounNum(
-                                          //         mobileNum: mobileNumberController
-                                          //             .text
-                                          //             .trim(),
-                                          //         code: selectedCountryShortName!);
-                                          // if (!mounted) return;
-                                          // if (checkingNum == false) {
-                                          //   GlobalSnackBar.valid(
-                                          //       context, checkNumError);
-                                          //   setState(() {
-                                          //     isLoading = false;
-                                          //   });
-                                          //   return;
-                                          // } else {
-                                          FocusManager.instance.primaryFocus
-                                              ?.unfocus();
-                                          checkProvider();
-                                          //   }
-                                        }
-                                      },
+                                    // E-mail
+                                    TextFormField(
+                                      controller: emailController,
+                                      cursorColor: _primaryBlue,
+                                      decoration: _modernInputDecoration(
+                                        hintText: S.of(context).email,
+                                        icon: Icons.email_outlined,
+                                      ),
                                     ),
-                            ],
-                          ),
+                                    const SizedBox(height: 15),
+
+                                    _phoneNumberFields(),
+                                    const SizedBox(height: 22),
+
+                                    _sectionHeader(Icons.lock_outline,
+                                        'Secure Your Account'),
+
+                                    // Password
+                                    TextFormField(
+                                      controller: passwordController,
+                                      cursorColor: _primaryBlue,
+                                      decoration: _modernInputDecoration(
+                                        hintText: S.of(context).passwordA,
+                                        icon: Icons.lock_outline,
+                                        suffixIcon: GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              _isHidden = !_isHidden;
+                                            });
+                                          },
+                                          child: Icon(
+                                            _isHidden
+                                                ? Icons.visibility_off_outlined
+                                                : Icons.visibility_outlined,
+                                            color: _softText,
+                                            size: 20,
+                                          ),
+                                        ),
+                                      ),
+                                      obscureText: _isHidden,
+                                    ),
+
+                                    const SizedBox(height: 15),
+
+                                    // Confirm Password
+                                    TextFormField(
+                                      controller: confirmPassowrdController,
+                                      cursorColor: _primaryBlue,
+                                      decoration: _modernInputDecoration(
+                                        hintText:
+                                            S.of(context).confirmPasswordA,
+                                        icon: Icons.lock_outline,
+                                        suffixIcon: GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              _isHidden1 = !_isHidden1;
+                                            });
+                                          },
+                                          child: Icon(
+                                            _isHidden1
+                                                ? Icons.visibility_off_outlined
+                                                : Icons.visibility_outlined,
+                                            color: _softText,
+                                            size: 20,
+                                          ),
+                                        ),
+                                      ),
+                                      obscureText: _isHidden1,
+                                    ),
+
+                                    previousPhonePrefix != selectedPhonePrefix
+                                        ? Column(children: [
+                                            const SizedBox(height: 15),
+                                            AutoSizeText(
+                                              'Your mobile country code differs from your selected country.',
+                                              style: noteTextStyle,
+                                            ),
+                                            const SizedBox(height: 15),
+                                            // Select SMS service
+                                            FutureBuilder<SmsValidationModel?>(
+                                                future: otpTypeList,
+                                                builder: (context, snapshot) {
+                                                  if (snapshot.hasError) {
+                                                    return _placeholderField(
+                                                        S.of(context).error);
+                                                  } else if (!snapshot
+                                                      .hasData) {
+                                                    return _placeholderField(S
+                                                        .of(context)
+                                                        .pleaseWaitD);
+                                                  } else {
+                                                    return Container(
+                                                      height: 50.h,
+                                                      width: double.infinity,
+                                                      decoration: BoxDecoration(
+                                                        color: GlobalColors
+                                                            .paleGray,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(5.0),
+                                                      ),
+                                                      child: snapshot.data!
+                                                              .data!.isEmpty
+                                                          ? Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .only(
+                                                                      top: 15.0,
+                                                                      left:
+                                                                          25.0,
+                                                                      right:
+                                                                          25.0),
+                                                              child:
+                                                                  AutoSizeText(
+                                                                S
+                                                                    .of(context)
+                                                                    .noSmsTypeAvailable,
+                                                                // 'No Sms Type Available',
+                                                                style: locationStyle.copyWith(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500),
+                                                              ),
+                                                            )
+                                                          : DropdownButtonWidget(
+                                                              label:
+                                                                  'SMS verification method',
+                                                              searchController:
+                                                                  otpSearchController,
+                                                              fillColor:
+                                                                  Colors.white,
+                                                              borderColor:
+                                                                  _fieldBorder,
+                                                              borderRadius:
+                                                                  12.r,
+                                                              iconColor:
+                                                                  _primaryBlue,
+                                                              hintStyle:
+                                                                  _dropdownHintStyle,
+                                                              items: snapshot
+                                                                  .data!.data!
+                                                                  .map((e) {
+                                                                return DropdownMenuItem(
+                                                                  value: e
+                                                                      .mediumDisplayName,
+                                                                  child:
+                                                                      Padding(
+                                                                    padding: const EdgeInsets
+                                                                        .only(
+                                                                        left:
+                                                                            25),
+                                                                    child: Text(
+                                                                      e.mediumDisplayName
+                                                                          .toString(),
+                                                                      style:
+                                                                          dopdownTextStyle,
+                                                                    ),
+                                                                  ),
+                                                                );
+                                                              }).toList(),
+                                                              onChanged:
+                                                                  (newVal) async {
+                                                                setState(() {
+                                                                  selectedSmsValType =
+                                                                      newVal
+                                                                          as String;
+                                                                });
+                                                                final smsID = snapshot
+                                                                    .data!.data!
+                                                                    .firstWhere((element) =>
+                                                                        element
+                                                                            .mediumDisplayName ==
+                                                                        selectedSmsValType);
+                                                                smsOtpMedium =
+                                                                    smsID
+                                                                        .medium;
+                                                              },
+                                                              value:
+                                                                  selectedSmsValType,
+                                                            ),
+                                                    );
+                                                  }
+                                                }),
+                                            const SizedBox(
+                                              height: 10,
+                                            )
+                                          ])
+                                        : const SizedBox(),
+
+                                    SizedBox(height: 22.h),
+                                    _promoCodeSection(),
+                                    const SizedBox(height: 15),
+
+                                    if (referralCodeController.text
+                                        .trim()
+                                        .isNotEmpty)
+                                      _appliedAttributionLabel(
+                                          'Referral applied'),
+
+                                    // Select Charity
+
+                                    // FutureBuilder<NearByCharityListResModel?>(
+                                    //     future: nearByCharityForReg,
+                                    //     builder: (context, snapshot) {
+                                    //       if (!snapshot.hasData) {
+                                    //         return Container(
+                                    //           padding: const EdgeInsets.only(
+                                    //               left: 25, right: 25, top: 15),
+                                    //           height: 50.h,
+                                    //           width: double.infinity,
+                                    //           decoration: BoxDecoration(
+                                    //             color: GlobalColors.paleGray,
+                                    //             borderRadius:
+                                    //                 BorderRadius.circular(5.0),
+                                    //           ),
+                                    //           child: InkWell(
+                                    //             onTap: () {
+                                    //               if (selectedCountryID == null) {
+                                    //                 GlobalSnackBar.valid(
+                                    //                     context,
+                                    //                     S
+                                    //                         .of(context)
+                                    //                         .pleaseSelectCountryFirstToSelectCharity);
+                                    //               } else if (AppVariables
+                                    //                       .locationEnabledStatus
+                                    //                       .value <
+                                    //                   2) {
+                                    //                 LocationService()
+                                    //                     .enableLocationAndFetchCountry()
+                                    //                     .then((value) {
+                                    //                   if (value == true) {
+                                    //                     setState(() {
+                                    //                       nearByCharityForReg =
+                                    //                           getNearByCharityForReg(
+                                    //                               selectedCountryID!);
+                                    //                     });
+                                    //                   }
+                                    //                 });
+                                    //               }
+                                    //             },
+                                    //             child: AutoSizeText(
+                                    //               S.of(context).selectCharity,
+                                    //               // 'Select Charity',
+                                    //               style: TextStyle(
+                                    //                   color: GlobalColors.gray
+                                    //                       .withValues(alpha: 0.8),
+                                    //                   fontSize: 15.sp,
+                                    //                   fontWeight: FontWeight.w500),
+                                    //             ),
+                                    //           ),
+                                    //         );
+                                    //       } else {
+                                    //         return Container(
+                                    //           height: 50.h,
+                                    //           width: double.infinity,
+                                    //           decoration: BoxDecoration(
+                                    //             color: GlobalColors.paleGray,
+                                    //             borderRadius:
+                                    //                 BorderRadius.circular(5.0),
+                                    //           ),
+                                    //           child: snapshot.data!.data!.isEmpty
+                                    //               ? Padding(
+                                    //                   padding: const EdgeInsets.only(
+                                    //                       top: 15.0,
+                                    //                       left: 25.0,
+                                    //                       right: 25.0),
+                                    //                   child: AutoSizeText(
+                                    //                     S
+                                    //                         .of(context)
+                                    //                         .noCharityAvailable,
+                                    //                     style: locationStyle.copyWith(
+                                    //                         fontWeight:
+                                    //                             FontWeight.w500),
+                                    //                   ),
+                                    //                 )
+                                    //               : iscountryChanged == true
+                                    //                   ? Padding(
+                                    //                       padding:
+                                    //                           const EdgeInsets.only(
+                                    //                               top: 15,
+                                    //                               left: 25,
+                                    //                               right: 25),
+                                    //                       child: AutoSizeText(
+                                    //                         S.of(context).pleaseWait,
+                                    //                         style: locationStyle
+                                    //                             .copyWith(
+                                    //                                 fontWeight:
+                                    //                                     FontWeight
+                                    //                                         .w500),
+                                    //                       ),
+                                    //                     )
+                                    //                   : DropdownButtonWidget(
+                                    //                       label: S
+                                    //                           .of(context)
+                                    //                           .selectCharity,
+                                    //                       searchController:
+                                    //                           stateSearchController,
+                                    //                       isExpanded: true,
+                                    //                       bWidth: double.infinity,
+                                    //                       iHeight: 35,
+                                    //                       dropHeight: 175,
+                                    //                       searchHeight: 40,
+                                    //                       items: snapshot.data!.data!
+                                    //                           .map((e) {
+                                    //                         return DropdownMenuItem(
+                                    //                           value: e.charityName,
+                                    //                           child: Padding(
+                                    //                             padding:
+                                    //                                 const EdgeInsets
+                                    //                                     .only(
+                                    //                               left: 25,
+                                    //                               top: 0,
+                                    //                               bottom: 0,
+                                    //                             ),
+                                    //                             child: AutoSizeText(
+                                    //                               e.charityName!,
+                                    //                               style:
+                                    //                                   dopdownTextStyle,
+                                    //                             ),
+                                    //                           ),
+                                    //                         );
+                                    //                       }).toList(),
+                                    //                       onChanged: (newVal) async {
+                                    //                         setState(() {
+                                    //                           selectedCharity =
+                                    //                               newVal as String;
+                                    //                         });
+                                    //                         final charityIDD = snapshot
+                                    //                             .data!.data!
+                                    //                             .firstWhere((element) =>
+                                    //                                 element
+                                    //                                     .charityName ==
+                                    //                                 selectedCharity);
+                                    //                         selectedCharityID =
+                                    //                             charityIDD.id;
+                                    //                       },
+                                    //                       value: selectedCharity,
+                                    //                     ),
+                                    //         );
+                                    //       }
+                                    //     }),
+
+                                    const SizedBox(height: 15),
+                                    // I agree with the Term and Condition
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          flex: 1,
+                                          child: Checkbox(
+                                            checkColor: Colors.white,
+                                            activeColor: _primaryBlue,
+                                            side: const BorderSide(
+                                                width: 2, color: _primaryBlue),
+                                            // fillColor: WidgetStateProperty.all(
+                                            //     GlobalColors.appColor),
+                                            value: isChecked,
+                                            // shape: const CircleBorder(),
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                isChecked = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        const SizedBox(width: 7),
+                                        Expanded(
+                                          flex: 9,
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text.rich(
+                                                  TextSpan(
+                                                    text: S
+                                                        .of(context)
+                                                        .iAgreeWithTheTermsAndCondition
+                                                        .replaceAll('&C', ''),
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                    children: [
+                                                      TextSpan(
+                                                        text: S
+                                                            .of(context)
+                                                            .iAgreeWithTheTermsAndCondition
+                                                            .replaceAll(
+                                                                'I agree with the',
+                                                                '')
+                                                            .replaceAll(
+                                                                '&C',
+                                                                S
+                                                                    .of(context)
+                                                                    .termsAndConditions),
+                                                        style: const TextStyle(
+                                                          fontSize: 13,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          decoration:
+                                                              TextDecoration
+                                                                  .underline,
+                                                          color: _primaryBlue,
+                                                        ),
+                                                        recognizer:
+                                                            TapGestureRecognizer()
+                                                              ..onTap = () {
+                                                                context.pushNamed(
+                                                                    'terms-condition'); // Navigate to terms
+                                                              },
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  maxLines: 2,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 15),
+
+                                    _gradientContinueButton(),
+                                    SizedBox(height: 14.h),
+                                    Text(
+                                      'Secure verification required before activation',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color:
+                                            _softText.withValues(alpha: 0.85),
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       );
                     }
