@@ -844,7 +844,7 @@ class _ChangeCountryState extends State<ChangeCountry> {
                                             .of(context)
                                             .topUpAndPayXY
                                             .replaceAll('&XY',
-                                                '${AppVariables.currency}${memPackAll.data![0].packageFee.toString()}'),
+                                                '${AppVariables.currency}${memPackAll.data![0].packageFee.toString()} inc GST'),
                                         onPressed: () async {
                                           stateMod(() {
                                             isLoadingB = true;

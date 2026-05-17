@@ -146,7 +146,7 @@ class TopUpWithCircular extends StatelessWidget {
           height: 24,
           padding: const EdgeInsets.all(2.0),
           child: CircularProgressIndicator(
-            color: circleColor ?? GlobalColors.appColor1,
+            color: circleColor ?? GlobalColors.loaderColor,
             strokeWidth: 3,
           ),
         ),
@@ -209,7 +209,7 @@ class CustomButtonWithCircular extends StatelessWidget {
           height: 24,
           padding: const EdgeInsets.all(2.0),
           child: const CircularProgressIndicator(
-            color: Colors.white,
+            color: GlobalColors.loaderColor,
             strokeWidth: 3,
           ),
         ),

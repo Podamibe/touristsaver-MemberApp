@@ -7,12 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:local_auth_android/local_auth_android.dart';
 import 'package:local_auth_darwin/local_auth_darwin.dart';
 import 'package:new_piiink/common/services/dio_common.dart';
-import 'package:new_piiink/common/widgets/custom_app_bar.dart';
 import 'package:new_piiink/common/widgets/custom_button.dart';
 import 'package:new_piiink/common/widgets/custom_loader.dart';
 import 'package:new_piiink/common/widgets/custom_snackbar.dart';
@@ -159,319 +159,608 @@ class _LoginScreenState extends State<LoginScreen> {
     context.pushReplacementNamed('paid-free'); // adjust route name
   }
 
+  static const Color _primaryBlue = Color(0xFF0009FE);
+  static const Color _ctaCyan = Color(0xFF18C6FF);
+  static const Color _screenBackground = Color(0xFFF8FAFE);
+  static const Color _fieldBorder = Color(0xFFD8DEEC);
+  static const Color _softText = Color(0xFF65708D);
+
+  InputDecoration _loginInputDecoration({
+    required String hintText,
+    required IconData icon,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: TextStyle(
+        color: _softText.withValues(alpha: 0.82),
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w500,
+      ),
+      prefixIcon: Icon(icon, color: _softText, size: 20),
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 15.h),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.r),
+        borderSide: const BorderSide(color: _fieldBorder),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.r),
+        borderSide: const BorderSide(color: _primaryBlue, width: 1.4),
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.r),
+        borderSide: const BorderSide(color: _fieldBorder),
+      ),
+    );
+  }
+
+  TextStyle get _dropdownHintStyle => TextStyle(
+        color: _softText.withValues(alpha: 0.82),
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w500,
+      );
+
+  String _countryDisplayName(Object? countryName) {
+    final String name = countryName?.toString() ?? '';
+    return name == 'United States of America' ? 'USA' : name;
+  }
+
+  String? _countryCodeForFlag(Object? countryName) {
+    switch (countryName?.toString()) {
+      case 'Australia':
+        return 'AU';
+      case 'Canada':
+        return 'CA';
+      case 'China':
+        return 'CN';
+      case 'Fiji':
+        return 'FJ';
+      case 'Germany':
+        return 'DE';
+      case 'India':
+        return 'IN';
+      case 'Indonesia':
+        return 'ID';
+      case 'Ireland':
+        return 'IE';
+      case 'Lao':
+        return 'LA';
+      case 'Malaysia':
+        return 'MY';
+      case 'New Zealand':
+        return 'NZ';
+      case 'Philippines':
+        return 'PH';
+      case 'Singapore':
+        return 'SG';
+      case 'South Africa':
+        return 'ZA';
+      case 'Thailand':
+        return 'TH';
+      case 'United Kingdom':
+        return 'GB';
+      case 'United States of America':
+        return 'US';
+      case 'Vietnam':
+        return 'VN';
+    }
+    return null;
+  }
+
+  String? _flagEmoji(Object? countryName) {
+    final String? countryCode = _countryCodeForFlag(countryName);
+    if (countryCode == null || countryCode.length != 2) return null;
+
+    final int firstLetter = countryCode.codeUnitAt(0) - 0x41 + 0x1F1E6;
+    final int secondLetter = countryCode.codeUnitAt(1) - 0x41 + 0x1F1E6;
+    return String.fromCharCodes([firstLetter, secondLetter]);
+  }
+
+  Widget _fallbackFlag(Object? countryName) {
+    final String? emoji = _flagEmoji(countryName);
+    if (emoji != null) {
+      return Center(
+        child: Text(
+          emoji,
+          style: TextStyle(fontSize: 17.sp),
+        ),
+      );
+    }
+
+    return Container(
+      color: const Color(0xFFEAF0F8),
+      alignment: Alignment.center,
+      child: Icon(
+        Icons.flag_outlined,
+        color: _softText,
+        size: 15.sp,
+      ),
+    );
+  }
+
+  Widget _prefixFlag(Object? logoUrl, Object? countryName) {
+    final String flagUrl = logoUrl?.toString().trim() ?? '';
+    if (flagUrl.isEmpty) return _fallbackFlag(countryName);
+
+    final bool isSvg = flagUrl.toLowerCase().contains('.svg');
+
+    if (isSvg) {
+      return SvgPicture.network(
+        flagUrl,
+        height: 20,
+        width: 25,
+        fit: BoxFit.cover,
+        placeholderBuilder: (_) => _fallbackFlag(countryName),
+        errorBuilder: (_, __, ___) => _fallbackFlag(countryName),
+      );
+    }
+
+    return Image.network(
+      flagUrl,
+      height: 20,
+      width: 25,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return _fallbackFlag(countryName);
+      },
+    );
+  }
+
+  phone_pre.Datum? _prefixMetaForCountry(
+    String? countryName,
+    String? phonePrefix,
+    List<phone_pre.Datum> phonePrefixItems,
+  ) {
+    for (final item in phonePrefixItems) {
+      if (item.countryName == countryName && item.phonePrefix == phonePrefix) {
+        return item;
+      }
+    }
+
+    for (final item in phonePrefixItems) {
+      if (item.countryName == countryName) return item;
+    }
+
+    for (final item in phonePrefixItems) {
+      if (item.phonePrefix == phonePrefix) return item;
+    }
+
+    return null;
+  }
+
+  Widget _countryPrefixRow({
+    required String? countryName,
+    required String? phonePrefix,
+    required Object? logoUrl,
+  }) {
+    return Row(
+      children: [
+        Container(
+          height: 20,
+          width: 25,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.withValues(alpha: 0.4)),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: _prefixFlag(logoUrl, countryName),
+        ),
+        SizedBox(width: 10.w),
+        Flexible(
+          child: AutoSizeText(
+            '${phonePrefix ?? ''} ${_countryDisplayName(countryName)}',
+            maxLines: 1,
+            style: dopdownTextStyle,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _backButton() {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.95),
+      shape: const CircleBorder(),
+      elevation: 0,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: () => context.goNamed('intro-screen'),
+        child: Padding(
+          padding: EdgeInsets.all(10.w),
+          child: Icon(
+            Icons.arrow_back_ios_new,
+            color: _primaryBlue,
+            size: 20.sp,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _gradientLoginButton() {
+    return Container(
+      width: double.infinity,
+      height: 54.h,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18.r),
+        gradient: const LinearGradient(
+          colors: [_primaryBlue, _ctaCyan],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _primaryBlue.withValues(alpha: 0.22),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18.r),
+          onTap: isLoading ? null : onLoginSubmit,
+          child: Center(
+            child: isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 3,
+                    ),
+                  )
+                : Text(
+                    S.of(context).logIn,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _loginButtonRow() {
+    final bool hasBiometric = AppVariables.isLocalAuthEnabled == true;
+    if (!hasBiometric) return _gradientLoginButton();
+
+    return Row(
+      children: [
+        Expanded(
+          flex: 7,
+          child: _gradientLoginButton(),
+        ),
+        SizedBox(width: 10.w),
+        Expanded(
+          flex: 2,
+          child: Container(
+            height: 54.h,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18.r),
+              border: Border.all(color: _fieldBorder),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18.r),
+              onTap: () async {
+                await readFromSharedPref();
+              },
+              child: Icon(
+                Icons.fingerprint,
+                color: _primaryBlue,
+                size: 32.sp,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GlobalColors.appWhiteBackgroundColor, // Clean background
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: CustomAppBar(
-          text: S.of(context).logIn,
-          // icon: Icons.arrow_back_ios,
-          // onPressed: () {
-          //   context.pop();
-          // },
-        ),
-      ),
-      body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
-        builder: (context, state) {
-          if (state == ConnectivityState.loading) {
-            return const NoInternetLoader();
-          } else if (state == ConnectivityState.disconnected) {
-            return const NoConnectivityScreen();
-          } else if (state == ConnectivityState.connected) {
-            return Align(
-                alignment: Alignment.topCenter,
-                // Centered on screen
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: BlocProvider(
-                    lazy: false,
-                    create: (context) => LocationAllBloc(
-                        RepositoryProvider.of<DioLocation>(context))
-                      ..add(LoadLocationAllEvent()),
+      backgroundColor: _screenBackground,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(18.w, 8.h, 18.w, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _backButton(),
+              ),
+            ),
+            Expanded(
+              child: BlocBuilder<ConnectivityCubit, ConnectivityState>(
+                builder: (context, state) {
+                  if (state == ConnectivityState.loading) {
+                    return const NoInternetLoader();
+                  } else if (state == ConnectivityState.disconnected) {
+                    return const NoConnectivityScreen();
+                  } else if (state == ConnectivityState.connected) {
+                    return SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      padding: EdgeInsets.fromLTRB(20.w, 14.h, 20.w, 28.h),
+                      child: BlocProvider(
+                        lazy: false,
+                        create: (context) => LocationAllBloc(
+                            RepositoryProvider.of<DioLocation>(context))
+                          ..add(LoadLocationAllEvent()),
+                        child: BlocBuilder<LocationAllBloc, LocationAllState>(
+                          builder: (context, locationState) {
+                            if (locationState is LocationAllLoadingState) {
+                              return const CustomAllLoader();
+                            } else if (locationState
+                                is LocationAllLoadedState) {
+                              LocationGetAllResModel locationList =
+                                  locationState.locationGetAll;
+                              phone_pre.CountryWisePrefixResModel
+                                  phonePrefixList =
+                                  locationState.countryWisePrefixResModel;
 
-                    child: BlocBuilder<LocationAllBloc, LocationAllState>(
-                      builder: (context, locationState) {
-                        // Loading State
-                        if (locationState is LocationAllLoadingState) {
-                          return const CustomAllLoader();
-                        }
-                        // Loaded State
-                        else if (locationState is LocationAllLoadedState) {
-                          LocationGetAllResModel locationList =
-                              locationState.locationGetAll;
-                          phone_pre.CountryWisePrefixResModel phonePrefixList =
-                              locationState.countryWisePrefixResModel;
+                              final phonePrefixItems =
+                                  phonePrefixList.data ?? [];
 
-                          return Container(
-                            width: MediaQuery.of(context).size.width *
-                                0.9, // 90% of screen width
-                            padding: EdgeInsets.symmetric(
-                                vertical: 20.h, horizontal: 20.w),
-                            margin: EdgeInsets.only(top: 50.h, bottom: 40.h),
-                            decoration: BoxDecoration(
-                                color: Colors.white, // Pure white card
-                                borderRadius: BorderRadius.circular(
-                                    20.r), // Smooth rounded corners
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: GlobalColors.appColor
-                                        .withValues(alpha: 0.1),
-                                    blurRadius: 15,
-                                    spreadRadius: 2,
-                                    offset: const Offset(
-                                        0, 5), // Soft floating shadow
-                                  )
-                                ]),
-                            child: Column(
-                              mainAxisSize:
-                                  MainAxisSize.min, // Wrap content tightly
-                              children: [
-                                // --- App Logo ---
-                                SizedBox(
-                                  height: 80.h,
-                                  child: Image.asset(
-                                      "assets/images/tourist.png",
-                                      fit: BoxFit.contain),
-                                ),
-                                SizedBox(height: 15.h),
-
-                                // --- Welcome Text ---
-                                // Text(
-                                //   "Welcome Back!",
-                                //   style: TextStyle(
-                                //     fontSize: 24.sp,
-                                //     fontWeight: FontWeight.bold,
-                                //     color: Colors.black87,
-                                //   ),
-                                // ),
-                                SizedBox(height: 5.h),
-                                Text(
-                                  "Sign in to continue",
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    color: Colors.grey.shade500,
-                                  ),
-                                ),
-                                SizedBox(height: 30.h),
-
-                                // --- Country Dropdown ---
-                                DropdownButtonWidget(
-                                  label: S.of(context).selectCountryA,
-                                  searchController: countrySearchController,
-                                  lPadding: 15,
-                                  items: locationList.data!.map((e) {
-                                    return DropdownMenuItem(
-                                      value: e.countryName,
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 20),
-                                        child: AutoSizeText(
-                                          '(${e.phonePrefix}) ${e.countryName!}',
-                                          style: dopdownTextStyle,
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: (newVal) async {
-                                    setState(() {
-                                      selectedCountry = newVal as String;
-                                    });
-                                    final locationID = locationList.data!
-                                        .firstWhere((element) =>
-                                            element.countryName ==
-                                            selectedCountry);
-                                    selectedPhonePrefix =
-                                        locationID.phonePrefix;
-                                    selectedCountryID = locationID.id!;
-                                  },
-                                  value: selectedCountry,
-                                ),
-                                SizedBox(height: 20.h),
-
-                                // --- Mobile Number ---
-                                TextFormField(
-                                  controller: numController,
-                                  cursorColor: GlobalColors.appColor,
-                                  keyboardType: TextInputType.number,
-                                  decoration: textInputDecoration1.copyWith(
-                                      hintText: S.of(context).mobileNumberA),
-                                  inputFormatters: <TextInputFormatter>[
-                                    FilteringTextInputFormatter.allow(
-                                        RegExp(r'[0-9]*'))
-                                  ],
-                                ),
-                                SizedBox(height: 20.h),
-
-                                // --- Password ---
-                                IgnorePointer(
-                                  ignoring: isLoading,
-                                  child: TextFormField(
-                                    controller: passwordController,
-                                    cursorColor: GlobalColors.appColor,
-                                    decoration: textInputDecoration1.copyWith(
-                                      hintText: S.of(context).passwordA,
-                                      suffix: GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            _isHidden = !_isHidden;
-                                          });
-                                        },
-                                        child: _isHidden
-                                            ? Icon(
-                                                Icons.visibility_off,
-                                                size: 20,
-                                                color: Colors.grey.shade600,
-                                              )
-                                            : Icon(
-                                                Icons.visibility,
-                                                size: 20,
-                                                color: GlobalColors.appColor,
-                                              ),
-                                      ),
-                                    ),
-                                    obscureText: isLoading == true || _isHidden,
-                                  ),
-                                ),
-                                SizedBox(height: 10.h),
-
-                                // --- Forgot Password ---
-                                InkWell(
-                                  onTap: () async {
-                                    forgotEmailnumController.clear();
-                                    forgotPopUp(locationList.data ?? [],
-                                        phonePrefixList.data ?? []);
-                                  },
-                                  child: Align(
-                                    alignment: Alignment.centerRight,
-                                    child: Padding(
-                                      padding: EdgeInsets.only(
-                                          right: 5.w, bottom: 20.h),
-                                      child: AutoSizeText(
-                                        S.of(context).forgotPassword,
-                                        style: textStyle15h.copyWith(
-                                          decoration: TextDecoration.underline,
-                                          color: GlobalColors
-                                              .appColor, // Colored link
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                              return Column(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(24.r),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: AspectRatio(
+                                      aspectRatio: 16 / 9,
+                                      child: Image.asset(
+                                        'assets/images/onboarding/banner_login_au.webp',
+                                        width: double.infinity,
+                                        fit: BoxFit.contain,
+                                        alignment: Alignment.center,
                                       ),
                                     ),
                                   ),
-                                ),
-
-                                // --- Login Button ---
-                                isLoading == true
-                                    ? const CustomButtonWithCircular()
-                                    : Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceEvenly,
-                                        children: [
-                                          Expanded(
-                                            flex: 7,
-                                            child: CustomButton(
-                                                text: S.of(context).logIn,
-                                                onPressed: onLoginSubmit),
-                                          ),
-                                          //Fingerprint Login Spacer
-                                          AppVariables.isLocalAuthEnabled ==
-                                                      false ||
-                                                  AppVariables
-                                                          .isLocalAuthEnabled ==
-                                                      null
-                                              ? const SizedBox()
-                                              : SizedBox(width: 10.w),
-                                          //Fingerprint Login Button
-                                          AppVariables.isLocalAuthEnabled ==
-                                                      false ||
-                                                  AppVariables
-                                                          .isLocalAuthEnabled ==
-                                                      null
-                                              ? const SizedBox()
-                                              : Expanded(
-                                                  flex: 2,
-                                                  child: Container(
-                                                    decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10.r),
-                                                      color: GlobalColors
-                                                          .appColor
-                                                          .withValues(
-                                                              alpha:
-                                                                  0.1), // Soft background for fingerprint
-                                                    ),
-                                                    child: CustomIconButton(
-                                                      onPressed: () async {
-                                                        await readFromSharedPref();
-                                                      },
-                                                      icon: const Icon(
-                                                        Icons.fingerprint,
-                                                        color: GlobalColors
-                                                            .appColor,
-                                                        size: 32,
-                                                      ),
-                                                    ),
-                                                  ),
+                                  SizedBox(height: 10.h),
+                                  Text(
+                                    'Access your member savings',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: _softText.withValues(alpha: 0.88),
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w500,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                  SizedBox(height: 22.h),
+                                  Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: 22.h,
+                                      horizontal: 18.w,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(24.r),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: _primaryBlue.withValues(
+                                              alpha: 0.08),
+                                          blurRadius: 18,
+                                          offset: const Offset(0, 8),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        DropdownButtonWidget(
+                                          label: S.of(context).selectCountryA,
+                                          searchController:
+                                              countrySearchController,
+                                          lPadding: 8,
+                                          fillColor: Colors.white,
+                                          borderColor: _fieldBorder,
+                                          borderRadius: 12.r,
+                                          iconColor: _primaryBlue,
+                                          hintStyle: _dropdownHintStyle,
+                                          bWidth: MediaQuery.of(context)
+                                                  .size
+                                                  .width -
+                                              76.w,
+                                          dropWidth: MediaQuery.of(context)
+                                                  .size
+                                                  .width -
+                                              40.w,
+                                          items: locationList.data!.map((e) {
+                                            final flagMeta =
+                                                _prefixMetaForCountry(
+                                              e.countryName,
+                                              e.phonePrefix,
+                                              phonePrefixItems,
+                                            );
+                                            return DropdownMenuItem(
+                                              value: e.countryName,
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                    left: 10),
+                                                child: _countryPrefixRow(
+                                                  countryName: e.countryName,
+                                                  phonePrefix: e.phonePrefix,
+                                                  logoUrl: flagMeta?.logoUrl ??
+                                                      e.imageUrl,
                                                 ),
-                                        ],
-                                      ),
-                                SizedBox(height: 25.h),
-
-                                // --- Register Link ---
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      "Don't have an account? ",
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                    GestureDetector(
-                                      onTap: () {
-                                        // 👉 Use pushNamed instead of pushReplacementNamed
-                                        context.pushNamed(
-                                          'register',
-                                          queryParameters: {
-                                            'issuercode': '',
-                                            'memberReferralCode': '',
+                                              ),
+                                            );
+                                          }).toList(),
+                                          selectedItemBuilder: (context) {
+                                            return locationList.data!.map((e) {
+                                              final flagMeta =
+                                                  _prefixMetaForCountry(
+                                                e.countryName,
+                                                e.phonePrefix,
+                                                phonePrefixItems,
+                                              );
+                                              return _countryPrefixRow(
+                                                countryName: e.countryName,
+                                                phonePrefix: e.phonePrefix,
+                                                logoUrl: flagMeta?.logoUrl ??
+                                                    e.imageUrl,
+                                              );
+                                            }).toList();
                                           },
-                                        );
-                                      },
-                                      child: Text(
-                                        "Register Now",
+                                          onChanged: (newVal) async {
+                                            setState(() {
+                                              selectedCountry =
+                                                  newVal as String;
+                                            });
+                                            final locationID = locationList
+                                                .data!
+                                                .firstWhere((element) =>
+                                                    element.countryName ==
+                                                    selectedCountry);
+                                            selectedPhonePrefix =
+                                                locationID.phonePrefix;
+                                            selectedCountryID = locationID.id!;
+                                          },
+                                          value: selectedCountry,
+                                        ),
+                                        SizedBox(height: 15.h),
+                                        TextFormField(
+                                          controller: numController,
+                                          cursorColor: _primaryBlue,
+                                          keyboardType: TextInputType.number,
+                                          decoration: _loginInputDecoration(
+                                            hintText:
+                                                S.of(context).mobileNumberA,
+                                            icon: Icons.phone_outlined,
+                                          ),
+                                          inputFormatters: <TextInputFormatter>[
+                                            FilteringTextInputFormatter.allow(
+                                                RegExp(r'[0-9]*'))
+                                          ],
+                                        ),
+                                        SizedBox(height: 15.h),
+                                        IgnorePointer(
+                                          ignoring: isLoading,
+                                          child: TextFormField(
+                                            controller: passwordController,
+                                            cursorColor: _primaryBlue,
+                                            decoration: _loginInputDecoration(
+                                              hintText: S.of(context).passwordA,
+                                              icon: Icons.lock_outline,
+                                              suffixIcon: GestureDetector(
+                                                onTap: () {
+                                                  setState(() {
+                                                    _isHidden = !_isHidden;
+                                                  });
+                                                },
+                                                child: Icon(
+                                                  _isHidden
+                                                      ? Icons
+                                                          .visibility_off_outlined
+                                                      : Icons
+                                                          .visibility_outlined,
+                                                  size: 20,
+                                                  color: _softText,
+                                                ),
+                                              ),
+                                            ),
+                                            obscureText:
+                                                isLoading == true || _isHidden,
+                                          ),
+                                        ),
+                                        SizedBox(height: 12.h),
+                                        Align(
+                                          alignment: Alignment.centerRight,
+                                          child: TextButton(
+                                            onPressed: () async {
+                                              forgotEmailnumController.clear();
+                                              forgotPopUp(
+                                                  locationList.data ?? [],
+                                                  phonePrefixList.data ?? []);
+                                            },
+                                            style: TextButton.styleFrom(
+                                              foregroundColor: _primaryBlue,
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: 4.w,
+                                                vertical: 6.h,
+                                              ),
+                                            ),
+                                            child: Text(
+                                              S.of(context).forgotPassword,
+                                              style: TextStyle(
+                                                color: _primaryBlue,
+                                                fontSize: 14.sp,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(height: 12.h),
+                                        _loginButtonRow(),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(height: 22.h),
+                                  Wrap(
+                                    alignment: WrapAlignment.center,
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
+                                    children: [
+                                      Text(
+                                        "Don't have an account? ",
                                         style: TextStyle(
-                                          fontSize: 15.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: GlobalColors.appColor,
+                                          fontSize: 14.sp,
+                                          color: _softText,
+                                          fontWeight: FontWeight.w500,
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                        // Error State
-                        else if (locationState is LocationAllErrorState) {
-                          return const Error1();
-                        }
-                        // if none the state is executable
-                        else {
-                          return const SizedBox();
-                        }
-                      },
-                    ), //Location
-                  ),
-                ));
-          } else {
-            return const SizedBox();
-          }
-        },
+                                      GestureDetector(
+                                        onTap: () {
+                                          context.pushNamed(
+                                            'register',
+                                            queryParameters: {
+                                              'issuercode': '',
+                                              'memberReferralCode': '',
+                                            },
+                                          );
+                                        },
+                                        child: Text(
+                                          'Register Now',
+                                          style: TextStyle(
+                                            fontSize: 15.sp,
+                                            fontWeight: FontWeight.w800,
+                                            color: _primaryBlue,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              );
+                            } else if (locationState is LocationAllErrorState) {
+                              return const Error1();
+                            } else {
+                              return const SizedBox();
+                            }
+                          },
+                        ),
+                      ),
+                    );
+                  } else {
+                    return const SizedBox();
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

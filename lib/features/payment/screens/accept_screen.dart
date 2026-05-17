@@ -1,28 +1,26 @@
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:new_piiink/common/app_variables.dart';
 import 'package:new_piiink/common/widgets/custom_app_bar.dart';
-import 'package:new_piiink/common/widgets/custom_button.dart';
+import 'package:new_piiink/common/widgets/custom_loader.dart';
 import 'package:new_piiink/common/widgets/custom_snackbar.dart';
-import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/constants/number_formatter.dart';
-import 'package:new_piiink/constants/style.dart';
 import 'package:new_piiink/features/payment/services/dio_payment.dart';
 import 'package:new_piiink/models/request/sure_apply_piiink_req.dart';
 import 'package:new_piiink/models/response/sure_apply_piiink_res.dart';
-import 'package:outline_gradient_button/outline_gradient_button.dart';
-import 'package:new_piiink/generated/l10n.dart';
 
 class AcceptScreen extends StatefulWidget {
   static const String routeName = '/accept-screen';
+  final String merchantName;
+  final String logo;
   final String totalAmount;
   final String qrCode;
   final String discountedTransactionAmount;
   final String totalPiiinkDiscount;
   final String merchantRebateToMember;
+  final String merchantDiscountPercentage;
+  final String tsdcsRemaining;
   final String walletType;
   final int? terminalUserId;
   final int? terminalId;
@@ -30,11 +28,15 @@ class AcceptScreen extends StatefulWidget {
 
   const AcceptScreen({
     super.key,
+    required this.merchantName,
+    required this.logo,
     required this.totalAmount,
     required this.qrCode,
     required this.discountedTransactionAmount,
     required this.totalPiiinkDiscount,
     required this.merchantRebateToMember,
+    required this.merchantDiscountPercentage,
+    required this.tsdcsRemaining,
     required this.walletType,
     this.terminalUserId,
     this.terminalId,
@@ -46,223 +48,294 @@ class AcceptScreen extends StatefulWidget {
 }
 
 class _AcceptScreenState extends State<AcceptScreen> {
-  // For Loading part
-  var isLoading = false;
+  static const Color _primaryBlue = Color(0xFF0009FE);
+  static const Color _ctaCyan = Color(0xFF18C6FF);
+  static const Color _screenBackground = Color(0xFFF8FAFE);
+  static const Color _headingColor = Color(0xFF111C44);
+  static const Color _bodyColor = Color(0xFF61708A);
+  static const Color _borderColor = Color(0xFFE2E8F3);
+
+  bool isLoading = false;
+
+  final NumberFormat _currencyFormat = NumberFormat.currency(
+      symbol: AppVariables.currency ?? '\$', decimalDigits: 2);
+  final NumberFormat _numberFormat = NumberFormat('#,##0.##');
+
+  double get _billAmount => double.tryParse(widget.totalAmount) ?? 0;
+  double get _memberSavings => double.tryParse(widget.totalPiiinkDiscount) ?? 0;
+  double get _customerPays =>
+      double.tryParse(widget.discountedTransactionAmount) ?? 0;
+  double get _discountPercent =>
+      double.tryParse(widget.merchantDiscountPercentage) ?? 0;
 
   @override
   Widget build(BuildContext context) {
-    List arr = S
-        .of(context)
-        .weWillDeductCPiinksFromYourCredit
-        .replaceAll(
-            '&X', numFormatter.format(double.parse(widget.totalPiiinkDiscount)))
-        .split(" ");
     return Scaffold(
+      backgroundColor: _screenBackground,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: CustomAppBar(
-          text: S.of(context).confirmWallet,
+          text: 'Redeem Discount',
           icon: Icons.arrow_back_ios,
-          onPressed: () {
-            context.pop();
-          },
+          onPressed: () => context.pop(),
         ),
       ),
-      body: FittedBox(
-        fit: BoxFit.fill,
-        child: Container(
-            // height: 500,
-            width: MediaQuery.of(context).size.width / 1,
-            margin:
-                const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-            decoration: BoxDecoration(
-                // color: GlobalColors.appWhiteBackgroundColor,
-                // borderRadius: BorderRadius.circular(5.0),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.grey.withValues(alpha: 0.2),
-                      blurRadius: 4,
-                      spreadRadius: 1,
-                      offset: const Offset(2, 2))
-                ]),
-            child: OutlineGradientButton(
-              padding: const EdgeInsets.all(10.0),
-              strokeWidth: 1,
-              radius: const Radius.circular(5.0),
-              backgroundColor: GlobalColors.appWhiteBackgroundColor,
-              elevation: 2,
-              gradient: const LinearGradient(
-                colors: [GlobalColors.appColor, GlobalColors.appColor1],
-                begin: Alignment.topRight,
-                end: Alignment.bottomLeft,
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 15),
-                  AutoSizeText(
-                    S.of(context).acceptToUseTouristSavers,
-                    style: topicStyle,
-                  ),
-
-                  const SizedBox(height: 15),
-                  const SizedBox(height: 15),
-                  FittedBox(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        for (var item in arr)
-                          if (item.indexOf('&C') != -1)
-                            AutoSizeText(
-                              ' $item'.replaceAll('&C', ""),
-                              style: transactionTextStyle.copyWith(
-                                  color: GlobalColors.appColor),
-                            )
-                          else
-                            AutoSizeText(
-                              ' $item'.replaceAll('&C', ""),
-                              style: transactionTextStyle,
-                            ),
-                      ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _RedeemCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _sectionHeader(Icons.verified_outlined,
+                        'Ready to redeem your member discount'),
+                    SizedBox(height: 10.h),
+                    Text(
+                      'TouristSaver will redeem the discount only. You still pay the merchant directly using their accepted payment method.',
+                      style: _bodyStyle(),
                     ),
-                  ),
-
-                  // The Piiink point to be cut
-                  // AutoSizeText.rich(
-                  //   TextSpan(
-                  //       text: 'We will deduct ',
-                  //       style: transactionTextStyle,
-                  //       children: [
-                  //         TextSpan(
-                  //           text:
-                  //               '${toFixed2DecimalPlaces(double.parse(widget.totalPiiinkDiscount))} Piiinks',
-                  //           style: transactionTextStyle.copyWith(
-                  //             fontWeight: FontWeight.w600,
-                  //             color: GlobalColors.appColor,
-                  //           ),
-                  //         ),
-                  //         TextSpan(
-                  //           text: ' from your credit',
-                  //           style: transactionTextStyle,
-                  //         )
-                  //       ]),
-                  // ),
-
-                  const SizedBox(height: 20),
-
-                  // Image
-                  Image.asset(
-                    'assets/images/percentage.png',
-                    height: 100,
-                    filterQuality: FilterQuality.high,
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Total Amount to be paid
-                  AutoSizeText(
-                    AppVariables.currency! +
-                        numFormatter.format(double.parse(widget.totalAmount)),
-                    style: TextStyle(
-                        decoration: TextDecoration.lineThrough,
-                        fontSize: 20.sp),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Amount to be paid after discount
-                  AutoSizeText(
-                    AppVariables.currency! +
-                        numFormatter.format(
-                            double.parse(widget.discountedTransactionAmount)),
-                    style: TextStyle(
-                        fontSize: 30.sp,
-                        color: GlobalColors.appColor,
-                        fontWeight: FontWeight.w600),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Accept Button
-                  isLoading == true
-                      ? const CustomButtonWithCircular()
-                      : CustomButton(
-                          text: S.of(context).accept,
-                          onPressed: () async {
-                            setState(() {
-                              isLoading = true;
-                            });
-                            var res = await DioPay().sureApplyPiiink(
-                              payToMainMerchant:
-                                  widget.terminalUserId == null ? true : false,
-                              sureApplyPiiinkReqModel: SureApplyPiiinkReqModel(
-                                totalAmount: double.parse(widget.totalAmount),
-                                piiinkWalletType: widget.walletType,
-                                transactionQrCode: widget.qrCode,
-                                hour: int.parse(
-                                    DateFormat('HH ').format(DateTime.now())),
-                                week: DateTime.now().weekday % 7,
-                                terminalUserId: widget.terminalUserId,
-                                terminalId: widget.terminalId,
-                              ),
-                            );
-                            if (!mounted) return;
-                            if (res is SureApplyPiiinkResModel) {
-                              if (res.status == "Success") {
-                                setState(() {
-                                  isLoading = false;
-                                });
-                                context.pop();
-                                context.pushNamed('payment-complete', extra: {
-                                  'merchantId': widget.merchantId,
-                                  'discountedTransactionAmount':
-                                      widget.discountedTransactionAmount,
-                                  'merchantRebateToMember':
-                                      widget.merchantRebateToMember,
-                                  'walletType': widget.walletType,
-                                });
-                              } else {
-                                GlobalSnackBar.showError(
-                                    context, S.of(context).somethingWentWrong);
-                                setState(() {
-                                  isLoading = false;
-                                });
-                              }
-                            } else {
-                              GlobalSnackBar.showError(
-                                  context, S.of(context).serverError);
-                              setState(() {
-                                isLoading = false;
-                              });
-                            }
-                          },
-                        ),
-
-                  const SizedBox(height: 10),
-
-                  // Try Again Button
-                  CustomButton(
-                    text: S.of(context).tryAgain,
-                    onPressed: () {
-                      context.pop();
-                      // isLoading == true ? null : context.pop();
-                    },
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  //Cancel Button
-                  CustomButton1(
-                    text: S.of(context).cancel,
-                    onPressed: () {
-                      context.pushReplacementNamed('bottom-bar',
-                          pathParameters: {'page': '3'});
-                    },
-                  ),
-
-                  const SizedBox(height: 10),
-                ],
+                    SizedBox(height: 16.h),
+                    _summaryRow('Merchant', widget.merchantName),
+                    _summaryRow('Bill amount', _formatCurrency(_billAmount)),
+                    _summaryRow(
+                      'Member discount',
+                      '${_formatCurrency(_memberSavings)} (${_numberFormat.format(_discountPercent)}%)',
+                    ),
+                    _summaryRow(
+                        'You pay merchant', _formatCurrency(_customerPays),
+                        emphasized: true),
+                    _summaryRow('TSDCs to be used',
+                        _numberFormat.format(_memberSavings)),
+                    _summaryRow(
+                        'TSDC balance after redeeming',
+                        _numberFormat.format(
+                            double.tryParse(widget.tsdcsRemaining) ?? 0)),
+                  ],
+                ),
               ),
-            )),
+              SizedBox(height: 18.h),
+              isLoading
+                  ? const Center(child: CustomAllLoader())
+                  : _GradientButton(
+                      label: 'Redeem Discount',
+                      onTap: _redeemDiscount,
+                    ),
+              SizedBox(height: 10.h),
+              TextButton(
+                onPressed: isLoading ? null : () => context.pop(),
+                child: Text(
+                  'Try again',
+                  style: TextStyle(
+                    color: _primaryBlue,
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Sans',
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: isLoading
+                    ? null
+                    : () => context.goNamed(
+                          'bottom-bar',
+                          pathParameters: {'page': '2'},
+                        ),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: _bodyColor,
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Sans',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _redeemDiscount() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final res = await DioPay().sureApplyPiiink(
+      payToMainMerchant: widget.terminalUserId == null,
+      sureApplyPiiinkReqModel: SureApplyPiiinkReqModel(
+        totalAmount: double.parse(widget.totalAmount),
+        piiinkWalletType: widget.walletType,
+        transactionQrCode: widget.qrCode,
+        hour: int.parse(DateFormat('HH ').format(DateTime.now())),
+        week: DateTime.now().weekday % 7,
+        terminalUserId: widget.terminalUserId,
+        terminalId: widget.terminalId,
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (res is SureApplyPiiinkResModel && res.status == "Success") {
+      setState(() {
+        isLoading = false;
+      });
+      context.pushReplacementNamed('payment-complete', extra: {
+        'merchantId': widget.merchantId,
+        'merchantName': widget.merchantName,
+        'totalAmount': widget.totalAmount,
+        'discountedTransactionAmount': widget.discountedTransactionAmount,
+        'totalPiiinkDiscount': widget.totalPiiinkDiscount,
+        'merchantRebateToMember': widget.merchantRebateToMember,
+        'merchantDiscountPercentage': widget.merchantDiscountPercentage,
+        'walletType': widget.walletType,
+      });
+    } else {
+      GlobalSnackBar.showError(context, 'The discount could not be redeemed.');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Widget _sectionHeader(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, color: _primaryBlue, size: 23.sp),
+        SizedBox(width: 8.w),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              color: _headingColor,
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Sans',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _summaryRow(String label, String value, {bool emphasized = false}) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 11.h),
+      child: Row(
+        children: [
+          Expanded(child: Text(label, style: _bodyStyle())),
+          SizedBox(width: 12.w),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                color: emphasized ? _primaryBlue : _headingColor,
+                fontSize: emphasized ? 17.sp : 14.sp,
+                fontWeight: FontWeight.w900,
+                fontFamily: 'Sans',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  TextStyle _bodyStyle() {
+    return TextStyle(
+      color: _bodyColor,
+      fontSize: 13.5.sp,
+      fontWeight: FontWeight.w600,
+      height: 1.38,
+      fontFamily: 'Sans',
+    );
+  }
+
+  String _formatCurrency(num value) {
+    return _currencyFormat.format(value);
+  }
+}
+
+class _RedeemCard extends StatelessWidget {
+  const _RedeemCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(18.r),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22.r),
+        border: Border.all(color: _AcceptScreenState._borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0A236B).withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _GradientButton extends StatelessWidget {
+  const _GradientButton({
+    required this.label,
+    required this.onTap,
+  });
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18.r),
+        onTap: onTap,
+        child: Ink(
+          height: 54.h,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [
+                _AcceptScreenState._primaryBlue,
+                _AcceptScreenState._ctaCyan
+              ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(18.r),
+            boxShadow: [
+              BoxShadow(
+                color: _AcceptScreenState._primaryBlue.withValues(alpha: 0.20),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w900,
+                fontFamily: 'Sans',
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

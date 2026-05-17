@@ -1,7 +1,6 @@
-import 'package:auto_size_text/auto_size_text.dart';
-import 'package:auto_size_text_field/auto_size_text_field.dart';
-import 'package:flutter/gestures.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 // import 'package:flutter_barcode_scanner_plus/flutter_barcode_scanner_plus.dart';
 // import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 // import 'package:intl/intl.dart';
@@ -15,15 +14,12 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:new_piiink/common/app_variables.dart';
 import 'package:new_piiink/common/widgets/custom_app_bar.dart';
-import 'package:new_piiink/common/widgets/custom_button.dart';
 import 'package:new_piiink/common/widgets/custom_loader.dart';
 import 'package:new_piiink/common/widgets/custom_snackbar.dart';
 import 'package:new_piiink/common/widgets/error.dart';
 import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/constants/style.dart';
 import 'package:new_piiink/features/connectivity/cubit/internet_cubit.dart';
 import 'package:new_piiink/features/payment/services/dio_payment.dart';
-import 'package:new_piiink/features/payment/widgets/num_pad.dart';
 import 'package:new_piiink/models/response/is_pay_enable_res.dart';
 
 import '../../../common/services/dio_common.dart';
@@ -47,6 +43,11 @@ class PayScreen extends StatefulWidget {
 }
 
 class _PayScreenState extends State<PayScreen> {
+  static const Color _primaryBlue = Color(0xFF0009FE);
+  static const Color _ctaCyan = Color(0xFF18C6FF);
+  static const Color _screenBackground = Color(0xFFF8FAFE);
+  static const Color _borderColor = Color(0xFFE2E8F3);
+
   TextEditingController amountController = TextEditingController();
   bool? hideMerchantPaymentCode;
 
@@ -269,6 +270,8 @@ class _PayScreenState extends State<PayScreen> {
           'merchantPiiinkBalance':
               toFixed2DecimalPlaces(data.merchantPiiinkBalance!).toString(),
           'merchantRebateToMember': data.merchantRebateToMember.toString(),
+          'merchantDiscountPercentage':
+              data.merchantDiscountPercentage.toString(),
           'discountedTransactionAmount':
               data.discountedTransactionAmount.toString(),
           'totalPiiinkDiscount': data.totalPiiinkDiscount.toString(),
@@ -307,6 +310,8 @@ class _PayScreenState extends State<PayScreen> {
     }
   }
 
+  // Retained for terminal QR flows that include the transaction amount in the QR.
+  // ignore: unused_element
   _scanMerchantQr(String merchantQrCode) async {
     // log('Merchant QR pay');
     var res = await DioPay()
@@ -330,6 +335,8 @@ class _PayScreenState extends State<PayScreen> {
           'merchantPiiinkBalance':
               toFixed2DecimalPlaces(data.merchantPiiinkBalance!).toString(),
           'merchantRebateToMember': data.merchantRebateToMember.toString(),
+          'merchantDiscountPercentage':
+              data.merchantDiscountPercentage.toString(),
           'discountedTransactionAmount':
               data.discountedTransactionAmount.toString(),
           'totalPiiinkDiscount': data.totalPiiinkDiscount.toString(),
@@ -380,6 +387,7 @@ class _PayScreenState extends State<PayScreen> {
 
   @override
   void dispose() {
+    amountController.dispose();
     ConnectivityCubit().close();
     super.dispose();
   }
@@ -387,10 +395,11 @@ class _PayScreenState extends State<PayScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _screenBackground,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: CustomAppBar(
-            text: widget.merchantName ?? S.of(context).pay,
+            text: widget.merchantName ?? 'Redeem discount',
             icon: widget.merchantName == null ? null : Icons.arrow_back_ios,
             onPressed: widget.merchantName == null
                 ? null
@@ -398,278 +407,375 @@ class _PayScreenState extends State<PayScreen> {
                     context.pop();
                   }),
       ),
-      body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
-        builder: (context, state) {
-          if (state == ConnectivityState.loading) {
-            return const NoInternetLoader();
-          } else if (state == ConnectivityState.disconnected) {
-            return const NoConnectivityScreen();
-          } else if (state == ConnectivityState.connected) {
-            return SingleChildScrollView(
-              child: FutureBuilder<IsPayEnableResModel?>(
-                  future: payE,
-                  builder: (context, snapShot) {
-                    if (snapShot.hasError) {
-                      return const Error1();
-                    } else if (!snapShot.hasData) {
-                      return const CustomAllLoader();
-                    } else {
-                      return snapShot.data!.data!.transactionIsEnabled == true
-                          ? Container(
-                              margin: EdgeInsets.symmetric(
-                                  horizontal: 10.0, vertical: 10.h),
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 15, vertical: 20.h),
-                              width: MediaQuery.of(context).size.width / 1,
-                              constraints: const BoxConstraints(
-                                //To make height expandable according to the text
-                                maxHeight: double.infinity,
-                              ),
-                              decoration: BoxDecoration(
-                                  color: GlobalColors.appWhiteBackgroundColor,
-                                  borderRadius: BorderRadius.circular(5.0),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withValues(alpha: 0.2),
-                                      blurRadius: 4,
-                                      spreadRadius: 1,
-                                      offset: const Offset(2, 2),
-                                    )
-                                  ]),
-                              child: Column(
-                                children: [
-                                  // 'Scan Merchant Payment Code Button'
-                                  hideMerchantPaymentCode == false
-                                      ? Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            isMerchantQrLoading == true
-                                                ? const CustomButtonWithCircular()
-                                                : CustomButton(
-                                                    text: S
-                                                        .of(context)
-                                                        .scanMerchantPaymentCode,
-                                                    onPressed: isLoading
-                                                        ? () {}
-                                                        : () {
-                                                            context.pushNamed(
-                                                                'qr_screen',
-                                                                extra: {
-                                                                  'title': S
-                                                                      .of(context)
-                                                                      .pay
-                                                                }).then((vlz) {
-                                                              // log("${vlz.toString()} 1");
-                                                              if (vlz.toString() !=
-                                                                  'null') {
-                                                                // log("${vlz.toString()} 2");
-                                                                if (vlz !=
-                                                                        null &&
-                                                                    vlz
-                                                                        .toString()
-                                                                        .isNotEmpty) {
-                                                                  // log("${vlz.toString()} 3");
-                                                                  _scanMerchantQr(
-                                                                      vlz.toString());
-                                                                }
-                                                              }
-                                                            });
-                                                          }
-                                                    //  _scanMerchantQr,
-                                                    ),
-                                            SizedBox(height: 15.h),
-                                            Text(
-                                              S.of(context).or,
-                                              style: merchantNameStyle,
-                                            ),
-                                            SizedBox(height: 15.h),
-                                          ],
-                                        )
-                                      : const SizedBox(),
-                                  AutoSizeText(
-                                    S.of(context).enterAmountOfTransaction,
-                                    style: topicStyle,
-                                  ),
-                                  SizedBox(height: 15.h),
-                                  Container(
-                                    height: 75,
-                                    color: GlobalColors.paleGray,
-                                    child: Align(
-                                      alignment: Alignment.center,
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Expanded(
-                                            flex: 3,
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 32,
-                                                      vertical: 4),
-                                              decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.circular(7),
-                                                  color: GlobalColors.paleGray),
-                                              child: AutoSizeText(
-                                                "\$",
-                                                style: const TextStyle(
-                                                    fontSize: 60,
-                                                    color:
-                                                        GlobalColors.textColor),
-                                              ),
-                                            ),
-                                          ),
-                                          Container(
-                                              color: GlobalColors
-                                                  .appWhiteBackgroundColor,
-                                              width: 2),
-                                          Expanded(
-                                            flex: 8,
-                                            child: AutoSizeTextField(
-                                              controller: amountController,
-                                              style:
-                                                  const TextStyle(fontSize: 60),
-                                              enabled: false,
-                                              readOnly: true,
-                                              textAlign: TextAlign.end,
-                                              decoration: const InputDecoration(
-                                                filled: true,
-                                                contentPadding:
-                                                    EdgeInsets.symmetric(
-                                                        horizontal: 2,
-                                                        vertical: 0),
-                                                fillColor:
-                                                    GlobalColors.paleGray,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  // implement the custom NumPad
-                                  NumPad(
-                                    buttonSize: 70,
-                                    buttonColor: Colors.white,
-                                    iconColor: GlobalColors.appColor,
-                                    controller: amountController,
-                                    delete: () {
-                                      amountController.text.isEmpty
-                                          ? null
-                                          : amountController.text =
-                                              amountController.text.substring(
-                                                  0,
-                                                  amountController.text.length -
-                                                      1);
-                                    },
-                                  ),
-
-                                  SizedBox(height: 20.h),
-
-                                  isLoading == true
-                                      ? const CustomButtonWithCircular()
-                                      : CustomButton(
-                                          text: S.of(context).scan,
-                                          onPressed: isMerchantQrLoading
-                                              ? () {}
-                                              : () {
-                                                  if (amountController
-                                                          .text.isEmpty ||
-                                                      double.parse(
-                                                              amountController
-                                                                  .text) <=
-                                                          0) {
-                                                    GlobalSnackBar.valid(
-                                                        context,
-                                                        S
-                                                            .of(context)
-                                                            .pleaseEnterTheRightAmount);
-                                                    return;
-                                                  }
-                                                  context.pushNamed(
-                                                    'qr_screen',
-                                                    extra: {
-                                                      'title':
-                                                          S.of(context).pay,
-                                                    },
-                                                  ).then((result) async {
-                                                    if (result != null &&
-                                                        result
-                                                            .toString()
-                                                            .isNotEmpty) {
-                                                      setState(() {
-                                                        isLoading =
-                                                            true; // show loading right after scanning QR
-                                                      });
-
-                                                      await _scanManualQr(result
-                                                          .toString()); // wait for API + navigation to complete
-                                                      setState(() {
-                                                        isLoading =
-                                                            false; // hide loading (if _scanManualQr does not already do it)
-                                                      });
-                                                    }
-                                                  });
-                                                }
-                                          //  _scanManualQr,
-                                          ),
-
-                                  SizedBox(height: 15.h),
-
-                                  Text.rich(
-                                    TextSpan(
-                                      text: S
-                                          .of(context)
-                                          .ifYourCameraIsNotWorkingProperly,
-                                      style: merchantNameStyle,
-                                      children: <TextSpan>[
-                                        TextSpan(
-                                          text: S.of(context).enterCodeManually,
-                                          style: merchantNameStyle.copyWith(
-                                            decoration:
-                                                TextDecoration.underline,
-                                            color: GlobalColors.appColor1,
-                                          ),
-                                          recognizer: TapGestureRecognizer()
-                                            ..onTap = () async {
-                                              if (amountController
-                                                      .text.isEmpty ||
-                                                  double.parse(amountController
-                                                          .text) <=
-                                                      0) {
-                                                GlobalSnackBar.valid(
-                                                    context,
-                                                    S
-                                                        .of(context)
-                                                        .pleaseEnterTheRightAmount);
-                                                return;
-                                              }
-                                              context.pushNamed('manual-code',
-                                                  pathParameters: {
-                                                    'totalAmount':
-                                                        amountController.text
-                                                            .trim()
-                                                  });
-                                            },
-                                        ),
-                                      ],
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
-                              ),
-                            )
-                          : daysMoreToGo(snapShot.data!);
-                    }
-                  }),
-            );
-          } else {
-            return const SizedBox();
-          }
-        },
+      body: Focus(
+        autofocus: true,
+        onKeyEvent: _handleDebugManualCodeShortcut,
+        child: BlocBuilder<ConnectivityCubit, ConnectivityState>(
+          builder: (context, state) {
+            if (state == ConnectivityState.loading) {
+              return const NoInternetLoader();
+            } else if (state == ConnectivityState.disconnected) {
+              return const NoConnectivityScreen();
+            } else if (state == ConnectivityState.connected) {
+              return SingleChildScrollView(
+                child: FutureBuilder<IsPayEnableResModel?>(
+                    future: payE,
+                    builder: (context, snapShot) {
+                      if (snapShot.hasError) {
+                        return const Error1();
+                      } else if (!snapShot.hasData) {
+                        return const CustomAllLoader();
+                      } else {
+                        return snapShot.data!.data!.transactionIsEnabled == true
+                            ? Container(
+                                margin: EdgeInsets.symmetric(
+                                    horizontal: 16.w, vertical: 14.h),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 18.w, vertical: 20.h),
+                                width: MediaQuery.of(context).size.width / 1,
+                                constraints: const BoxConstraints(
+                                  //To make height expandable according to the text
+                                  maxHeight: double.infinity,
+                                ),
+                                decoration: BoxDecoration(
+                                    color: GlobalColors.appWhiteBackgroundColor,
+                                    borderRadius: BorderRadius.circular(22.r),
+                                    border: Border.all(color: _borderColor),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFF0A236B)
+                                            .withValues(alpha: 0.06),
+                                        blurRadius: 18,
+                                        offset: const Offset(0, 10),
+                                      )
+                                    ]),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    _billAmountCard(),
+                                    SizedBox(height: 16.h),
+                                    _merchantSelectionCard(),
+                                    SizedBox(height: 16.h),
+                                    _redemptionHelpImage(),
+                                  ],
+                                ),
+                              )
+                            : daysMoreToGo(snapShot.data!);
+                      }
+                    }),
+              );
+            } else {
+              return const SizedBox();
+            }
+          },
+        ),
       ),
     );
+  }
+
+  Widget _billAmountCard() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FAFF),
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: _borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Enter bill amount',
+            style: TextStyle(
+              color: const Color(0xFF111C44),
+              fontSize: 19.sp,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Sans',
+            ),
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            'TouristSaver will check your available member discount.',
+            style: TextStyle(
+              color: GlobalColors.textColor,
+              fontSize: 13.5.sp,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Sans',
+            ),
+          ),
+          SizedBox(height: 14.h),
+          TextFormField(
+            controller: amountController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textInputAction: TextInputAction.done,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+              TextInputFormatter.withFunction((oldValue, newValue) {
+                final String value = newValue.text;
+                if (value.isEmpty) return newValue;
+                if ('.'.allMatches(value).length > 1) return oldValue;
+                final int decimalIndex = value.indexOf('.');
+                if (decimalIndex != -1 &&
+                    value.substring(decimalIndex + 1).length > 2) {
+                  return oldValue;
+                }
+                return newValue;
+              }),
+            ],
+            style: TextStyle(
+              color: const Color(0xFF111C44),
+              fontSize: 28.sp,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Sans',
+            ),
+            decoration: InputDecoration(
+              prefixText: '\$ ',
+              prefixStyle: TextStyle(
+                color: _primaryBlue,
+                fontSize: 28.sp,
+                fontWeight: FontWeight.w900,
+                fontFamily: 'Sans',
+              ),
+              hintText: '100.00',
+              hintStyle: TextStyle(
+                color: GlobalColors.textColor.withValues(alpha: 0.45),
+                fontSize: 28.sp,
+                fontWeight: FontWeight.w800,
+                fontFamily: 'Sans',
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 16.w, vertical: 15.h),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16.r),
+                borderSide: const BorderSide(color: _borderColor),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16.r),
+                borderSide: const BorderSide(color: _borderColor),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16.r),
+                borderSide: const BorderSide(color: _primaryBlue, width: 1.4),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _merchantSelectionCard() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FAFF),
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: _borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Check merchant offer',
+            style: TextStyle(
+              color: const Color(0xFF111C44),
+              fontSize: 17.sp,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Sans',
+            ),
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            'Scan the TouristSaver QR at the counter, table, menu, window or EFTPOS terminal.',
+            style: TextStyle(
+              color: GlobalColors.textColor,
+              fontSize: 13.5.sp,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Sans',
+            ),
+          ),
+          SizedBox(height: 14.h),
+          _scanMerchantQrButton(
+            isLoading: isLoading,
+            onTap: isMerchantQrLoading ? null : _openOfferQrScanner,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _redemptionHelpImage() {
+    // TODO: Add 30-second onboarding/help video for first-time redemption flow.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18.r),
+            border: Border.all(color: _borderColor),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0A236B).withValues(alpha: 0.06),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Image.asset(
+              'assets/images/onboarding/scanning_at_counter.webp',
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        SizedBox(height: 9.h),
+        Text(
+          'Scan the merchant QR code before paying the bill.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: GlobalColors.textColor,
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w700,
+            height: 1.3,
+            fontFamily: 'Sans',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _scanMerchantQrButton({
+    required VoidCallback? onTap,
+    bool isLoading = false,
+  }) {
+    final bool enabled = onTap != null;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18.r),
+        onTap: enabled ? onTap : null,
+        child: Ink(
+          height: 54.h,
+          padding: EdgeInsets.symmetric(horizontal: 18.w),
+          decoration: BoxDecoration(
+            gradient: enabled
+                ? const LinearGradient(
+                    colors: [_primaryBlue, _ctaCyan],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  )
+                : null,
+            color:
+                enabled ? null : GlobalColors.textColor.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(18.r),
+            boxShadow: enabled
+                ? [
+                    BoxShadow(
+                      color: _primaryBlue.withValues(alpha: 0.20),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              isLoading
+                  ? SizedBox(
+                      width: 20.w,
+                      height: 20.w,
+                      child: const CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.2,
+                      ),
+                    )
+                  : Icon(
+                      Icons.qr_code_scanner_rounded,
+                      color: Colors.white,
+                      size: 21.sp,
+                    ),
+              SizedBox(width: 10.w),
+              Text(
+                'Scan merchant QR',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w900,
+                  fontFamily: 'Sans',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openOfferQrScanner() {
+    if (!_hasValidAmount()) {
+      GlobalSnackBar.valid(context, S.of(context).pleaseEnterTheRightAmount);
+      return;
+    }
+
+    context.pushNamed('qr_screen', extra: {'title': S.of(context).pay}).then(
+      (result) async {
+        if (result != null && result.toString().isNotEmpty) {
+          setState(() {
+            isLoading = true;
+          });
+          await _scanManualQr(result.toString());
+          if (mounted) {
+            setState(() {
+              isLoading = false;
+            });
+          }
+        }
+      },
+    );
+  }
+
+  KeyEventResult _handleDebugManualCodeShortcut(
+    FocusNode node,
+    KeyEvent event,
+  ) {
+    if (!kDebugMode || event is! KeyDownEvent) {
+      return KeyEventResult.ignored;
+    }
+
+    final bool isHashKey =
+        event.character == '#' || event.logicalKey.keyLabel == '#';
+    if (!isHashKey) {
+      return KeyEventResult.ignored;
+    }
+
+    _openManualMerchantCode();
+    return KeyEventResult.handled;
+  }
+
+  // ignore: unused_element
+  void _openManualMerchantCode() {
+    if (!_hasValidAmount()) {
+      GlobalSnackBar.valid(context, S.of(context).pleaseEnterTheRightAmount);
+      return;
+    }
+
+    context.pushNamed('manual-code',
+        pathParameters: {'totalAmount': amountController.text.trim()});
+  }
+
+  bool _hasValidAmount() {
+    final double? amount = double.tryParse(amountController.text.trim());
+    return amount != null && amount > 0;
   }
 
   //Showing how many more days to go for a pay section

@@ -1,8 +1,3 @@
-import 'dart:async';
-import 'dart:convert';
-
-import 'package:auto_size_text/auto_size_text.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -10,14 +5,11 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:go_router/go_router.dart';
 import 'package:new_piiink/common/app_variables.dart';
 import 'package:new_piiink/common/services/dio_common.dart';
-import 'package:new_piiink/common/widgets/custom_app_bar.dart';
-import 'package:new_piiink/common/widgets/custom_button.dart';
 import 'package:new_piiink/common/widgets/custom_loader.dart';
 import 'package:new_piiink/common/widgets/custom_snackbar.dart';
 import 'package:new_piiink/common/widgets/error.dart';
 import 'package:new_piiink/common/widgets/not_available.dart';
 import 'package:new_piiink/constants/decimal_remove.dart';
-import 'package:new_piiink/constants/global_colors.dart';
 import 'package:new_piiink/constants/number_formatter.dart';
 import 'package:new_piiink/constants/pref.dart';
 import 'package:new_piiink/constants/pref_key.dart';
@@ -27,7 +19,6 @@ import 'package:new_piiink/features/top_up/bloc/mem_pack_bloc.dart';
 import 'package:new_piiink/features/top_up/bloc/mem_pack_event.dart';
 import 'package:new_piiink/features/top_up/bloc/mem_pack_state.dart';
 import 'package:new_piiink/features/top_up/services/top_up_dio.dart';
-import 'package:new_piiink/features/wallet/services/dio_wallet.dart';
 import 'package:new_piiink/models/request/confirm_topup_req.dart';
 import 'package:new_piiink/models/request/premium_topup_req.dart';
 import 'package:new_piiink/models/request/top_up_stripe_req.dart';
@@ -54,10 +45,8 @@ class _PaidFreeScreenState extends State<PaidFreeScreen> {
 
   // To get saved Country ID
   String? countryId;
-  String? currencyPref;
 
   // For Loading part
-  bool isLoading = false;
   bool isAppliedLoading = false;
   double? piiinkCre;
 
@@ -65,6 +54,9 @@ class _PaidFreeScreenState extends State<PaidFreeScreen> {
   dynamic premiumData;
   String? registrationImageUrl;
   bool isGlobalLoading = false; // Add this at the top with your other variables
+  late MemPackAllBloc _memPackAllBloc;
+  bool _memPackBlocReady = false;
+
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -74,6 +66,23 @@ class _PaidFreeScreenState extends State<PaidFreeScreen> {
     fetchMemberPremiumGetOne();
 
     fetchRegistrationImage();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_memPackBlocReady) return;
+    _memPackAllBloc =
+        MemPackAllBloc(RepositoryProvider.of<DioTopUpStripe>(context))
+          ..add(LoadMemPackAllEvent());
+    _memPackBlocReady = true;
+  }
+
+  @override
+  void dispose() {
+    _memPackAllBloc.close();
+    premiumController.dispose();
+    super.dispose();
   }
 
   Future<void> fetchRegistrationImage() async {
@@ -132,6 +141,7 @@ class _PaidFreeScreenState extends State<PaidFreeScreen> {
         return TopUpWidget(
           memPackAll: memPackAll,
           index: realIndex,
+          showHeader: index == 0,
           countryID: countryId,
           premiumData: premiumData,
           registrationImageUrl: registrationImageUrl, // Pass it here!
@@ -300,90 +310,78 @@ class _PaidFreeScreenState extends State<PaidFreeScreen> {
         double.tryParse(discountStr?.toString() ?? "0") ?? 0;
     String appBarTitle =
         discountPercent == 100 ? "Free Membership" : "Join now";
-    const Color primaryBlue = Color(0xFF5871FF);
+    const Color primaryBlue = Color(0xFF0009FE);
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: FutureBuilder<bool>(
-          future: checkWalletBalance(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) return const SizedBox.shrink();
-            final hasBalance = snapshot.data ?? false;
-            return hasBalance
-                ? CustomAppBar(
-                    text: appBarTitle,
-                    textColor: primaryBlue,
-                    fontSize: 24.sp,
-                    fontWeight: FontWeight.w900,
-                    icon: Icons.person_outlined,
-                    onPressed: () => context.push('/log-profile'))
-                : CustomAppBar(
-                    text: appBarTitle,
-                    textColor: primaryBlue,
-                    fontSize: 24.sp,
-                    fontWeight: FontWeight.w900,
-                    icon: Icons.person_outlined,
-                    onPressed: () => context.push('/log-profile'));
-          },
+      backgroundColor: const Color(0xFFF8FAFE),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF8FAFE),
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(
+            Icons.person_outline,
+            color: primaryBlue,
+            size: 22.sp,
+          ),
+          onPressed: () => context.push('/log-profile'),
+        ),
+        title: Text(
+          appBarTitle,
+          style: GoogleFonts.nunito(
+            color: const Color(0xFF111C44),
+            fontSize: 22.sp,
+            fontWeight: FontWeight.w900,
+          ),
         ),
       ),
       body: Stack(children: [
-        BlocProvider(
-          lazy: false,
-          create: (context) =>
-              MemPackAllBloc(RepositoryProvider.of<DioTopUpStripe>(context))
-                ..add(LoadMemPackAllEvent()),
+        BlocProvider.value(
+          value: _memPackAllBloc,
           child: Builder(
             builder: (context) {
-              return RefreshIndicator(
-                color: GlobalColors.appColor,
-                onRefresh: () async {
-                  await fetchRegistrationImage();
-                  await fetchMemberPremiumGetOne();
-                  context.read<MemPackAllBloc>().add(LoadMemPackAllEvent());
-                },
-                child: ScrollConfiguration(
-                  behavior: const ScrollBehavior(),
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    scrollDirection: Axis.vertical,
-                    child: Container(
-                      constraints: BoxConstraints(
-                        minHeight: MediaQuery.of(context).size.height,
-                      ),
-                      alignment: Alignment.topCenter,
-                      child: BlocBuilder<MemPackAllBloc, MemPackAllState>(
-                        builder: (context, state) {
-                          if (state is MemPackAllLoadingState) {
-                            return const CustomAllLoader();
-                          } else if (state is MemPackAllLoadedState) {
-                            MemberShipPackageResModel memPackAll =
-                                state.memPackAll;
-                            return memPackAll.data!.isEmpty
-                                ? Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 10.0, horizontal: 10.0),
-                                    child: NoDataFound(
-                                      titleText: S.of(context).noTopUpAvailable,
-                                      bodyText: S
-                                          .of(context)
-                                          .noTopupPacakgeAvailableForNow,
-                                      image: "assets/images/oops.png",
-                                    ),
-                                  )
-                                : Column(
-                                    children: [
-                                      piiinkLoaded(memPackAll, countryId),
-                                    ],
-                                  );
-                          } else if (state is MemPackAllErrorState) {
-                            return const Error1();
-                          } else {
-                            return const SizedBox();
-                          }
-                        },
-                      ),
+              return ScrollConfiguration(
+                behavior: const ScrollBehavior(),
+                child: SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  scrollDirection: Axis.vertical,
+                  child: Container(
+                    padding: EdgeInsets.only(bottom: 28.h),
+                    constraints: BoxConstraints(
+                      minHeight: MediaQuery.of(context).size.height,
+                    ),
+                    alignment: Alignment.topCenter,
+                    child: BlocBuilder<MemPackAllBloc, MemPackAllState>(
+                      builder: (context, state) {
+                        if (state is MemPackAllLoadingState) {
+                          return const CustomAllLoader();
+                        } else if (state is MemPackAllLoadedState) {
+                          MemberShipPackageResModel memPackAll =
+                              state.memPackAll;
+                          return memPackAll.data!.isEmpty
+                              ? Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 10.0, horizontal: 10.0),
+                                  child: NoDataFound(
+                                    titleText: S.of(context).noTopUpAvailable,
+                                    bodyText: S
+                                        .of(context)
+                                        .noTopupPacakgeAvailableForNow,
+                                    image: "assets/images/oops.png",
+                                  ),
+                                )
+                              : Column(
+                                  children: [
+                                    piiinkLoaded(memPackAll, countryId),
+                                  ],
+                                );
+                        } else if (state is MemPackAllErrorState) {
+                          return const Error1();
+                        } else {
+                          return const SizedBox();
+                        }
+                      },
                     ),
                   ),
                 ),
@@ -397,7 +395,7 @@ class _PaidFreeScreenState extends State<PaidFreeScreen> {
               onTap:
                   () {}, // This empty callback blocks taps from reaching the buttons below
               child: Container(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 child: const Center(
                   child: CircularProgressIndicator(
                     color: Colors.white,
@@ -421,19 +419,58 @@ class TopUpWidget extends StatefulWidget {
     this.countryID,
     this.premiumData,
     this.registrationImageUrl,
+    this.showHeader = false,
   });
   final String? countryID;
   final int? index;
   final MemberShipPackageResModel? memPackAll;
   final dynamic premiumData;
   final String? registrationImageUrl;
+  final bool showHeader;
 
   @override
   State<TopUpWidget> createState() => _TopUpWidgetState();
 }
 
 class _TopUpWidgetState extends State<TopUpWidget> {
+  static const Color _primaryBlue = Color(0xFF0009FE);
+  static const Color _ctaCyan = Color(0xFF18C6FF);
+  static const Color _screenBackground = Color(0xFFF8FAFE);
+  static const Color _headingColor = Color(0xFF111C44);
+  static const Color _bodyColor = Color(0xFF61708A);
+  static const Color _borderColor = Color(0xFFE2E8F3);
+
   bool isLoading = false;
+
+  Future<void> _showPaymentConfirmation(String paymentPriceText) async {
+    final shouldContinue = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => _PaymentConfirmationScreen(
+          amountText: paymentPriceText,
+        ),
+      ),
+    );
+
+    if (shouldContinue == true) {
+      await _handleTopUp();
+    }
+  }
+
+  void _navigateToActivationSuccess({String creditAmount = '0'}) {
+    context.pushReplacementNamed(
+      'congrats-screen',
+      pathParameters: {
+        'piiinkCredit': creditAmount,
+      },
+    );
+  }
+
+  String _selectedPackageCreditAmount() {
+    final credits =
+        widget.memPackAll?.data?[widget.index ?? 0].universalPiiinks;
+    return credits?.toString() ?? '0';
+  }
 
   Future<void> _handleFreeMemberShip() async {
     bool isLoggedIn = AppVariables.accessToken != null &&
@@ -461,12 +498,7 @@ class _TopUpWidgetState extends State<TopUpWidget> {
       isLoading = false;
     });
 
-    context.pushNamed(
-      'congrats-screen',
-      pathParameters: {
-        'piiinkCredit': creditAmount,
-      },
-    );
+    _navigateToActivationSuccess(creditAmount: creditAmount);
   }
 
   Future<void> _handleTopUp() async {
@@ -515,9 +547,9 @@ class _TopUpWidgetState extends State<TopUpWidget> {
         if (!context.mounted) return;
 
         if (canGoHome) {
-          GlobalSnackBar.showSuccess(context, S.of(context).paymentSuccessful);
-          context.pushReplacementNamed('bottom-bar',
-              pathParameters: {'page': '0'});
+          _navigateToActivationSuccess(
+            creditAmount: _selectedPackageCreditAmount(),
+          );
         } else {
           context.pushReplacementNamed('top-up');
         }
@@ -555,16 +587,15 @@ class _TopUpWidgetState extends State<TopUpWidget> {
           parentState.isGlobalLoading = true;
         });
 
-        GlobalSnackBar.showSuccess(context, S.of(context).paymentSuccessful);
-
         // 👉 2. CHANGE: Use 'await' so the loader stays until balance is updated
         await checkWalletBalance();
 
         if (!mounted) return;
 
         // 👉 3. Navigate Home - the loader will disappear as the screen is destroyed
-        context
-            .pushReplacementNamed('bottom-bar', pathParameters: {'page': '0'});
+        _navigateToActivationSuccess(
+          creditAmount: _selectedPackageCreditAmount(),
+        );
       } else {
         setState(() {
           isLoading = false;
@@ -601,7 +632,7 @@ class _TopUpWidgetState extends State<TopUpWidget> {
         return await checkWalletBalance();
       }
       return false;
-    } on StripeException catch (e) {
+    } on StripeException {
       if (!mounted) return false;
       GlobalSnackBar.showError(
           context, S.of(context).thePaymentHasBeenCanceled);
@@ -619,12 +650,6 @@ class _TopUpWidgetState extends State<TopUpWidget> {
     final discountStr = widget.premiumData?['discount'];
     debugPrint("====== CURRENT DISCOUNT PERCENT: $discountStr% ======");
 
-    String displayAmount = "1000";
-    if (widget.premiumData != null &&
-        widget.premiumData['piiinksProvided'] != null) {
-      displayAmount = removeTrailingZero(
-          numFormatter.format(widget.premiumData['piiinksProvided']));
-    }
     double discountPercent =
         double.tryParse(discountStr?.toString() ?? "0") ?? 0;
     debugPrint("====== CURRENT DISCOUNT PERCENT: $discountPercent% ======");
@@ -634,189 +659,912 @@ class _TopUpWidgetState extends State<TopUpWidget> {
 
     String originalPriceText =
         "$currency${removeTrailingZero(numFormatter.format(originalFee))}";
+    String discountedPriceTextWithGst = _withIncGst(discountedPriceText);
+    String originalPriceTextWithGst = _withIncGst(originalPriceText);
 
-    // Colors extracted from your mock image
-    const Color primaryBlue = Color(0xFF5775FF);
-    const Color accentYellow = Color(0xFFF7E015);
+    final bool isFreeMembership = discountPercent == 100;
+    final bool hasPartialDiscount =
+        discountPercent > 0 && discountPercent < 100;
+    final String paymentPriceText = hasPartialDiscount
+        ? discountedPriceTextWithGst
+        : originalPriceTextWithGst;
+    final String buttonLabel =
+        isFreeMembership ? "Activate my membership" : "Pay $paymentPriceText";
+    final bool showValueSections = widget.showHeader || isFreeMembership;
 
-    return Column(
-      children: [
-        // 👉 1. The Collage Image at the top (Only shows on the first package)
-        if (widget.index == 0)
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (showValueSections) ...[
+            SizedBox(height: 10.h),
+            _heroImage(),
+            SizedBox(height: 14.h),
+            _watchIntroLink(),
+            SizedBox(height: 18.h),
+            _valueIntroCard(),
+            SizedBox(height: 18.h),
+            _exampleSavingsSection(),
+            SizedBox(height: 18.h),
+            _nearbySavingsCard(),
+            SizedBox(height: 18.h),
+          ] else
+            SizedBox(height: 18.h),
+          _membershipCard(
+            originalPriceText: originalPriceText,
+            discountedPriceText: discountedPriceText,
+            discountPercent: discountPercent,
+            isFreeMembership: isFreeMembership,
+            hasPartialDiscount: hasPartialDiscount,
+            buttonLabel: buttonLabel,
+            onPressed: isFreeMembership
+                ? _handleFreeMemberShip
+                : () => _showPaymentConfirmation(paymentPriceText),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _withIncGst(String priceText) {
+    return priceText.toLowerCase().contains('gst')
+        ? priceText
+        : '$priceText inc GST';
+  }
+
+  Widget _heroImage() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24.r),
+      clipBehavior: Clip.antiAlias,
+      child: AspectRatio(
+        aspectRatio: 4 / 3,
+        child: Container(
+          color: Colors.white,
+          child: widget.registrationImageUrl != null &&
+                  widget.registrationImageUrl!.isNotEmpty
+              ? Image.network(
+                  widget.registrationImageUrl!,
+                  width: double.infinity,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(
+                      child: CircularProgressIndicator(color: _primaryBlue),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return _fallbackHeroImage();
+                  },
+                )
+              : _fallbackHeroImage(),
+        ),
+      ),
+    );
+  }
+
+  Widget _fallbackHeroImage() {
+    return Image.asset(
+      "assets/images/newimage.png",
+      width: double.infinity,
+      fit: BoxFit.contain,
+    );
+  }
+
+  Widget _watchIntroLink() {
+    return Align(
+      alignment: Alignment.center,
+      child: TextButton.icon(
+        onPressed: () => context.pushNamed(
+          'video-screen',
+          queryParameters: {'returnTo': 'paid-free'},
+        ),
+        style: TextButton.styleFrom(
+          foregroundColor: _primaryBlue,
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+        ),
+        icon: Icon(Icons.play_circle_outline, size: 20.sp),
+        label: Text(
+          "Watch 1-minute intro",
+          style: GoogleFonts.nunito(
+            color: _primaryBlue,
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _valueIntroCard() {
+    return _SoftCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Save on thousands of experiences across Australia & New Zealand",
+            style: GoogleFonts.nunito(
+              color: _headingColor,
+              fontSize: 23.sp,
+              fontWeight: FontWeight.w900,
+              height: 1.18,
+            ),
+          ),
+          SizedBox(height: 12.h),
+          Text(
+            "Access over 4,500 member offers across theme parks, dining, attractions, travel, shopping and everyday lifestyle experiences.",
+            style: GoogleFonts.nunito(
+              color: _bodyColor,
+              fontSize: 14.5.sp,
+              fontWeight: FontWeight.w600,
+              height: 1.45,
+            ),
+          ),
+          SizedBox(height: 12.h),
+          Container(
+            padding: EdgeInsets.all(14.r),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF7FF),
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            child: Text(
+              "Many families and couples can recover the cost of membership from just one holiday, weekend getaway or local day out.",
+              style: GoogleFonts.nunito(
+                color: _headingColor,
+                fontSize: 13.5.sp,
+                fontWeight: FontWeight.w700,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _exampleSavingsSection() {
+    return _SoftCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Example member savings",
+            style: GoogleFonts.nunito(
+              color: _headingColor,
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          SizedBox(height: 14.h),
+          _savingExample(
+            icon: Icons.confirmation_number_outlined,
+            title: "Theme park pass",
+            body: "Save around \$28 per person",
+          ),
+          SizedBox(height: 10.h),
+          _savingExample(
+            icon: Icons.restaurant_outlined,
+            title: "Dinner or cruise experience",
+            body: "Save around \$20 or more",
+          ),
+          SizedBox(height: 10.h),
+          _savingExample(
+            icon: Icons.explore_outlined,
+            title: "Local dining & attractions",
+            body: "Everyday savings during your trip and throughout the year",
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _savingExample({
+    required IconData icon,
+    required String title,
+    required String body,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(14.r),
+      decoration: BoxDecoration(
+        color: _screenBackground,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: _borderColor),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 38.w,
+            height: 38.w,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF7FF),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Icon(icon, color: _primaryBlue, size: 21.sp),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.nunito(
+                    color: _headingColor,
+                    fontSize: 14.5.sp,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                SizedBox(height: 3.h),
+                Text(
+                  body,
+                  style: GoogleFonts.nunito(
+                    color: _bodyColor,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _nearbySavingsCard() {
+    return _SoftCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 42.w,
+            height: 42.w,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF7FF),
+              borderRadius: BorderRadius.circular(14.r),
+            ),
+            child: Icon(
+              Icons.location_on_outlined,
+              color: _primaryBlue,
+              size: 24.sp,
+            ),
+          ),
+          SizedBox(width: 14.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Find nearby savings as you travel",
+                  style: GoogleFonts.nunito(
+                    color: _headingColor,
+                    fontSize: 17.sp,
+                    fontWeight: FontWeight.w900,
+                    height: 1.2,
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  "TouristSaver helps connect you with participating merchants and local offers near you using location-based discovery.",
+                  style: GoogleFonts.nunito(
+                    color: _bodyColor,
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  "No more relying on printed vouchers or outdated leaflets. Offers can be viewed in the app as you explore.",
+                  style: GoogleFonts.nunito(
+                    color: _bodyColor,
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _membershipCard({
+    required String originalPriceText,
+    required String discountedPriceText,
+    required double discountPercent,
+    required bool isFreeMembership,
+    required bool hasPartialDiscount,
+    required String buttonLabel,
+    required VoidCallback onPressed,
+  }) {
+    return _SoftCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isFreeMembership
+                ? "Your 12-month membership is included"
+                : "Premium 12-month membership",
+            style: GoogleFonts.nunito(
+              color: _headingColor,
+              fontSize: 20.sp,
+              fontWeight: FontWeight.w900,
+              height: 1.2,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            isFreeMembership
+                ? "No payment is required. Activate your membership to start exploring TouristSaver offers."
+                : "Enjoy member savings for 12 months across Australia & New Zealand.",
+            style: GoogleFonts.nunito(
+              color: _bodyColor,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+            ),
+          ),
+          SizedBox(height: 18.h),
+          if (isFreeMembership)
+            _includedMembershipBadge()
+          else if (hasPartialDiscount)
+            _discountPriceSummary(
+              originalPriceText: originalPriceText,
+              discountedPriceText: discountedPriceText,
+              discountPercent: discountPercent,
+            )
+          else
+            _standardPriceSummary(originalPriceText),
+          SizedBox(height: 22.h),
+          _GradientCheckoutButton(
+            label: buttonLabel,
+            isLoading: isLoading,
+            onPressed: onPressed,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _standardPriceSummary(String priceText) {
+    return Center(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            priceText,
+            style: GoogleFonts.nunito(
+              color: _headingColor,
+              fontSize: 34.sp,
+              fontWeight: FontWeight.w900,
+              height: 1,
+            ),
+          ),
+          SizedBox(width: 8.w),
           Padding(
-            padding: EdgeInsets.only(bottom: 10.h),
-            child: widget.registrationImageUrl != null &&
-                    widget.registrationImageUrl!.isNotEmpty
-                ? Image.network(
-                    widget.registrationImageUrl!, // Use the dynamic URL!
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    // Show a loading spinner while the image downloads
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return SizedBox(
-                        height: 200.h,
-                        child: const Center(child: CircularProgressIndicator()),
-                      );
-                    },
-                    // If the URL is broken, show your local asset as a fallback
-                    errorBuilder: (context, error, stackTrace) {
-                      return Image.asset(
-                        "assets/images/newimage.png",
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      );
-                    },
+            padding: EdgeInsets.only(bottom: 4.h),
+            child: Text(
+              "inc GST for 12 months",
+              style: GoogleFonts.nunito(
+                color: _bodyColor,
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _discountPriceSummary({
+    required String originalPriceText,
+    required String discountedPriceText,
+    required double discountPercent,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(14.r),
+      decoration: BoxDecoration(
+        color: _screenBackground,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: _borderColor),
+      ),
+      child: Column(
+        children: [
+          _priceRow(
+            label: "Was",
+            value: _withIncGst(originalPriceText),
+            strikeThrough: true,
+          ),
+          SizedBox(height: 8.h),
+          _priceRow(
+            label: "Promo saving applied",
+            value:
+                "${removeTrailingZero(numFormatter.format(discountPercent))}% off",
+            valueColor: _primaryBlue,
+          ),
+          SizedBox(height: 10.h),
+          Divider(height: 1, color: _borderColor),
+          SizedBox(height: 10.h),
+          Column(
+            children: [
+              Text(
+                "Today",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.nunito(
+                  color: _bodyColor,
+                  fontSize: 13.5.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: 4.h),
+              Text(
+                _withIncGst(discountedPriceText),
+                textAlign: TextAlign.center,
+                style: GoogleFonts.nunito(
+                  color: _headingColor,
+                  fontSize: 24.sp,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _priceRow({
+    required String label,
+    required String value,
+    Color? valueColor,
+    bool strikeThrough = false,
+    bool isLarge = false,
+  }) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: GoogleFonts.nunito(
+              color: _bodyColor,
+              fontSize: 13.5.sp,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.nunito(
+            color: valueColor ?? _bodyColor,
+            fontSize: isLarge ? 22.sp : 14.sp,
+            fontWeight: isLarge ? FontWeight.w900 : FontWeight.w800,
+            decoration: strikeThrough
+                ? TextDecoration.lineThrough
+                : TextDecoration.none,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _includedMembershipBadge() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(14.r),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF7FF),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: const Color(0xFFCCE8FF)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.verified_outlined, color: _primaryBlue, size: 24.sp),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Text(
+              "Included today",
+              style: GoogleFonts.nunito(
+                color: _headingColor,
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SoftCard extends StatelessWidget {
+  const _SoftCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(18.r),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(color: _TopUpWidgetState._borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0A236B).withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _GradientCheckoutButton extends StatelessWidget {
+  const _GradientCheckoutButton({
+    required this.label,
+    required this.isLoading,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool isLoading;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 54.h,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18.r),
+        gradient: const LinearGradient(
+          colors: [
+            _TopUpWidgetState._primaryBlue,
+            _TopUpWidgetState._ctaCyan,
+          ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _TopUpWidgetState._primaryBlue.withValues(alpha: 0.22),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18.r),
+          onTap: isLoading ? null : onPressed,
+          child: Center(
+            child: isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 3,
+                    ),
                   )
-                : Image.asset(
-                    "assets/images/newimage.png", // Fallback while API is loading
-                    width: double.infinity,
-                    fit: BoxFit.cover,
+                : Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.nunito(
+                      color: Colors.white,
+                      fontSize: 17.sp,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
           ),
+        ),
+      ),
+    );
+  }
+}
 
-        // 👉 2. The Text and Buttons
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20.w),
+class _PaymentConfirmationScreen extends StatelessWidget {
+  const _PaymentConfirmationScreen({
+    required this.amountText,
+  });
+
+  final String amountText;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: _TopUpWidgetState._screenBackground,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(20.w, 18.h, 20.w, 28.h),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _ConfirmationIconButton(
+                  icon: Icons.arrow_back_ios_new_rounded,
+                  onTap: () => Navigator.of(context).pop(false),
+                ),
+              ),
               SizedBox(height: 20.h),
-              // Top Blue Text
               Text(
-                "Save \$$displayAmount's of dollars\nAustralia wide",
+                "Activate your membership",
                 textAlign: TextAlign.center,
                 style: GoogleFonts.nunito(
-                  color: primaryBlue,
-                  fontSize: 22.sp,
-                  fontWeight: FontWeight.w800, // Black/Boldest weight
-                  height: 1.3,
+                  color: _TopUpWidgetState._headingColor,
+                  fontSize: 26.sp,
+                  fontWeight: FontWeight.w900,
+                  height: 1.15,
                 ),
               ),
-              SizedBox(height: 15.h),
-
-              // Subtitle Blue Text
+              SizedBox(height: 8.h),
               Text(
-                discountPercent == 100
-                    ? "Free 12 month membership"
-                    : (discountPercent > 0 && discountPercent < 100)
-                        ? "Premium 12 month's membership"
-                        : "12 month's membership only $originalPriceText",
+                "Premium 12-month TouristSaver membership",
                 textAlign: TextAlign.center,
                 style: GoogleFonts.nunito(
-                  color: primaryBlue,
-                  fontSize: 22.sp,
-                  fontWeight: FontWeight.w800,
+                  color: _TopUpWidgetState._bodyColor,
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w700,
+                  height: 1.35,
                 ),
               ),
-
-              // 👉 FIX 1: Only add this gap AND the Row if there is a partial discount.
-              if (discountPercent > 0 && discountPercent < 100) ...[
-                SizedBox(height: 20.h),
-                // 👉 Pricing Row (Yellow Badges and Strikethrough)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+              SizedBox(height: 24.h),
+              _SoftCard(
+                child: Column(
                   children: [
-                    // Yellow Discount Box
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 20.w, vertical: 15.h),
-                      decoration: BoxDecoration(
-                        color: accentYellow,
-                        borderRadius: BorderRadius.circular(6.r),
-                      ),
-                      child: Text(
-                        "${removeTrailingZero(numFormatter.format(discountPercent))}% OFF",
-                        style: GoogleFonts.nunito(
-                          color: Colors.black,
-                          fontSize: 20.sp,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                    _ConfirmationBenefit(
+                      icon: Icons.local_offer_outlined,
+                      text: "Access 4,500+ member offers",
                     ),
-                    SizedBox(width: 12.w),
-
-                    // Grey Strikethrough Price
+                    _ConfirmationBenefit(
+                      icon: Icons.public_outlined,
+                      text: "Savings across Australia & New Zealand",
+                    ),
+                    _ConfirmationBenefit(
+                      icon: Icons.restaurant_outlined,
+                      text:
+                          "Dining, attractions, travel & lifestyle experiences",
+                    ),
+                    _ConfirmationBenefit(
+                      icon: Icons.location_on_outlined,
+                      text: "Nearby offers using location-based discovery",
+                    ),
+                    _ConfirmationBenefit(
+                      icon: Icons.calendar_month_outlined,
+                      text: "Valid for 12 months",
+                      showDivider: false,
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 18.h),
+              _SoftCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      originalPriceText,
-                      style: TextStyle(
-                        fontSize: 23.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade500,
-                        decoration: TextDecoration.lineThrough,
+                      "Payment summary",
+                      style: GoogleFonts.nunito(
+                        color: _TopUpWidgetState._headingColor,
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
-                    SizedBox(width: 12.w),
-
-                    // Final Price Yellow Box
+                    SizedBox(height: 14.h),
+                    _SummaryRow(
+                      label: "Membership",
+                      value: "Premium 12-month",
+                    ),
+                    SizedBox(height: 10.h),
+                    Divider(
+                      color: _TopUpWidgetState._borderColor,
+                      height: 1,
+                    ),
+                    SizedBox(height: 12.h),
+                    _SummaryRow(
+                      label: "Today",
+                      value: amountText,
+                      isTotal: true,
+                    ),
+                    SizedBox(height: 16.h),
                     Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 25.w, vertical: 15.h),
+                      padding: EdgeInsets.all(12.r),
                       decoration: BoxDecoration(
-                        color: accentYellow,
-                        borderRadius: BorderRadius.circular(6.r),
+                        color: const Color(0xFFEFF7FF),
+                        borderRadius: BorderRadius.circular(14.r),
                       ),
-                      child: Text(
-                        discountedPriceText,
-                        style: GoogleFonts.nunito(
-                          color: Colors.black,
-                          fontSize: 23.sp,
-                          fontWeight: FontWeight.w800,
-                        ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.lock_outline,
+                            color: _TopUpWidgetState._primaryBlue,
+                            size: 20.sp,
+                          ),
+                          SizedBox(width: 10.w),
+                          Expanded(
+                            child: Text(
+                              "Secure payment powered by Stripe",
+                              style: GoogleFonts.nunito(
+                                color: _TopUpWidgetState._headingColor,
+                                fontSize: 13.5.sp,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ],
-
-              // 👉 Master gap between text/pricing and the button
-              SizedBox(height: 28.h),
-
-              // 👉 PAY Button
-              SizedBox(
-                width: 320.w,
-                // 👉 FIX 2: Removed hardcoded heights. Let the internal padding define the button height dynamically.
-                child: ElevatedButton(
-                  onPressed: isLoading
-                      ? null
-                      : (discountPercent == 100
-                          ? _handleFreeMemberShip
-                          : _handleTopUp),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: accentYellow,
-                    disabledBackgroundColor: accentYellow,
-                    // 👉 FIX 3: Added symmetric padding. This guarantees a perfect
-                    // professional gap around the text, even if it wraps to two lines!
-                    padding:
-                        EdgeInsets.symmetric(vertical: 16.h, horizontal: 20.w),
-                    shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(50.r), // Perfect pill shape
-                    ),
-                    elevation: 0,
+              ),
+              SizedBox(height: 24.h),
+              _GradientCheckoutButton(
+                label: "Continue to secure payment",
+                isLoading: false,
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+              SizedBox(height: 12.h),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                style: TextButton.styleFrom(
+                  foregroundColor: _TopUpWidgetState._primaryBlue,
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                ),
+                child: Text(
+                  "Back to membership summary",
+                  style: GoogleFonts.nunito(
+                    color: _TopUpWidgetState._primaryBlue,
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w800,
                   ),
-                  child: isLoading
-                      ? const CircularProgressIndicator(color: primaryBlue)
-                      // 👉 FIX 4: Used AutoSizeText so the text shrinks slightly instead of breaking awkwardly.
-                      : AutoSizeText(
-                          discountPercent == 100
-                              ? "Continue with FREE membership"
-                              : (discountPercent > 0 && discountPercent < 100)
-                                  ? "PAY now $discountedPriceText"
-                                  : "PAY now $originalPriceText",
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          style: GoogleFonts.nunito(
-                            color: Colors.black,
-                            fontSize: 22.sp,
-                            fontWeight: FontWeight.w800,
-                            height:
-                                1.2, // Gives breathing room between lines if it wraps
-                          ),
-                        ),
                 ),
               ),
-              SizedBox(height: 20.h),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ConfirmationIconButton extends StatelessWidget {
+  const _ConfirmationIconButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16.r),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16.r),
+        onTap: onTap,
+        child: Container(
+          width: 44.w,
+          height: 44.w,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(color: _TopUpWidgetState._borderColor),
+          ),
+          child: Icon(
+            icon,
+            color: _TopUpWidgetState._primaryBlue,
+            size: 18.sp,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ConfirmationBenefit extends StatelessWidget {
+  const _ConfirmationBenefit({
+    required this.icon,
+    required this.text,
+    this.showDivider = true,
+  });
+
+  final IconData icon;
+  final String text;
+  final bool showDivider;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 38.w,
+              height: 38.w,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF7FF),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Icon(
+                icon,
+                color: _TopUpWidgetState._primaryBlue,
+                size: 21.sp,
+              ),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Text(
+                text,
+                style: GoogleFonts.nunito(
+                  color: _TopUpWidgetState._headingColor,
+                  fontSize: 14.5.sp,
+                  fontWeight: FontWeight.w800,
+                  height: 1.3,
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (showDivider) ...[
+          SizedBox(height: 12.h),
+          Divider(
+            color: _TopUpWidgetState._borderColor,
+            height: 1,
+          ),
+          SizedBox(height: 12.h),
+        ],
+      ],
+    );
+  }
+}
+
+class _SummaryRow extends StatelessWidget {
+  const _SummaryRow({
+    required this.label,
+    required this.value,
+    this.isTotal = false,
+  });
+
+  final String label;
+  final String value;
+  final bool isTotal;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: GoogleFonts.nunito(
+              color: _TopUpWidgetState._bodyColor,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.nunito(
+            color: isTotal
+                ? _TopUpWidgetState._headingColor
+                : _TopUpWidgetState._bodyColor,
+            fontSize: isTotal ? 22.sp : 14.sp,
+            fontWeight: isTotal ? FontWeight.w900 : FontWeight.w800,
           ),
         ),
       ],

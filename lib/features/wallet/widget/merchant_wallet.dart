@@ -518,7 +518,7 @@ class _MerchantWalletScreenState extends State<MerchantWalletScreen> {
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 10.0),
                   child: CircularProgressIndicator(
-                    color: GlobalColors.appColor,
+                    color: GlobalColors.loaderColor,
                     strokeWidth: 2.0,
                   ),
                 ),
@@ -652,7 +652,7 @@ class _MerchantWalletScreenState extends State<MerchantWalletScreen> {
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 10.0),
                   child: CircularProgressIndicator(
-                    color: GlobalColors.appColor,
+                    color: GlobalColors.loaderColor,
                     strokeWidth: 2.0,
                   ),
                 ),

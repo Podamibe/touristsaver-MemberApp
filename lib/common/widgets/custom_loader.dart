@@ -77,7 +77,7 @@ class CustomLoader extends StatelessWidget {
                                 height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: GlobalColors.appColor,
+                                  color: GlobalColors.loaderColor,
                                 ),
                               )),
                         ),
@@ -177,7 +177,7 @@ class CustomLoader1 extends StatelessWidget {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: GlobalColors.appColor,
+                            color: GlobalColors.loaderColor,
                           ),
                         )),
                   ),
@@ -216,17 +216,30 @@ class CustomAllLoader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AutoSizeText(S.of(context).pleaseWait, style: textStyle15),
-            const SizedBox(height: 10),
-            const CircularProgressIndicator(color: GlobalColors.appColor),
-          ],
+    return Center(
+      child: Dialog(
+        backgroundColor: Colors.white,
+        alignment: Alignment.center,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18.r),
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 28.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              AutoSizeText(
+                S.of(context).pleaseWait,
+                textAlign: TextAlign.center,
+                style: textStyle15,
+              ),
+              SizedBox(height: 14.h),
+              const CircularProgressIndicator(
+                color: GlobalColors.loaderColor,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -249,8 +262,8 @@ class CustomAllLoader1State extends State<CustomAllLoader1>
       AnimationController(vsync: this, duration: const Duration(seconds: 3))
         ..repeat();
 
-  List<Color> colors = [GlobalColors.appColor, GlobalColors.appColor1];
-  Color colorNow = GlobalColors.appColor;
+  List<Color> colors = [GlobalColors.loaderColor, GlobalColors.loaderColor];
+  Color colorNow = GlobalColors.loaderColor;
   int colorIndex = 0;
   void changeColor() {
     setState(() {
@@ -486,7 +499,10 @@ class MerchantWalletLoader extends StatelessWidget {
               backgroundColor: GlobalColors.appWhiteBackgroundColor,
               elevation: 2,
               gradient: const LinearGradient(
-                colors: [GlobalColors.appColor, GlobalColors.appColor1],
+                colors: [
+                  GlobalColors.loaderColor,
+                  Color(0xffE8F7FD),
+                ],
                 begin: Alignment.topRight,
                 end: Alignment.bottomLeft,
               ),
@@ -527,7 +543,8 @@ class MerchantWalletLoader extends StatelessWidget {
                   child: Center(
                     child: AutoSizeText(
                       '..........',
-                      style: topicStyle.copyWith(color: GlobalColors.appColor),
+                      style:
+                          topicStyle.copyWith(color: GlobalColors.loaderColor),
                     ),
                   ),
                 )

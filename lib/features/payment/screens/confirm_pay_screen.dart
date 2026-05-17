@@ -1,17 +1,11 @@
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:new_piiink/common/app_variables.dart';
 import 'package:new_piiink/common/widgets/custom_app_bar.dart';
 import 'package:new_piiink/common/widgets/custom_snackbar.dart';
-import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/constants/number_formatter.dart';
-import 'package:new_piiink/constants/style.dart';
-import 'package:outline_gradient_button/outline_gradient_button.dart';
-
-import '../../../common/widgets/custom_loader.dart';
-import 'package:new_piiink/generated/l10n.dart';
 
 class ConfimrPaymentScreen extends StatefulWidget {
   static const String routeName = "/confirm-pay";
@@ -23,6 +17,7 @@ class ConfimrPaymentScreen extends StatefulWidget {
   final String universalPiiinkBalance;
   final String merchantPiiinkBalance;
   final String merchantRebateToMember;
+  final String merchantDiscountPercentage;
   final String discountedTransactionAmount;
   final String totalPiiinkDiscount;
   final String logo;
@@ -42,6 +37,7 @@ class ConfimrPaymentScreen extends StatefulWidget {
     required this.universalPiiinkBalance,
     required this.merchantPiiinkBalance,
     required this.merchantRebateToMember,
+    required this.merchantDiscountPercentage,
     required this.discountedTransactionAmount,
     required this.totalPiiinkDiscount,
     required this.logo,
@@ -51,287 +47,385 @@ class ConfimrPaymentScreen extends StatefulWidget {
     this.terminalId,
     this.merchantId,
   });
+
   @override
   State<ConfimrPaymentScreen> createState() => _ConfimrPaymentScreenState();
 }
 
 class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
+  static const Color _primaryBlue = Color(0xFF0009FE);
+  static const Color _ctaCyan = Color(0xFF18C6FF);
+  static const Color _screenBackground = Color(0xFFF8FAFE);
+  static const Color _headingColor = Color(0xFF111C44);
+  static const Color _bodyColor = Color(0xFF61708A);
+  static const Color _borderColor = Color(0xFFE2E8F3);
+
+  final NumberFormat _currencyFormat = NumberFormat.currency(
+      symbol: AppVariables.currency ?? '\$', decimalDigits: 2);
+  final NumberFormat _numberFormat = NumberFormat('#,##0.##');
+
+  double get _billAmount => double.tryParse(widget.totalAmount) ?? 0;
+  double get _memberSavings => double.tryParse(widget.totalPiiinkDiscount) ?? 0;
+  double get _customerPays =>
+      double.tryParse(widget.discountedTransactionAmount) ?? 0;
+  double get _discountPercent =>
+      double.tryParse(widget.merchantDiscountPercentage) ?? 0;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _screenBackground,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: CustomAppBar(
-          text: S.of(context).chooseWallet,
+          text: 'Discount Available',
           icon: Icons.arrow_back_ios,
-          onPressed: () {
-            context.pop();
-          },
+          onPressed: () => context.pop(),
         ),
       ),
-      body: ScrollConfiguration(
-        behavior: const ScrollBehavior(),
+      body: SafeArea(
         child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      S.of(context).merchantNameP,
-                      // 'Merchant Name : ',
-                      style: notiHeaderTextStyle.copyWith(color: Colors.black),
-                      textAlign: TextAlign.center,
-                    ),
-                    Text(
-                      widget.merchantName,
-                      style: notiHeaderTextStyle,
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
+              _merchantCard(),
+              SizedBox(height: 16.h),
+              _summaryCard(),
+              SizedBox(height: 16.h),
+              _walletChoiceCard(
+                title: 'Use All Merchant TSDCs',
+                subtitle: 'Available for participating merchants generally.',
+                balance: widget.universalPiiinkBalance,
+                remaining: widget.universalPiiinkOnHold,
+                enabled: widget.hasUniversalPiiinks == 'true',
+                walletType: 'universalWallet',
               ),
-              // Universal Wallet
-              SameContainer(
-                onTap: () {
-                  if (widget.hasUniversalPiiinks == "true") {
-                    context.pushNamed(
-                      'accept-screen',
-                      extra: {
-                        'merchantId': widget.merchantId,
-                        'totalAmount': widget.totalAmount,
-                        'qrCode': widget.qrCode,
-                        'discountedTransactionAmount':
-                            widget.discountedTransactionAmount,
-                        'totalPiiinkDiscount': widget.totalPiiinkDiscount,
-                        'merchantRebateToMember': widget.merchantRebateToMember,
-                        'walletType': 'universalWallet',
-                        'terminalUserId': widget.terminalUserId,
-                        'terminalId': widget.terminalId,
-                      },
-                    );
-                  } else {
-                    GlobalSnackBar.showError(
-                      context,
-                      S.of(context).notEnoughTouristSaverCredits,
-                    );
-                  }
-                },
-                image: Expanded(
-                  flex: 4,
-                  child: Image.asset(
-                    'assets/images/universal.png',
-                    // height: 70,
-                    // width: MediaQuery.of(context).size.width / 1.3,
-                    filterQuality: FilterQuality.high,
+              if (double.tryParse(widget.merchantPiiinkBalance) != 0) ...[
+                SizedBox(height: 12.h),
+                _walletChoiceCard(
+                  title: 'Use Merchant TSDCs for this merchant',
+                  subtitle:
+                      'Merchant-specific rewards usable toward future purchases here.',
+                  balance: widget.merchantPiiinkBalance,
+                  remaining: widget.merchantPiiinkOnHold,
+                  enabled: widget.hasMerchantPiiinks == 'true',
+                  walletType: 'merchantWallet',
+                ),
+              ],
+              SizedBox(height: 18.h),
+              TextButton(
+                onPressed: () => context.pop(),
+                child: Text(
+                  'Try again / Cancel',
+                  style: TextStyle(
+                    color: _bodyColor,
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Sans',
                   ),
                 ),
-                textName: S.of(context).universal,
-                piiinkBalance: widget.universalPiiinkBalance,
-                onHoldPiiink: widget.universalPiiinkOnHold,
               ),
-
-              // Merchant Wallet
-              widget.merchantPiiinkBalance != '0.0'
-                  ? SameContainer(
-                      onTap: () {
-                        if (widget.hasMerchantPiiinks == "true") {
-                          context.pushNamed(
-                            'accept-screen',
-                            extra: {
-                              'merchantId': widget.merchantId,
-                              'totalAmount': widget.totalAmount,
-                              'qrCode': widget.qrCode,
-                              'discountedTransactionAmount':
-                                  widget.discountedTransactionAmount,
-                              'totalPiiinkDiscount': widget.totalPiiinkDiscount,
-                              'merchantRebateToMember':
-                                  widget.merchantRebateToMember,
-                              'walletType': 'merchantWallet',
-                              'terminalUserId': widget.terminalUserId,
-                              'terminalId': widget.terminalId,
-                            },
-                          );
-                        } else {
-                          GlobalSnackBar.showError(
-                            context,
-                            S.of(context).notEnoughTouristSaverCredits,
-                          );
-                        }
-                      },
-                      image: Expanded(
-                        flex: 4,
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 0),
-                          child: ClipRRect(
-                            borderRadius: const BorderRadius.only(
-                              topRight: Radius.circular(10.0),
-                              topLeft: Radius.circular(10.0),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(10.0),
-                              child: widget.logo == 'null'
-                                  ? Image.asset(
-                                      "assets/images/tourist.png",
-                                      height: 40,
-                                    )
-                                  : widget.logo == ''
-                                      ? Image.asset(
-                                          "assets/images/tourist.png",
-                                          height: 40,
-                                        )
-                                      : CachedNetworkImage(
-                                          imageUrl: widget.logo,
-                                          fit: BoxFit.contain,
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width /
-                                              1.3,
-                                          placeholder: (context, url) {
-                                            return const Center(
-                                              child: CustomAllLoader(),
-                                            );
-                                          },
-                                          errorWidget: (context, url, error) =>
-                                              Center(
-                                            child: Image.asset(
-                                              'assets/images/no_image.jpg',
-                                            ),
-                                          ),
-                                        ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // image: Image.asset(
-                      //   "assets/images/piiink.png",
-                      //   height: 40,
-                      // ),
-                      textName: widget.merchantName,
-                      piiinkBalance: widget.merchantPiiinkBalance,
-                      onHoldPiiink: widget.merchantPiiinkOnHold,
-                    )
-                  : const SizedBox(),
             ],
           ),
         ),
       ),
     );
   }
+
+  Widget _merchantCard() {
+    return _PayCard(
+      child: Row(
+        children: [
+          _merchantLogo(),
+          SizedBox(width: 14.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.merchantName,
+                  style: TextStyle(
+                    color: _headingColor,
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'Sans',
+                  ),
+                ),
+                SizedBox(height: 6.h),
+                Text(
+                  'TouristSaver found an available member discount.',
+                  style: _bodyStyle(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _merchantLogo() {
+    final bool hasLogo = widget.logo.isNotEmpty && widget.logo != 'null';
+
+    return Container(
+      width: 58.w,
+      height: 58.w,
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF7FF),
+        borderRadius: BorderRadius.circular(18.r),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: hasLogo
+          ? CachedNetworkImage(
+              imageUrl: widget.logo,
+              fit: BoxFit.cover,
+              errorWidget: (context, url, error) => _fallbackLogo(),
+            )
+          : _fallbackLogo(),
+    );
+  }
+
+  Widget _fallbackLogo() {
+    return Icon(Icons.storefront_outlined, color: _primaryBlue, size: 30.sp);
+  }
+
+  Widget _summaryCard() {
+    return _PayCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeader(Icons.local_offer_outlined, 'Your discount summary'),
+          SizedBox(height: 14.h),
+          _summaryRow('Bill amount', _formatCurrency(_billAmount)),
+          _summaryRow('Member discount',
+              '${_formatCurrency(_memberSavings)} (${_numberFormat.format(_discountPercent)}%)'),
+          _summaryRow('You pay merchant', _formatCurrency(_customerPays),
+              emphasized: true),
+          _summaryRow('TSDCs required', _numberFormat.format(_memberSavings)),
+        ],
+      ),
+    );
+  }
+
+  Widget _walletChoiceCard({
+    required String title,
+    required String subtitle,
+    required String balance,
+    required String remaining,
+    required bool enabled,
+    required String walletType,
+  }) {
+    final double availableValue = double.tryParse(balance) ?? 0;
+    final double remainingValue =
+        (availableValue - _memberSavings).clamp(0, double.infinity);
+
+    return _PayCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.savings_outlined, color: _primaryBlue, size: 22.sp),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: _headingColor,
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'Sans',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          Text(subtitle, style: _bodyStyle()),
+          SizedBox(height: 12.h),
+          _summaryRow('Available TSDCs', _numberFormat.format(availableValue)),
+          _summaryRow('TSDC balance after redeeming',
+              _numberFormat.format(remainingValue)),
+          SizedBox(height: 14.h),
+          _GradientButton(
+            label: 'Redeem Discount',
+            enabled: enabled,
+            onTap: () {
+              if (!enabled) {
+                GlobalSnackBar.showError(
+                  context,
+                  'Not enough TouristSaver Discount Credits.',
+                );
+                return;
+              }
+
+              context.pushNamed(
+                'accept-screen',
+                extra: {
+                  'merchantId': widget.merchantId,
+                  'merchantName': widget.merchantName,
+                  'logo': widget.logo,
+                  'totalAmount': widget.totalAmount,
+                  'qrCode': widget.qrCode,
+                  'discountedTransactionAmount':
+                      widget.discountedTransactionAmount,
+                  'totalPiiinkDiscount': widget.totalPiiinkDiscount,
+                  'merchantRebateToMember': widget.merchantRebateToMember,
+                  'merchantDiscountPercentage':
+                      widget.merchantDiscountPercentage,
+                  'tsdcsRemaining': remainingValue.toString(),
+                  'walletType': walletType,
+                  'terminalUserId': widget.terminalUserId,
+                  'terminalId': widget.terminalId,
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionHeader(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, color: _primaryBlue, size: 22.sp),
+        SizedBox(width: 8.w),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              color: _headingColor,
+              fontSize: 17.sp,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Sans',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _summaryRow(String label, String value, {bool emphasized = false}) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 10.h),
+      child: Row(
+        children: [
+          Expanded(child: Text(label, style: _bodyStyle())),
+          SizedBox(width: 12.w),
+          Text(
+            value,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              color: emphasized ? _primaryBlue : _headingColor,
+              fontSize: emphasized ? 17.sp : 14.sp,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Sans',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  TextStyle _bodyStyle() {
+    return TextStyle(
+      color: _bodyColor,
+      fontSize: 13.5.sp,
+      fontWeight: FontWeight.w600,
+      height: 1.38,
+      fontFamily: 'Sans',
+    );
+  }
+
+  String _formatCurrency(num value) {
+    return _currencyFormat.format(value);
+  }
 }
 
-// Making stateless widget
-class SameContainer extends StatelessWidget {
-  final VoidCallback onTap;
-  final Widget image;
-  final String textName;
-  final String piiinkBalance;
-  final String? onHoldPiiink;
-  const SameContainer({
-    super.key,
-    required this.onTap,
-    required this.image,
-    required this.textName,
-    required this.piiinkBalance,
-    this.onHoldPiiink,
-  });
+class _PayCard extends StatelessWidget {
+  const _PayCard({required this.child});
+
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Center(
-        child: Container(
-          height: 180,
-          width: MediaQuery.of(context).size.width / 1.2,
-          margin: const EdgeInsets.symmetric(vertical: 10.0),
-          // decoration: BoxDecoration(
-          //     color: GlobalColors.appWhiteBackgroundColor,
-          //     borderRadius: BorderRadius.circular(5.0),
-          //     boxShadow: [
-          //       BoxShadow(
-          //           color: Colors.grey.withValues(alpha: 0.5),
-          //           blurRadius: 4,
-          //           spreadRadius: 4,
-          //           offset: const Offset(0, 4))
-          //     ]),
-          child: OutlineGradientButton(
-            padding: const EdgeInsets.all(10.0),
-            strokeWidth: 1,
-            radius: const Radius.circular(5.0),
-            backgroundColor: GlobalColors.appWhiteBackgroundColor,
-            elevation: 10,
-            gradient: const LinearGradient(
-              colors: [GlobalColors.appColor, GlobalColors.appColor1],
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                image,
-                const SizedBox(height: 20),
-                // Piiinks Universal Number
-                AutoSizeText(
-                  textName,
-                  textAlign: TextAlign.center,
-                  style: topicStyle.copyWith(fontSize: 24.sp),
-                ),
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(18.r),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22.r),
+        border: Border.all(color: _ConfimrPaymentScreenState._borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0A236B).withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
 
-                const SizedBox(height: 10),
+class _GradientButton extends StatelessWidget {
+  const _GradientButton({
+    required this.label,
+    required this.onTap,
+    this.enabled = true,
+  });
 
-                // Piiinks Credits
-                AutoSizeText.rich(
-                  TextSpan(
-                    text: '${S.of(context).creditRemaning}: ',
-                    style: transactionTextStyle.copyWith(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 18.sp,
-                    ),
-                    children: [
-                      TextSpan(
-                        text:
-                            '${numFormatter.format(double.parse(piiinkBalance))} ${S.of(context).touristSavers}',
-                        style: transactionTextStyle.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: GlobalColors.appColor,
-                          fontSize: 18.sp,
-                        ),
-                      ),
+  final String label;
+  final VoidCallback onTap;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18.r),
+        onTap: enabled ? onTap : onTap,
+        child: Ink(
+          height: 54.h,
+          decoration: BoxDecoration(
+            gradient: enabled
+                ? const LinearGradient(
+                    colors: [
+                      _ConfimrPaymentScreenState._primaryBlue,
+                      _ConfimrPaymentScreenState._ctaCyan,
                     ],
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                // Piiinks Credits
-                onHoldPiiink == '0.0'
-                    ? const SizedBox()
-                    : AutoSizeText.rich(
-                        TextSpan(
-                          text: '${S.of(context).touristSaversOnHold}: ',
-                          style: transactionTextStyle.copyWith(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 18.sp,
-                          ),
-                          children: [
-                            TextSpan(
-                              text:
-                                  '${numFormatter.format(double.parse(onHoldPiiink!))} ${S.of(context).touristSavers}',
-                              style: transactionTextStyle.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: GlobalColors.appColor,
-                                fontSize: 18.sp,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-              ],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  )
+                : null,
+            color: enabled ? null : const Color(0xFFE8ECF5),
+            borderRadius: BorderRadius.circular(18.r),
+            boxShadow: enabled
+                ? [
+                    BoxShadow(
+                      color: _ConfimrPaymentScreenState._primaryBlue
+                          .withValues(alpha: 0.20),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: enabled
+                    ? Colors.white
+                    : _ConfimrPaymentScreenState._bodyColor,
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w900,
+                fontFamily: 'Sans',
+              ),
             ),
           ),
         ),

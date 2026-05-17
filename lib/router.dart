@@ -93,7 +93,9 @@ final GoRouter goRouter = GoRouter(
     GoRoute(
       path: '/video-screen',
       name: 'video-screen',
-      builder: (context, state) => const VideoIntroScreen(),
+      builder: (context, state) => VideoIntroScreen(
+        returnRouteName: state.uri.queryParameters['returnTo'],
+      ),
     ),
     //First Choose Country Screen
     GoRoute(
@@ -442,6 +444,7 @@ final GoRouter goRouter = GoRouter(
             universalPiiinkBalance: args['universalPiiinkBalance'],
             merchantPiiinkBalance: args['merchantPiiinkBalance'],
             merchantRebateToMember: args['merchantRebateToMember'],
+            merchantDiscountPercentage: args['merchantDiscountPercentage'],
             discountedTransactionAmount: args['discountedTransactionAmount'],
             totalPiiinkDiscount: args['totalPiiinkDiscount'],
             logo: args['logo'],
@@ -464,6 +467,10 @@ final GoRouter goRouter = GoRouter(
             discountedTransactionAmount: args['discountedTransactionAmount'],
             totalPiiinkDiscount: args['totalPiiinkDiscount'],
             merchantRebateToMember: args['merchantRebateToMember'],
+            merchantDiscountPercentage: args['merchantDiscountPercentage'],
+            merchantName: args['merchantName'],
+            logo: args['logo'],
+            tsdcsRemaining: args['tsdcsRemaining'],
             walletType: args['walletType'],
             terminalUserId: args['terminalUserId'],
             terminalId: args['terminalId'],
@@ -477,8 +484,12 @@ final GoRouter goRouter = GoRouter(
           Map<String, dynamic> args = state.extra as Map<String, dynamic>;
           return PaymentCompleted(
             merchantId: args['merchantId'],
+            merchantName: args['merchantName'],
+            totalAmount: args['totalAmount'],
+            totalPiiinkDiscount: args['totalPiiinkDiscount'],
             discountedTransactionAmount: args['discountedTransactionAmount'],
             merchantRebateToMember: args['merchantRebateToMember'],
+            merchantDiscountPercentage: args['merchantDiscountPercentage'],
             walletType: args['walletType'],
           );
         }),

@@ -94,6 +94,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   static const Color _fieldBorder = Color(0xFFD8DEEC);
   static const Color _softText = Color(0xFF65708D);
   static const double _inputHeight = 55;
+  static const String _defaultAustraliaIssuerCode = 'AU0000000001';
 
   // For dropDown of selecting country
   String? selectedCountry;
@@ -315,7 +316,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 shape: const CircleBorder(),
                 child: InkWell(
                   customBorder: const CircleBorder(),
-                  onTap: () => context.pop(),
+                  onTap: () => context.goNamed('intro-screen'),
                   child: Padding(
                     padding: EdgeInsets.all(9.w),
                     child: const Icon(
@@ -802,6 +803,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
             );
           }
         });
+  }
+
+  String? _getDefaultIssuerCodeForSelectedCountry() {
+    final String countryCode =
+        selectedCountryShortName?.trim().toUpperCase() ?? '';
+    final String countryName = selectedCountry?.trim().toLowerCase() ?? '';
+
+    // TODO: Move default country issuer mapping to backend/admin config.
+    if (countryCode == 'AU' ||
+        countryCode == 'AUS' ||
+        countryName == 'australia') {
+      return _defaultAustraliaIssuerCode;
+    }
+
+    return null;
+  }
+
+  String? _issuerCodeForPremiumCode() {
+    final scannedOrLinkedIssuer = providerController.text.trim();
+    if (scannedOrLinkedIssuer.isNotEmpty) return scannedOrLinkedIssuer;
+
+    final defaultIssuer = _getDefaultIssuerCodeForSelectedCountry();
+    if (defaultIssuer != null) {
+      providerController.text = defaultIssuer;
+    }
+
+    return defaultIssuer;
   }
 
   Widget _postalCodeField() {
@@ -1808,10 +1836,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   // 3. Everything is valid, send the OTP!
                                   sendPhoneOtp();
                                 } else {
-                                  GlobalSnackBar.showError(
-                                      context,
-                                      preRes.message ??
-                                          S.of(context).premiumCodeIsNotValid);
+                                  _showPremiumCodeVerificationMessage();
                                   setState(() {
                                     isLoading = false;
                                   });
@@ -1854,10 +1879,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   checkPremium() async {
     //If premium code is not empty but issuer code is empty following code be executed
     final String premiumCodeInput = premiumController.text.trim().toUpperCase();
-    if (premiumCodeInput == 'SAVER20' && providerController.text.isEmpty) {
-      providerController.text = 'AU0000000001';
-    }
-    if (premiumCodeInput.isNotEmpty && providerController.text.isEmpty) {
+    final String? issuerCodeForPremium =
+        premiumCodeInput.isEmpty ? null : _issuerCodeForPremiumCode();
+
+    if (premiumCodeInput.isNotEmpty && issuerCodeForPremium == null) {
       GlobalSnackBar.valid(
           context, S.of(context).pleaseEnterIssuerCodeToUsePremiumCode);
       setState(() {
@@ -1865,14 +1890,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       });
     }
     // If premium code is not empty following code will be executed to register the user
-    else if (premiumCodeInput.isNotEmpty &&
-        providerController.text.isNotEmpty) {
+    else if (premiumCodeInput.isNotEmpty && issuerCodeForPremium != null) {
       bool? validityResult = await checkEmailAndPhoneNo();
       if (validityResult == false) {
         var preRes = await DioRegister().premiumVal(
           premiumValidityReqModel: PremiumValidityReqModel(
             memberPremiumCode: premiumCodeInput,
-            issuerCode: providerController.text.trim(),
+            issuerCode: issuerCodeForPremium,
           ),
         );
         if (!mounted) return;
@@ -1880,8 +1904,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           if (preRes.status == 'success') {
             sendPhoneOtp();
           } else {
-            GlobalSnackBar.showError(
-                context, preRes.message ?? S.of(context).premiumCodeIsNotValid);
+            _showPremiumCodeVerificationMessage();
             setState(() {
               isLoading = false;
             });
@@ -1907,58 +1930,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   //Invalid Premium Code
   invalidPremium() {
-    return showGeneralDialog(
-      barrierLabel: 'Label',
-      barrierDismissible: true,
-      barrierColor: Colors.black.withValues(
-          alpha:
-              0.5), //to change the background color once the container is opened
-      transitionDuration: const Duration(milliseconds: 300),
-      context: context,
-      pageBuilder: (context, anim1, anim2) {
-        return Align(
-          alignment: Alignment.center,
-          child: Container(
-            height: 100,
-            width: MediaQuery.of(context).size.width / 1.1,
-            margin: const EdgeInsets.only(left: 10.0, right: 10.0),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(5.0),
-            ),
-            child: Column(
-              children: [
-                const SizedBox(height: 10),
-                //Text
-                AutoSizeText(S.of(context).premiumCodeIsNotValid,
-                    style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 18.sp,
-                        decoration: TextDecoration.none,
-                        color: Colors.black,
-                        fontFamily: 'Sans')),
-                const SizedBox(height: 10),
+    _showPremiumCodeVerificationMessage();
+  }
 
-                // Button
-                CustomButton(
-                  text: S.of(context).ok,
-                  onPressed: () {
-                    context.pop();
-                  },
-                )
-              ],
+  void _showPremiumCodeVerificationMessage() {
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.fixed,
+          duration: const Duration(seconds: 4),
+          backgroundColor: const Color(0xFFFFF7E6),
+          elevation: 0,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
             ),
           ),
-        );
-      },
-      transitionBuilder: (context, anim1, anim2, child) {
-        return SlideTransition(
-          position: Tween(begin: const Offset(0, 1), end: const Offset(0, 0))
-              .animate(anim1),
-          child: child,
-        );
-      },
-    );
+          content: Text(
+            'This premium code could not be verified. Please check the code and try again.',
+            style: TextStyle(
+              color: const Color(0xFF5A4A12),
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          action: SnackBarAction(
+            label: S.of(context).ok,
+            textColor: _primaryBlue,
+            onPressed: () {},
+          ),
+        ),
+      );
   }
 
   Future<bool?> checkEmailAndPhoneNo() async {

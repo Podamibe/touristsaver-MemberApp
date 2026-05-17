@@ -307,7 +307,7 @@ class ViewAllNearbyMerchantsScreenState
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 10.0),
               child: CircularProgressIndicator(
-                color: GlobalColors.appColor,
+                color: GlobalColors.loaderColor,
                 strokeWidth: 2.0,
               ),
             ),

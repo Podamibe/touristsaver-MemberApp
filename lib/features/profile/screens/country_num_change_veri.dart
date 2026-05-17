@@ -471,7 +471,7 @@ class _CountryNumberChangedVerificationState
                                             .of(context)
                                             .topUpAndPayXY
                                             .replaceAll('&XY',
-                                                '${AppVariables.currency}${memPackAll.data![0].packageFee.toString()}'),
+                                                '${AppVariables.currency}${memPackAll.data![0].packageFee.toString()} inc GST'),
                                         onPressed: () async {
                                           stateMod(() {
                                             isLoadingB = true;

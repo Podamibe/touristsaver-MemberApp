@@ -1,15 +1,11 @@
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:new_piiink/common/widgets/custom_app_bar.dart';
-import 'package:new_piiink/common/widgets/custom_button.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:new_piiink/constants/decimal_remove.dart';
-import 'package:new_piiink/constants/global_colors.dart';
 import 'package:new_piiink/constants/number_formatter.dart';
-import 'package:new_piiink/constants/style.dart';
 
 import '../app_variables.dart';
-import 'package:new_piiink/generated/l10n.dart';
 
 class CongratsScreen extends StatefulWidget {
   static const String routeName = '/congrats-screen';
@@ -22,126 +18,207 @@ class CongratsScreen extends StatefulWidget {
 }
 
 class _CongratsScreenState extends State<CongratsScreen> {
+  static const Color _primaryBlue = Color(0xFF0009FE);
+  static const Color _ctaCyan = Color(0xFF18C6FF);
+  static const Color _screenBackground = Color(0xFFF8FAFE);
+  static const Color _headingColor = Color(0xFF111C44);
+  static const Color _bodyColor = Color(0xFF61708A);
+  static const Color _borderColor = Color(0xFFE2E8F3);
+
+  double get _creditAmount =>
+      double.tryParse(widget.piiinkCredit.replaceAll(',', '').trim()) ?? 0;
+
+  String get _formattedCredits =>
+      removeTrailingZero(numFormatter.format(_creditAmount));
+
   @override
   Widget build(BuildContext context) {
-    List arr = S.of(context).congratulationNowYouHaveXTouristSavers.split(" ");
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: CustomAppBar(text: S.of(context).registrationCompleted),
-      ),
-      body: Container(
-        height: 320,
-        width: MediaQuery.of(context).size.width / 1,
-        margin: const EdgeInsets.all(10.0),
-        decoration: BoxDecoration(
-            color: GlobalColors.appWhiteBackgroundColor,
-            borderRadius: BorderRadius.circular(5.0),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.grey.withValues(alpha: 0.2),
-                  blurRadius: 4,
-                  spreadRadius: 1,
-                  offset: const Offset(2, 2))
-            ]),
-        child: Column(
-          children: [
-            const SizedBox(height: 15),
-            // Congratulation
-            AutoSizeText(
-              S.of(context).congratulations,
-              style: topicStyle,
+      backgroundColor: _screenBackground,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height -
+                  MediaQuery.of(context).padding.top -
+                  MediaQuery.of(context).padding.bottom -
+                  48.h,
             ),
-            const SizedBox(height: 25),
-            FittedBox(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    for (var item in arr)
-                      if (item.indexOf('&X') != -1)
-                        AutoSizeText(
-                          ' $item '.replaceAll(
-                              '&X',
-                              removeTrailingZero(numFormatter
-                                  .format(double.parse(widget.piiinkCredit)))),
-                          style: transactionTextStyle.copyWith(
-                              color: GlobalColors.appColor),
-                        )
-                      else
-                        AutoSizeText(
-                          ' $item'.replaceAll(
-                              '&X',
-                              removeTrailingZero(numFormatter
-                                  .format(double.parse(widget.piiinkCredit)))),
-                          style: transactionTextStyle,
-                        ),
-                    // Piiink Credit
-                    // AutoSizeText.rich(
-                    //   TextSpan(
-                    //     text: 'You now have ',
-                    //     style: TextStyle(
-                    //         fontWeight: FontWeight.w500,
-                    //         fontSize: 18.sp,
-                    //         decoration: TextDecoration.none,
-                    //         color: Colors.black,
-                    //         fontFamily: 'Sans'),
-                    //     children: [
-                    //       TextSpan(
-                    //         text: widget.piiinkCredit,
-                    //         style: TextStyle(
-                    //             fontWeight: FontWeight.w500,
-                    //             fontSize: 18.sp,
-                    //             decoration: TextDecoration.none,
-                    //             color: GlobalColors.appColor,
-                    //             fontFamily: 'Sans'),
-                    //       ),
-                    //       TextSpan(
-                    //         text: ' Piiink Credits',
-                    //         style: TextStyle(
-                    //             fontWeight: FontWeight.w500,
-                    //             fontSize: 18.sp,
-                    //             decoration: TextDecoration.none,
-                    //             color: Colors.black,
-                    //             fontFamily: 'Sans'),
-                    //       ),
-                    //     ],
-                    //   ),
-                    // ),
-                    // Text(
-                    //   'You now have ${piiinkCredit} Piiink Credits',
-                    //   style: TextStyle(
-                    //       fontWeight: FontWeight.w500,
-                    //       fontSize: 18.sp,
-                    //       decoration: TextDecoration.none,
-                    //       color: Colors.black,
-                    //       fontFamily: 'Sans'),
-                    // ),
-                  ],
-                ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _activationHeaderImage(),
+                SizedBox(height: 18.h),
+                _successCard(),
+                SizedBox(height: 22.h),
+                _startExploringButton(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _activationHeaderImage() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24.r),
+      clipBehavior: Clip.antiAlias,
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: Container(
+          width: double.infinity,
+          color: Colors.white,
+          child: Image.asset(
+            'assets/images/onboarding/header_activation.webp',
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.high,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _successCard() {
+    final bool hasCredits = _creditAmount > 0;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(22.w, 28.h, 22.w, 26.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(color: _borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF111C44).withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            'Your membership is active',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.nunito(
+              color: _headingColor,
+              fontSize: 26.sp,
+              fontWeight: FontWeight.w900,
+              height: 1.15,
+            ),
+          ),
+          SizedBox(height: 12.h),
+          Text(
+            'Welcome to TouristSaver. You can now explore thousands of member offers, nearby experiences, dining, attractions and travel savings across Australia & New Zealand.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.nunito(
+              color: _bodyColor,
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w600,
+              height: 1.45,
+            ),
+          ),
+          if (hasCredits) ...[
+            SizedBox(height: 22.h),
+            _creditsCard(),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _creditsCard() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F8FF),
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: const Color(0xFFDCEBFF)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            'You also received $_formattedCredits TouristSaver Credits',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.nunito(
+              color: _headingColor,
+              fontSize: 17.sp,
+              fontWeight: FontWeight.w900,
+              height: 1.25,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            'TouristSaver Credits can help you access additional savings and member offers with participating merchants.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.nunito(
+              color: _bodyColor,
+              fontSize: 13.5.sp,
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            'Some merchants may also reward you with Merchant Credits that can be used toward future merchant purchases.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.nunito(
+              color: _bodyColor,
+              fontSize: 13.5.sp,
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _startExploringButton() {
+    return Container(
+      height: 56.h,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [_primaryBlue, _ctaCyan],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(18.r),
+        boxShadow: [
+          BoxShadow(
+            color: _primaryBlue.withValues(alpha: 0.22),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18.r),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18.r),
+          onTap: () {
+            AppVariables.initNotifications = true;
+            context.pushReplacementNamed(
+              'bottom-bar',
+              pathParameters: {'page': '3'},
+            );
+          },
+          child: Center(
+            child: Text(
+              'Start exploring',
+              style: GoogleFonts.nunito(
+                color: Colors.white,
+                fontSize: 17.sp,
+                fontWeight: FontWeight.w900,
               ),
             ),
-            const SizedBox(height: 25),
-
-            // Image
-            Image.asset(
-              'assets/images/saving-approved.png',
-              height: 100,
-              filterQuality: FilterQuality.high,
-            ),
-
-            const SizedBox(height: 25),
-
-            CustomButton(
-              text: S.of(context).continueL,
-              onPressed: () {
-                AppVariables.initNotifications = true;
-                context.pushReplacementNamed('bottom-bar',
-                    pathParameters: {'page': '3'});
-              },
-            )
-          ],
+          ),
         ),
       ),
     );

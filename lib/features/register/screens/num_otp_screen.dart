@@ -6,10 +6,8 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:go_router/go_router.dart';
 import 'package:new_piiink/common/app_variables.dart';
 import 'package:new_piiink/common/services/dio_common.dart';
-import 'package:new_piiink/common/widgets/custom_app_bar.dart';
 import 'package:new_piiink/common/widgets/custom_button.dart';
 import 'package:new_piiink/common/widgets/custom_snackbar.dart';
-import 'package:new_piiink/common/widgets/otp_timer.dart';
 import 'package:new_piiink/constants/env.dart';
 import 'package:new_piiink/constants/fixed_decimal.dart';
 import 'package:new_piiink/constants/initialize_stripe.dart';
@@ -31,7 +29,6 @@ import 'package:new_piiink/models/response/stripe_key_res.dart';
 import 'package:pinput/pinput.dart';
 import 'package:sms_autofill/sms_autofill.dart';
 
-import '../../../constants/global_colors.dart';
 import 'package:new_piiink/generated/l10n.dart';
 
 class NumberOTPScreen extends StatefulWidget {
@@ -79,14 +76,12 @@ class _NumberOTPScreenState extends State<NumberOTPScreen> with CodeAutoFill {
   final focusNode = FocusNode();
   var isLoadingN = false;
   bool showText1 = false;
-  bool controlTimer1 = false;
   late Timer _timer;
 
   recieveResponseFromTimer1() {
     if (!mounted) return;
     setState(() {
       showText1 = true;
-      controlTimer1 = true;
     });
   }
 
@@ -131,80 +126,267 @@ class _NumberOTPScreenState extends State<NumberOTPScreen> with CodeAutoFill {
   }
 
   void showPaidFreeScreen() {
+    ScaffoldMessenger.of(context).clearSnackBars();
     context.pushReplacementNamed('paid-free'); // adjust route name
+  }
+
+  static const Color _primaryBlue = Color(0xFF0009FE);
+  static const Color _ctaCyan = Color(0xFF18C6FF);
+  static const Color _screenBackground = Color(0xFFF8FAFE);
+  static const Color _headlineColor = Color(0xFF101B4D);
+  static const Color _softText = Color(0xFF65708D);
+  static const Color _fieldBorder = Color(0xFFD8DEEC);
+
+  PinTheme _pinTheme() {
+    return PinTheme(
+      width: 46.w,
+      height: 54.h,
+      textStyle: TextStyle(
+        color: _headlineColor,
+        fontSize: 20.sp,
+        fontWeight: FontWeight.w800,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: _fieldBorder),
+      ),
+    );
+  }
+
+  Widget _gradientVerifyButton({required VoidCallback onPressed}) {
+    return Container(
+      width: double.infinity,
+      height: 54.h,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18.r),
+        gradient: const LinearGradient(
+          colors: [_primaryBlue, _ctaCyan],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _primaryBlue.withValues(alpha: 0.22),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18.r),
+          onTap: isLoadingN ? null : onPressed,
+          child: Center(
+            child: isLoadingN
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 3,
+                    ),
+                  )
+                : Text(
+                    S.of(context).verify,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: CustomAppBar(
-          text: S.of(context).mobileNumberVerification,
-        ),
+    final defaultPinTheme = _pinTheme();
+    final focusedPinTheme = defaultPinTheme.copyWith(
+      decoration: defaultPinTheme.decoration!.copyWith(
+        border: Border.all(color: _primaryBlue, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: _primaryBlue.withValues(alpha: 0.10),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              const SizedBox(height: 50),
+    );
 
-              Center(
-                child: AutoSizeText(
-                  S
-                      .of(context)
-                      .enterTheOtpThatHasBeenSentInYourMobileNumberOrWhatsApp
-                      .replaceAll(
-                          '*A',
-                          widget.phoneVerifiedBy == 'whatsApp'
-                              ? 'WhatsApp'
-                              : widget.phoneVerifiedBy == 'roaming'
-                                  ? 'roaming'
-                                  : 'mobile'),
-                  //     'Enter the OTP that has been sent to your ${widget.phoneVerifiedBy == 'whatsApp' ? 'WhatsApp' : widget.phoneVerifiedBy == 'roaming' ? 'roaming' : 'mobile'} number',
-                  style: textStyle15.copyWith(fontSize: 20),
-                ),
-              ),
+    return Scaffold(
+      backgroundColor: _screenBackground,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 28.h),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 58.w,
+                      height: 58.w,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF7FF),
+                        borderRadius: BorderRadius.circular(18.r),
+                      ),
+                      child: Icon(
+                        Icons.verified_user_outlined,
+                        color: _primaryBlue,
+                        size: 30.sp,
+                      ),
+                    ),
+                    SizedBox(height: 22.h),
+                    Text(
+                      'Verify your mobile number',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _headlineColor,
+                        fontSize: 24.sp,
+                        fontWeight: FontWeight.w800,
+                        height: 1.16,
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    Text(
+                      'Enter the 6-digit code sent to your mobile number.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _softText,
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w500,
+                        height: 1.35,
+                      ),
+                    ),
+                    SizedBox(height: 30.h),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Pinput(
+                        controller: otpControllerr1,
+                        focusNode: focusNode,
+                        keyboardType: TextInputType.number,
+                        length: 6,
+                        closeKeyboardWhenCompleted: true,
+                        pinAnimationType: PinAnimationType.fade,
+                        pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
+                        defaultPinTheme: defaultPinTheme,
+                        focusedPinTheme: focusedPinTheme,
+                        submittedPinTheme: defaultPinTheme,
+                        separatorBuilder: (index) => SizedBox(width: 8.w),
+                        onChanged: (code) {
+                          otpControllerr1.text = code;
+                        },
+                        cursor: Container(
+                          width: 2,
+                          height: 24.h,
+                          color: _primaryBlue,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 22.h),
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 14.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(color: _fieldBorder),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Your verification code will expire in 10 minutes.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: _headlineColor,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w700,
+                              height: 1.3,
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            'You can request a new code if it expires.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: _softText,
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w500,
+                              height: 1.3,
+                            ),
+                          ),
+                          if (showText1) ...[
+                            SizedBox(height: 10.h),
+                            TextButton(
+                              onPressed: () async {
+                                otpControllerr1.clear();
 
-              SizedBox(height: 50.h),
-
-              Directionality(
-                // Specify direction if desired
-                textDirection: TextDirection.ltr,
-                child: Pinput(
-                  controller: otpControllerr1,
-                  focusNode: focusNode,
-                  keyboardType: TextInputType.number,
-                  length: 6,
-                  closeKeyboardWhenCompleted: true,
-                  pinAnimationType: PinAnimationType.fade,
-                  pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
-                  // androidSmsAutofillMethod:
-                  //     AndroidSmsAutofillMethod.smsRetrieverApi,
-                  // listenForMultipleSmsOnAndroid: true,
-                  //    defaultPinTheme: defaultPinTheme,
-                  separatorBuilder: (index) => const SizedBox(width: 8),
-                  onChanged: (code) {
-                    //  smsCode = code.toString();
-                    otpControllerr1.text = code;
-                  },
-                  cursor: Container(
-                    width: 2,
-                    height: 25,
-                    color: GlobalColors.appColor,
-                  ),
-                ),
-              ),
-
-              SizedBox(height: 50.h),
-
-              // Send Button
-              isLoadingN == true
-                  ? const CustomButtonWithCircular()
-                  : CustomButton(
-                      text: S.of(context).verify,
+                                setState(() {
+                                  showText1 = false;
+                                });
+                                var res = await DioRegister().resendNumberOTP(
+                                  numberMemberOtpReqModel:
+                                      NumberMemberOtpReqModel(
+                                    email: widget.email,
+                                    phoneNumberPrefix: widget.phonePrefix,
+                                    phoneNumber: widget.phNum,
+                                    countryId: widget.countryID,
+                                    appSign: getAsign,
+                                  ),
+                                );
+                                if (!mounted) return;
+                                if (res is ResendRegNumberOtpResModel) {
+                                  if (res.status == 'Success') {
+                                    setState(() {
+                                      _timer = setTimer1();
+                                    });
+                                    GlobalSnackBar.showSuccess(
+                                        context, res.message);
+                                  }
+                                } else {
+                                  GlobalSnackBar.showError(
+                                      context,
+                                      S
+                                          .of(context)
+                                          .somethingWentWrongPleaseTryAgain);
+                                  setState(() {
+                                    showText1 = true;
+                                  });
+                                }
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: _primaryBlue,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 6.h,
+                                ),
+                              ),
+                              child: Text(
+                                S.of(context).resendOtp,
+                                style: TextStyle(
+                                  color: _primaryBlue,
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 28.h),
+                    _gradientVerifyButton(
                       onPressed: () async {
                         //    log(otpControllerr1.text);
                         setState(() {
@@ -370,6 +552,7 @@ class _NumberOTPScreenState extends State<NumberOTPScreen> with CodeAutoFill {
                           else {
                             print(
                                 "000000001111111111111111111111111111111111111110000000000000000000000000000000000000000000");
+                            ScaffoldMessenger.of(context).clearSnackBars();
                             context.pushReplacementNamed(
                               'paid-free',
                             );
@@ -402,78 +585,33 @@ class _NumberOTPScreenState extends State<NumberOTPScreen> with CodeAutoFill {
                         }
                       },
                     ),
-
-              const SizedBox(height: 10),
-
-              // Resend Number OTP
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Resend OTP
-                  InkWell(
-                    onTap: () async {
-                      otpControllerr1.clear();
-
-                      setState(() {
-                        showText1 = false;
-                      });
-                      var res = await DioRegister().resendNumberOTP(
-                        numberMemberOtpReqModel: NumberMemberOtpReqModel(
-                          // otpMedium: widget.otpMedium,
-                          email: widget.email,
-                          phoneNumberPrefix: widget.phonePrefix,
-                          phoneNumber: widget.phNum,
-                          countryId: widget.countryID,
-                          appSign: getAsign,
+                    SizedBox(height: 22.h),
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 14.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3F7FF),
+                        borderRadius: BorderRadius.circular(16.r),
+                      ),
+                      child: Text(
+                        "After mobile verification, we'll send an email verification link to complete your account setup.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: _softText,
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
                         ),
-                      );
-                      if (!mounted) return;
-                      if (res is ResendRegNumberOtpResModel) {
-                        if (res.status == 'Success') {
-                          setState(() {
-                            _timer = setTimer1();
-                            controlTimer1 = false;
-                          });
-                          GlobalSnackBar.showSuccess(context, res.message);
-                        }
-                      } else {
-                        GlobalSnackBar.showError(context,
-                            S.of(context).somethingWentWrongPleaseTryAgain);
-                        setState(() {
-                          showText1 = true;
-                        });
-                      }
-                    },
-                    child: showText1
-                        ? Align(
-                            alignment: Alignment.centerRight,
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 25.0),
-                              child: AutoSizeText(
-                                S.of(context).resendOtp,
-                                style: textStyle15h.copyWith(
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ),
-                          )
-                        : const Text(''),
-                  ),
-
-                  // Timer
-                  controlTimer1 == false ? const OTPTimer() : const OTPTimer1(),
-                ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
-              AutoSizeText(
-                S
-                    .of(context)
-                    .anEmailVerificationWillBeSentAfterTheVerificationOfMobileOtpPleaseCheckYourEmail,
-                textAlign: TextAlign.center,
-                style: notiHeaderTextStyle.copyWith(fontSize: 16.sp),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

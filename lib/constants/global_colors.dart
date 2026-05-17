@@ -6,6 +6,7 @@ class GlobalColors {
   static const appGreyBackgroundColor = Color(0xffF6F6F6);
   static const appColor = Color(0xffEC4785);
   static const appColor1 = Color(0xff5FC0CD);
+  static const loaderColor = Color(0xff009FE3);
   // static var tabbarColor = Colors.grey.withValues(alpha: 0.8);
 
   static const textColor = Color(0xff757575);

@@ -8,13 +8,6 @@ class LocalNotificationService {
       FlutterLocalNotificationsPlugin();
 
   static void initialize(BuildContext context) async {
-    Future onDidReceiveLocalNotification(
-        int id, String? title, String? body, String? payload) async {
-      if (title != null) {
-        context.pushNamed('notification');
-      }
-    }
-
     void onDidReceiveNotificationResponse(
         {required NotificationResponse notificationResponse, onData}) async {
       if (notificationResponse.payload != null) {
@@ -43,7 +36,14 @@ class LocalNotificationService {
   static void display(RemoteMessage message) async {
     try {
       final id = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-      String? longdata = message.notification?.body;
+      final String? notificationTitle = message.notification?.title;
+      final String? notificationBody = message.notification?.body;
+      final String? safeTitle = _safeNotificationTitle(notificationTitle);
+      final String? safeBody = _safeNotificationBody(
+        title: notificationTitle,
+        body: notificationBody,
+      );
+      String? longdata = safeBody;
       BigTextStyleInformation bigTextStyleInformation =
           BigTextStyleInformation(longdata ?? '');
 
@@ -67,13 +67,48 @@ class LocalNotificationService {
 
       await _notificationsPlugin.show(
         id,
-        message.notification!.title,
-        message.notification!.body,
+        safeTitle,
+        safeBody,
         notificationDetails,
         payload: message.data["route"],
       );
     } on Exception {
       // print(e);
     }
+  }
+
+  static bool _looksLikeOldPaymentSuccessCopy(String? text) {
+    final String normalized = text?.toLowerCase() ?? '';
+    return normalized.contains('transaction successful') ||
+        normalized.contains('transaction completed') ||
+        normalized.contains('payment successful');
+  }
+
+  static String? _safeNotificationTitle(String? title) {
+    return _looksLikeOldPaymentSuccessCopy(title) ? 'Discount approved' : title;
+  }
+
+  static String? _safeNotificationBody({
+    required String? title,
+    required String? body,
+  }) {
+    if (!_looksLikeOldPaymentSuccessCopy(title) &&
+        !_looksLikeOldPaymentSuccessCopy(body)) {
+      return body;
+    }
+
+    final RegExp amountPattern =
+        RegExp(r'(?:AUD|\$)\s*([0-9]+(?:\.[0-9]+)?)', caseSensitive: false);
+    final RegExpMatch? amountMatch = amountPattern.firstMatch(body ?? '');
+    if (amountMatch == null) {
+      return 'Show this screen to the merchant. Customer pays the merchant directly.';
+    }
+
+    final double? amount = double.tryParse(amountMatch.group(1) ?? '');
+    if (amount == null) {
+      return 'Show this screen to the merchant. Customer pays the merchant directly.';
+    }
+
+    return 'Merchant can accept \$${amount.toStringAsFixed(2)} from the member.';
   }
 }

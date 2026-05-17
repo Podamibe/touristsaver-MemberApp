@@ -11,7 +11,6 @@ import 'package:new_piiink/common/widgets/custom_snackbar.dart';
 import 'package:new_piiink/common/widgets/error.dart';
 import 'package:new_piiink/common/widgets/not_available.dart';
 import 'package:new_piiink/constants/decimal_remove.dart';
-import 'package:new_piiink/constants/global_colors.dart';
 import 'package:new_piiink/constants/number_formatter.dart';
 import 'package:new_piiink/constants/pref.dart';
 import 'package:new_piiink/constants/pref_key.dart';
@@ -556,11 +555,7 @@ class _TopUpWidgetState extends State<TopUpWidget> {
                             height: 2.0,
                           ),
                           AutoSizeText(
-                            widget.memPackAll!.data![widget.index!]
-                                        .marketingType ==
-                                    "normal"
-                                ? '${widget.memPackAll!.data![widget.index!].packageCurrencySymbol.toString()} ${removeTrailingZero(numFormatter.format(widget.memPackAll!.data![widget.index!].packageFee!))}'
-                                : '${widget.memPackAll!.data![widget.index!].packageCurrencySymbol.toString()} ${removeTrailingZero(numFormatter.format(widget.memPackAll!.data![widget.index!].packageFee!))}',
+                            _packagePriceWithGst(),
                             style: topicStyle.copyWith(
                               color: Color(int.parse(widget.memPackAll!
                                   .data![widget.index!].amountTextColor!)),
@@ -749,5 +744,14 @@ class _TopUpWidgetState extends State<TopUpWidget> {
     } catch (e) {
       return;
     }
+  }
+
+  String _packagePriceWithGst() {
+    final package = widget.memPackAll!.data![widget.index!];
+    final priceText =
+        '${package.packageCurrencySymbol.toString()} ${removeTrailingZero(numFormatter.format(package.packageFee!))}';
+    return priceText.toLowerCase().contains('gst')
+        ? priceText
+        : '$priceText inc GST';
   }
 }

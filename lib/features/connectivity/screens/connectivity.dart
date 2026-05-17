@@ -57,7 +57,7 @@ class NoInternetLoader extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Center(
       child: CircularProgressIndicator(
-        backgroundColor: GlobalColors.appColor,
+        color: GlobalColors.loaderColor,
         strokeWidth: 1,
       ),
     );

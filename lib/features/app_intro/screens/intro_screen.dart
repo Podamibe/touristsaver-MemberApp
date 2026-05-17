@@ -1,215 +1,215 @@
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:introduction_screen/introduction_screen.dart';
-import 'package:new_piiink/constants/global_colors.dart';
 import 'package:new_piiink/constants/pref.dart';
 import 'package:new_piiink/constants/pref_key.dart';
-import 'package:new_piiink/generated/l10n.dart';
-
-// Make sure to import wherever your checkWalletBalance() and AppVariables live
-import '../../../common/app_variables.dart';
-import 'package:new_piiink/splash_screen.dart'; // Adjust if checkWalletBalance is elsewhere
 
 class IntroScreen extends StatelessWidget {
   static const String routeName = '/intro-screen';
   const IntroScreen({super.key});
 
-  // 👉 NEW: Helper method to handle routing after Intro is done or skipped
-  Future<void> _finishIntroAndNavigate(BuildContext context) async {
-    Pref pref = Pref();
-    // Save "acc" as true so next time splash skips video + intro
-    await pref.writeData(key: accept, value: 'true');
+  static const Color _primaryBlue = Color(0xFF0009FE);
+  static const Color _ctaCyan = Color(0xFF18C6FF);
+  static const Color _screenBackground = Color(0xFFF8FAFE);
+  static const Color _headlineColor = Color(0xFF101B4D);
+  static const Color _softText = Color(0xFF65708D);
 
-    // 1. Check if the user is logged in
-    String? token = await pref.readData(key: saveToken);
-    bool isLoggedIn = token != null && token.isNotEmpty;
+  Future<void> _markWelcomeSeen() async {
+    await Pref().writeData(key: accept, value: 'true');
+  }
 
-    if (isLoggedIn) {
-      // 2. Check their wallet balance if they are logged in
-      bool canGoHome = await checkWalletBalance();
+  Future<void> _goToRegister(BuildContext context) async {
+    await _markWelcomeSeen();
+    if (!context.mounted) return;
+    context.goNamed('register');
+  }
 
-      if (!context.mounted) return;
-
-      if (canGoHome) {
-        context.goNamed('bottom-bar', pathParameters: {'page': '0'});
-      } else {
-        context.goNamed('top-up'); // redirect to top up / warning
-      }
-    } else {
-      if (!context.mounted) return;
-      // 3. Not logged in, send to login screen
-      context.goNamed('login');
-    }
+  Future<void> _goToLogin(BuildContext context) async {
+    await _markWelcomeSeen();
+    if (!context.mounted) return;
+    context.goNamed('login');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(),
-      body: Container(
-        margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 80.h),
-        decoration: BoxDecoration(
-            color: GlobalColors.appWhiteBackgroundColor,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.grey.withValues(alpha: 0.2),
-                  spreadRadius: 1,
-                  blurRadius: 4,
-                  offset: const Offset(2, 2))
-            ]),
-        child: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: IntroductionScreen(
-            globalBackgroundColor: GlobalColors.appWhiteBackgroundColor,
-            globalFooter: TextButton(
-              onPressed: () => context.pushNamed('video-screen'),
-              child: AutoSizeText(
-                'Watch 1-minute intro',
-                style: TextStyle(
-                  color: GlobalColors.appColor1,
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w600,
+      backgroundColor: _screenBackground,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 24.h),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Save on the experiences you love',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _headlineColor,
+                        fontSize: 24.sp,
+                        fontWeight: FontWeight.w800,
+                        height: 1.16,
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      'Dining, travel, shopping & holiday fun',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _softText,
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w500,
+                        height: 1.35,
+                      ),
+                    ),
+                    SizedBox(height: 24.h),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(24.r),
+                      child: AspectRatio(
+                        aspectRatio: 16 / 9,
+                        child: Image.asset(
+                          'assets/images/onboarding/header_welcome_au.webp',
+                          fit: BoxFit.contain,
+                          alignment: Alignment.center,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 34.h),
+                    _PrimaryActionButton(
+                      label: 'Join Now',
+                      onPressed: () => _goToRegister(context),
+                    ),
+                    SizedBox(height: 14.h),
+                    _SecondaryActionButton(
+                      label: 'Log In',
+                      onPressed: () => _goToLogin(context),
+                    ),
+                    SizedBox(height: 18.h),
+                    TextButton.icon(
+                      onPressed: () => context.pushNamed('video-screen'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: _primaryBlue,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 14.w,
+                          vertical: 10.h,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18.r),
+                        ),
+                      ),
+                      icon: Icon(
+                        Icons.play_circle_outline,
+                        color: _primaryBlue,
+                        size: 22.sp,
+                      ),
+                      label: Text(
+                        'Watch 1-minute intro',
+                        style: TextStyle(
+                          color: _primaryBlue,
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            isProgress: false,
-            pages: [
-              // First
-              PageViewModel(
-                title: S.of(context).welcomeToTouristSaver,
-                // 'Welcome to Piiink',
-                body: S
-                    .of(context)
-                    .theMostInnovativeCommunityLifestyleProgramForYourEverydayShopping,
-                // 'The most innovative Community Lifestyle Program for your everyday shopping.',
-                image: piiinkBuildImage("assets/images/tourist.png", context),
-                //getPageDecoration, a method to customise the page style
-                decoration: getPageDecoration(),
-              ),
-              // //  Second
-              // PageViewModel(
-              //   title: S.of(context).goShopping,
-              //   //'Go shopping',
-              //   body:
-              //       S.of(context).shopAtTouristSaverMerchantsAndGetGreatOffers,
-              //   // 'Shop at Piiink merchants and get great offers.',
-              //   image: buildImage("assets/images/shopping-bag.png", context),
-              //   decoration: getPageDecoration(),
-              // ),
-              // // Third
-              // PageViewModel(
-              //   title: S.of(context).donateToCharity,
-              //   // 'Donate to charity',
-              //   body: S
-              //       .of(context)
-              //       .fromEveryTransactionCashGoesToYourNominatedCharity,
-              //   //  'From every transaction, cash goes to your nominated charity.',
-              //   image: buildImage("assets/images/charity.png", context),
-              //   decoration: getPageDecoration(),
-              // ),
-            ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
 
-            // 👉 UPDATED: Call the helper function on Done
-            onDone: () => _finishIntroAndNavigate(context),
+class _PrimaryActionButton extends StatelessWidget {
+  const _PrimaryActionButton({
+    required this.label,
+    required this.onPressed,
+  });
 
-            // 👉 NEW: Also call it on Skip so users don't get stuck!
-            onSkip: () => _finishIntroAndNavigate(context),
+  final String label;
+  final VoidCallback onPressed;
 
-            // Done
-            showDoneButton: true,
-            done: Container(
-              height: 35.h,
-              width: 100.w,
-              decoration: BoxDecoration(
-                color: GlobalColors.appColor1,
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Center(
-                child: AutoSizeText(
-                  S.of(context).continueL,
-                  // 'Continue',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.bold),
-                ),
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 54.h,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18.r),
+        gradient: const LinearGradient(
+          colors: [
+            IntroScreen._primaryBlue,
+            IntroScreen._ctaCyan,
+          ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: IntroScreen._primaryBlue.withValues(alpha: 0.22),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18.r),
+          onTap: onPressed,
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w800,
               ),
             ),
-
-            // Next
-            showNextButton: true,
-            next: Container(
-              height: 35.h,
-              width: 100.w,
-              decoration: BoxDecoration(
-                color: GlobalColors.appColor1,
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Center(
-                child: AutoSizeText(
-                  S.of(context).next,
-                  // 'Next',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-
-            // Skip
-            showSkipButton: true,
-            skip: AutoSizeText(S.of(context).skip,
-                //'Skip',
-                style: TextStyle(
-                    fontWeight: FontWeight.w400,
-                    color: GlobalColors.textColor,
-                    fontSize: 15.sp)),
           ),
         ),
       ),
     );
   }
+}
 
-  // Widget to add the image on intro screen
-  Widget piiinkBuildImage(String imagePath, context) {
-    return Container(
-      // width: MediaQuery.of(context).size.width / 1.9,
-      width: 200.w,
-      // height: 250.h,
-      color: Colors.white,
-      child: Image.asset(imagePath, fit: BoxFit.fill),
-    );
-  }
+class _SecondaryActionButton extends StatelessWidget {
+  const _SecondaryActionButton({
+    required this.label,
+    required this.onPressed,
+  });
 
-  // Widget to add the image on intro screen
-  Widget buildImage(String imagePath, context) {
-    return Container(
-      // width: MediaQuery.of(context).size.width / 1.9,
-      width: 100.w,
-      // height: 250.h,
-      color: Colors.white,
-      child: Image.asset(imagePath, fit: BoxFit.fill),
-    );
-  }
+  final String label;
+  final VoidCallback onPressed;
 
-  //method to customise the page style
-  PageDecoration getPageDecoration() {
-    return PageDecoration(
-      imagePadding: const EdgeInsets.only(top: 50),
-      titleTextStyle: TextStyle(
-          color: GlobalColors.textColor,
-          fontSize: 23.sp,
-          fontWeight: FontWeight.bold),
-      bodyPadding:
-          const EdgeInsets.only(top: 5, left: 15, right: 15, bottom: 10),
-      bodyTextStyle: TextStyle(
-          color: GlobalColors.textColor,
-          fontSize: 15.sp,
-          fontWeight: FontWeight.w600),
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 54.h,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: IntroScreen._primaryBlue,
+          side: const BorderSide(color: IntroScreen._primaryBlue, width: 1.3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18.r),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: IntroScreen._primaryBlue,
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
     );
   }
 }

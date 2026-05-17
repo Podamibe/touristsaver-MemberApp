@@ -1,12 +1,12 @@
 // import 'dart:developer';
 // ignore_for_file: prefer_typing_uninitialized_variables
 
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:new_piiink/common/widgets/custom_app_bar.dart';
 import 'package:new_piiink/common/widgets/custom_loader.dart';
 import 'package:new_piiink/common/widgets/error.dart';
@@ -14,10 +14,10 @@ import 'package:new_piiink/constants/global_colors.dart';
 import 'package:new_piiink/constants/number_formatter.dart';
 import 'package:new_piiink/constants/style.dart';
 import 'package:new_piiink/features/connectivity/cubit/internet_cubit.dart';
-import 'package:new_piiink/features/profile/widget/info_popup.dart';
+import 'package:new_piiink/features/transaction/services/dio_transaction.dart';
 import 'package:new_piiink/features/wallet/services/dio_wallet.dart';
+import 'package:new_piiink/models/response/transaction_res.dart' as transaction;
 import 'package:new_piiink/models/response/universal_get_my_wallet.dart';
-import 'package:outline_gradient_button/outline_gradient_button.dart';
 import '../../../common/widgets/custom_button.dart';
 import '../../../common/widgets/custom_snackbar.dart';
 import '../../../constants/pref.dart';
@@ -30,7 +30,6 @@ import '../../../models/response/is_pay_enable_res.dart';
 import '../../connectivity/screens/connectivity.dart';
 import '../../merchant/services/dio_reviews.dart';
 import '../../payment/services/dio_payment.dart';
-import '../widget/show_confirm_piiinks_bottom_sheet.dart';
 import 'package:new_piiink/generated/l10n.dart';
 
 import 'package:dartz/dartz.dart' as dartz;
@@ -44,26 +43,17 @@ class LogWalletScreen extends StatefulWidget {
 }
 
 class _LogWalletScreenState extends State<LogWalletScreen> {
-  List<String> additionalList = [];
-  buildAdditionalList() {
-    additionalList.addAll([
-      S.of(context).topUpUniversalTouristSaverCredits,
-      S.of(context).changeCountry,
-      S.of(context).transferTouristSavers,
-      S.of(context).transactionHistory,
-      S.of(context).topUpHistory,
-    ]);
-  }
+  static const Color _primaryBlue = Color(0xFF0009FE);
+  static const Color _screenBackground = Color(0xFFF8FAFE);
+  static const Color _headingColor = Color(0xFF111C44);
+  static const Color _bodyColor = Color(0xFF61708A);
+  static const Color _borderColor = Color(0xFFE2E8F3);
 
   bool? isTopUpEnabled;
   bool? canClaimFreePiiinks;
   bool? isFreePiiinksProvided;
   bool? isTopUpOnRegister;
   double? universalFreePiiinks;
-  // For the refresh Indicator
-  final GlobalKey<RefreshIndicatorState> refreshIndicatorProfile =
-      GlobalKey<RefreshIndicatorState>();
-
   //For Sending the universal piiink as an argument
   double? sendUniPiiink;
   bool isLoading = false;
@@ -80,14 +70,12 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
     if (!mounted) return;
     setState(() {
       isTopUpEnabled = isPayEnabledResModel?.data?.transactionIsEnabled;
-      if (isTopUpEnabled == false) {
-        additionalList.remove(S.of(context).topUpUniversalTouristSaverCredits);
-      }
     });
   }
 
   // Calling the user wallet
   Future<UniversalGetMyWallet?>? walletLoad;
+  Future<transaction.TransactionResModel?>? recentSavingsLoad;
   Future<UniversalGetMyWallet?> loadWallet() async {
     setState(() {
       isLoading = false;
@@ -100,6 +88,15 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
       isLoading = true;
     });
     return getWallet;
+  }
+
+  Future<transaction.TransactionResModel?> loadRecentSavings() async {
+    final DateFormat apiDateFormat = DateFormat('yyyy-MM-dd');
+    final DateTime now = DateTime.now();
+    final String latestDate = apiDateFormat.format(now);
+    const String previousDate = '2000-01-01';
+
+    return DioTransaction().transac(previousDate, latestDate);
   }
 
   int? merchantId;
@@ -130,7 +127,6 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
   void initState() {
     getPaymentInfo();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      buildAdditionalList();
       showReviewPopUp = await Pref().readBool(key: showReview) ?? false;
       merchantId = await Pref().readInt(key: addReviewMerchantID);
       getReviews = getSuggestionReview();
@@ -142,6 +138,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
 
     getFreePiiinksInfo();
     walletLoad = loadWallet();
+    recentSavingsLoad = loadRecentSavings();
     super.initState();
   }
 
@@ -154,139 +151,30 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _screenBackground,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: CustomAppBar(text: S.of(context).myWallet),
+        child: CustomAppBar(text: 'My Savings'),
       ),
       body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
         builder: (context, state) {
-          return RefreshIndicator(
-            key: refreshIndicatorProfile,
-            onRefresh: () => walletLoad = loadWallet(),
-            color: GlobalColors.appColor,
-            child: ScrollConfiguration(
-              behavior: const ScrollBehavior(),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      (state == ConnectivityState.loading)
-                          ? const NoInternetLoader()
-                          : (state == ConnectivityState.disconnected)
-                              ? const NoInternetWidget()
-                              : (state == ConnectivityState.connected)
-                                  ? Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 10.0),
-                                          child: AutoSizeText(
-                                            S
-                                                .of(context)
-                                                .yourUniversalTouristSaverCredits,
-                                            style: topicStyle,
-                                          ),
-                                        ),
-
-                                        const SizedBox(height: 10),
-
-                                        FutureBuilder<UniversalGetMyWallet?>(
-                                            future: walletLoad,
-                                            builder: (context, snapshot) {
-                                              if (snapshot.hasError) {
-                                                return const ProfileError();
-                                              } else if (!snapshot.hasData) {
-                                                return const ProfileLoader();
-                                              } else {
-                                                // Full Container
-                                                sendUniPiiink = snapshot
-                                                    .data!.data!.balance;
-                                                return isLoading == false
-                                                    ? const ProfileLoader()
-                                                    : uniCredit(snapshot.data!);
-                                              }
-                                            }),
-
-                                        const SizedBox(height: 20),
-                                        // show modal for piiinks claim according to the isClaimPiiinks from api
-                                        // isTopUpOnRegister == false &&
-                                        canClaimFreePiiinks == true &&
-                                                isFreePiiinksProvided == false
-                                            ? Column(
-                                                children: [
-                                                  Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            left: 0, top: 0),
-                                                    // child: Align(
-                                                    //   alignment:
-                                                    //       Alignment.center,
-                                                    //   child: InkWell(
-                                                    //     onTap: () {
-                                                    //       showConfirmPiiinksBottomSheet(
-                                                    //           context,
-                                                    //           universalFreePiiinks);
-                                                    //     },
-                                                    //     child: AutoSizeText(
-                                                    //       S
-                                                    //           .of(context)
-                                                    //           .claimFreeTouristSavers,
-                                                    //       //     'Claim Free Piiinks',
-                                                    //       style:
-                                                    //           notiHeaderTextStyle
-                                                    //               .copyWith(
-                                                    //         fontSize: 16.sp,
-                                                    //         decoration:
-                                                    //             TextDecoration
-                                                    //                 .underline,
-                                                    //       ),
-                                                    //     ),
-                                                    //   ),
-                                                    // ),
-                                                  ),
-                                                  const SizedBox(height: 10),
-                                                ],
-                                              )
-                                            : const SizedBox(),
-
-                                        //  "Your Active Merchant Wallets",
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 10.0),
-                                          child: AutoSizeText(
-                                            S
-                                                .of(context)
-                                                .yourActiveMerchantWallets,
-                                            style: topicStyle,
-                                          ),
-                                        ),
-
-                                        const SizedBox(height: 10),
-
-                                        activeMerchantButton(),
-
-                                        const SizedBox(height: 20),
-                                      ],
-                                    )
-                                  : const SizedBox(),
-                      // Additionals
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                        child: AutoSizeText(
-                          S.of(context).additional,
-                          style: topicStyle,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      walletAdditionalList(),
-                    ],
-                  ),
+          return ScrollConfiguration(
+            behavior: const ScrollBehavior(),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height -
+                      kToolbarHeight -
+                      MediaQuery.of(context).padding.top -
+                      40.h,
                 ),
+                child: state == ConnectivityState.loading
+                    ? const NoInternetLoader()
+                    : state == ConnectivityState.disconnected
+                        ? const NoInternetWidget()
+                        : _connectedSavingsDashboard(),
               ),
             ),
           );
@@ -295,116 +183,519 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
     );
   }
 
-  // Universal Wallet
-  uniCredit(UniversalGetMyWallet universalWallet) {
-    return Stack(
-      clipBehavior: Clip.none,
+  Widget _connectedSavingsDashboard() {
+    return FutureBuilder<UniversalGetMyWallet?>(
+      future: walletLoad,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const ProfileError();
+        } else if (!snapshot.hasData || isLoading == false) {
+          return const ProfileLoader();
+        }
+
+        final UniversalGetMyWallet wallet = snapshot.data!;
+        sendUniPiiink = wallet.data?.balance ?? 0;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _mainBalanceCard(wallet),
+            SizedBox(height: 16.h),
+            _recentSavingsSection(),
+            SizedBox(height: 16.h),
+            _howTsdcsWorkCard(),
+            SizedBox(height: 16.h),
+            _merchantTsdcsSection(),
+            SizedBox(height: 16.h),
+            _moreOptionsSection(),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _mainBalanceCard(UniversalGetMyWallet universalWallet) {
+    final String balance =
+        numFormatter.format(universalWallet.data?.balance ?? 0);
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(20.r),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Colors.white, Color(0xFFEFF7FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(color: _borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0A236B).withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44.w,
+                height: 44.w,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE6F3FF),
+                  borderRadius: BorderRadius.circular(14.r),
+                ),
+                child: Icon(
+                  Icons.savings_outlined,
+                  color: _primaryBlue,
+                  size: 25.sp,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Text(
+                  'All Merchant TSDCs',
+                  style: TextStyle(
+                    color: _headingColor,
+                    fontSize: 17.sp,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'Sans',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 18.h),
+          Text(
+            '$balance TouristSaver Discount Credits',
+            style: TextStyle(
+              color: _headingColor,
+              fontSize: 27.sp,
+              fontWeight: FontWeight.w900,
+              height: 1.12,
+              fontFamily: 'Sans',
+            ),
+          ),
+          SizedBox(height: 10.h),
+          Text(
+            'Use your TSDCs to unlock member discounts with participating merchants.',
+            style: TextStyle(
+              color: _bodyColor,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+              fontFamily: 'Sans',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _howTsdcsWorkCard() {
+    return _SavingsCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeader(
+            icon: Icons.info_outline,
+            title: 'How TSDCs work',
+          ),
+          SizedBox(height: 12.h),
+          Text(
+            'TouristSaver Discount Credits are used to unlock merchant discounts. When a merchant applies a discount, only the discount amount is deducted from your available TSDCs.',
+            style: _bodyTextStyle(),
+          ),
+          SizedBox(height: 14.h),
+          Divider(color: _borderColor, height: 1),
+          SizedBox(height: 14.h),
+          _exampleRow('Bill total', '\$100'),
+          _exampleRow('Member discount', '10%'),
+          _exampleRow('You pay merchant', '\$90'),
+          _exampleRow('TSDCs used', '10'),
+          SizedBox(height: 10.h),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: _showTsdcExplainer,
+              style: TextButton.styleFrom(
+                foregroundColor: _primaryBlue,
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                'Learn more',
+                style: TextStyle(
+                  color: _primaryBlue,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w900,
+                  fontFamily: 'Sans',
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _recentSavingsSection() {
+    return _SavingsCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _sectionHeader(
+                  icon: Icons.history_outlined,
+                  title: 'Recent savings',
+                ),
+              ),
+              TextButton(
+                onPressed: _openTransactionHistory,
+                style: TextButton.styleFrom(
+                  foregroundColor: _primaryBlue,
+                  padding: EdgeInsets.symmetric(horizontal: 8.w),
+                ),
+                child: Text(
+                  'Transaction History',
+                  style: TextStyle(
+                    color: _primaryBlue,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Sans',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 10.h),
+          FutureBuilder<transaction.TransactionResModel?>(
+            future: recentSavingsLoad,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      color: _primaryBlue,
+                      strokeWidth: 2,
+                    ),
+                  ),
+                );
+              }
+
+              final List<transaction.Datum> allSavings =
+                  _latestSavings(snapshot.data!);
+              final List<transaction.Datum> transactions =
+                  allSavings.take(5).toList();
+              final double totalSavings = _totalMemberSavings(allSavings);
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _totalMemberSavingsBlock(totalSavings),
+                  SizedBox(height: 16.h),
+                  if (transactions.isEmpty)
+                    Text(
+                      'Your recent savings will appear here after you use TouristSaver with participating merchants.',
+                      style: _bodyTextStyle(),
+                    )
+                  else
+                    Column(
+                      children: [
+                        for (int index = 0;
+                            index < transactions.length;
+                            index++) ...[
+                          _recentSavingTile(transactions[index]),
+                          if (index != transactions.length - 1)
+                            Divider(height: 18.h, color: _borderColor),
+                        ],
+                      ],
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _recentSavingTile(transaction.Datum transaction) {
+    final String merchantName =
+        transaction.merchant?.merchantName ?? 'Participating merchant';
+    final String date = transaction.transactionDate == null
+        ? ''
+        : DateFormat('d MMM yyyy')
+            .format(transaction.transactionDate!.toLocal());
+    final String discount = _formatCurrency(transaction.discountAmount ?? 0);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: MediaQuery.of(context).size.width / 1,
-          height: 200,
-          margin: const EdgeInsets.symmetric(horizontal: 10.0),
+          width: 38.w,
+          height: 38.w,
           decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  GlobalColors.appColor1,
-                  GlobalColors.appColor,
-                ],
-              ),
-              borderRadius: BorderRadius.circular(5.0),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 4,
-                    spreadRadius: 1,
-                    offset: const Offset(2, 2))
-              ]),
+            color: const Color(0xFFEFF7FF),
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          child: Icon(Icons.local_offer_outlined,
+              color: _primaryBlue, size: 21.sp),
+        ),
+        SizedBox(width: 12.w),
+        Expanded(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
-
-              // Piiinks Universal Number
-              AutoSizeText(
-                numFormatter.format(universalWallet.data?.balance),
-                textAlign: TextAlign.center,
+              Text(
+                merchantName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 50.sp,
-                    decoration: TextDecoration.none,
-                    color: Colors.white,
-                    fontFamily: 'Sans'),
+                  color: _headingColor,
+                  fontSize: 14.5.sp,
+                  fontWeight: FontWeight.w800,
+                  fontFamily: 'Sans',
+                ),
               ),
-
-              const SizedBox(height: 5),
-
-              // Piiinks
-              AutoSizeText(
-                S.of(context).touristSavers,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 35.sp,
-                    decoration: TextDecoration.none,
-                    color: Colors.white,
-                    fontFamily: 'Sans'),
-              ),
-
-              const SizedBox(height: 15),
+              if (date.isNotEmpty) ...[
+                SizedBox(height: 3.h),
+                Text(date, style: _captionTextStyle()),
+              ],
             ],
           ),
         ),
+        SizedBox(width: 8.w),
+        Text(
+          'Saved $discount',
+          textAlign: TextAlign.right,
+          style: TextStyle(
+            color: _primaryBlue,
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w900,
+            fontFamily: 'Sans',
+          ),
+        ),
+      ],
+    );
+  }
 
-        //  info Button
-        Positioned(
-          right: -5.0,
-          top: -7.0,
-          child: GestureDetector(
-            onTap: () {
-              showGeneralDialog(
-                barrierLabel: 'Label',
-                barrierDismissible:
-                    false, //to dismiss the container once opened
-                barrierColor: Colors.black.withValues(
-                    alpha:
-                        0.5), //to change the background color once the container is opened
-                transitionDuration: const Duration(milliseconds: 300),
-                context: context,
-                pageBuilder: (context, anim1, anim2) {
-                  return Align(
-                    alignment: Alignment.center,
-                    child: InfoPopUp(
-                      title: S.of(context).touristSaverCreditsInfo,
-                      body: S.of(context).touristSaverCreditsInfoD,
-                      onOk: () {
-                        context.pop();
-                      },
-                    ),
-                  );
-                },
-                transitionBuilder: (context, anim1, anim2, child) {
-                  return SlideTransition(
-                    position: Tween(
-                            begin: const Offset(0, 1), end: const Offset(0, 0))
-                        .animate(anim1),
-                    child: child,
-                  );
-                },
-              );
-            },
-            child: Container(
-              width: 25,
-              height: 25,
-              margin: const EdgeInsets.symmetric(horizontal: 10.0),
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(50),
-                  color: GlobalColors.appColor),
-              child: Image.asset(
-                "assets/images/info.png",
+  Widget _merchantTsdcsSection() {
+    return _SavingsCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeader(
+            icon: Icons.storefront_outlined,
+            title: 'Merchant TSDCs',
+          ),
+          SizedBox(height: 10.h),
+          Text(
+            'Merchant TSDCs are rewards from a specific merchant and can be used toward future purchases with that merchant.',
+            style: _bodyTextStyle(),
+          ),
+          SizedBox(height: 14.h),
+          _outlineLinkButton(
+            label: 'View merchant TSDCs',
+            icon: Icons.arrow_forward_rounded,
+            onTap: () => context.pushNamed('merchant-wallet'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _moreOptionsSection() {
+    return _SavingsCard(
+      padding: EdgeInsets.zero,
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 2.h),
+          childrenPadding: EdgeInsets.fromLTRB(18.w, 0, 18.w, 16.h),
+          iconColor: _primaryBlue,
+          collapsedIconColor: _primaryBlue,
+          title: Text(
+            'More options',
+            style: TextStyle(
+              color: _headingColor,
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Sans',
+            ),
+          ),
+          children: [
+            _moreOptionTile(
+              icon: Icons.add_card_outlined,
+              label: 'Add TSDCs',
+              onTap: isTopUpEnabled == false
+                  ? null
+                  : () {
+                      context.pushNamed('top-up').then((value) {
+                        _refreshSavings();
+                      });
+                    },
+            ),
+            _moreOptionTile(
+              icon: Icons.public_outlined,
+              label: 'Change Country',
+              onTap: () {
+                context.pushNamed('change-country').then((value) {
+                  _refreshSavings();
+                });
+              },
+            ),
+            _moreOptionTile(
+              icon: Icons.swap_horiz_rounded,
+              label: 'Transfer Merchant TSDCs',
+              onTap: () {
+                context.pushNamed('transfer-piiinks').then((value) {
+                  _refreshSavings();
+                });
+              },
+            ),
+            _moreOptionTile(
+              icon: Icons.payments_outlined,
+              label: 'TSDC purchase history',
+              onTap: () => context.pushNamed('top_up_history'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _moreOptionTile({
+    required IconData icon,
+    required String label,
+    required VoidCallback? onTap,
+  }) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      enabled: onTap != null,
+      leading: Icon(
+        icon,
+        color:
+            onTap == null ? _bodyColor.withValues(alpha: 0.45) : _primaryBlue,
+        size: 22.sp,
+      ),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: onTap == null
+              ? _bodyColor.withValues(alpha: 0.55)
+              : _headingColor,
+          fontSize: 14.sp,
+          fontWeight: FontWeight.w700,
+          fontFamily: 'Sans',
+        ),
+      ),
+      trailing: Icon(
+        Icons.arrow_forward_ios_rounded,
+        color: _bodyColor,
+        size: 16.sp,
+      ),
+      onTap: onTap,
+    );
+  }
+
+  Widget _totalMemberSavingsBlock(double totalSavings) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FAFF),
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: _borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Total Member Savings',
+            style: TextStyle(
+              color: _headingColor,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Sans',
+            ),
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            _formatCurrency(totalSavings),
+            style: TextStyle(
+              color: _primaryBlue,
+              fontSize: 28.sp,
+              fontWeight: FontWeight.w900,
+              height: 1,
+              fontFamily: 'Sans',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _outlineLinkButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16.r),
+        onTap: onTap,
+        child: Ink(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF7FAFF),
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(color: _borderColor),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: _primaryBlue,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w900,
+                  fontFamily: 'Sans',
+                ),
               ),
+              SizedBox(width: 8.w),
+              Icon(icon, color: _primaryBlue, size: 18.sp),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionHeader({required IconData icon, required String title}) {
+    return Row(
+      children: [
+        Icon(icon, color: _primaryBlue, size: 22.sp),
+        SizedBox(width: 8.w),
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(
+              color: _headingColor,
+              fontSize: 17.sp,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Sans',
             ),
           ),
         ),
@@ -412,101 +703,146 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
     );
   }
 
-  // View active mechant button
-  activeMerchantButton() {
-    return InkWell(
-      onTap: () {
-        context.pushNamed('merchant-wallet');
-      },
-      child: Container(
-        width: MediaQuery.of(context).size.width / 1,
-        height: 50.h,
-        margin: const EdgeInsets.symmetric(horizontal: 10.0),
-        child: OutlineGradientButton(
-          strokeWidth: 3,
-          radius: const Radius.circular(5.0),
-          backgroundColor: GlobalColors.appGreyBackgroundColor,
-          elevation: 4,
-          gradient: const LinearGradient(
-            colors: [GlobalColors.appColor, GlobalColors.appColor1],
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
+  Widget _exampleRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8.h),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label, style: _bodyTextStyle()),
           ),
-          child: Center(
-            child: AutoSizeText(
-              S.of(context).viewAll,
-              style: merchantNameStyle,
+          Text(
+            value,
+            style: TextStyle(
+              color: _headingColor,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Sans',
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  // Additional List
-  walletAdditionalList() {
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 10.0),
-      separatorBuilder: (context, index) {
-        return const SizedBox(height: 10);
-      },
-      itemCount: additionalList.length,
-      itemBuilder: (context, index) {
-        return InkWell(
-          borderRadius: BorderRadius.circular(5.0),
-          onTap: () {
-            additionalList[index] ==
-                    S.of(context).topUpUniversalTouristSaverCredits
-                ? context.pushNamed('top-up').then((value) => setState(() {
-                      walletLoad = loadWallet();
-                    }))
-                : additionalList[index] == S.of(context).changeCountry
-                    ? context
-                        .pushNamed('change-country')
-                        .then((value) => setState(() {
-                              walletLoad = loadWallet();
-                            }))
-                    : additionalList[index] ==
-                            S.of(context).transferTouristSavers
-                        ? context
-                            .pushNamed('transfer-piiinks')
-                            .then((value) => setState(() {
-                                  walletLoad = loadWallet();
-                                }))
-                        : additionalList[index] == S.of(context).topUpHistory
-                            ? context.pushNamed('top_up_history')
-                            : context.pushNamed('statement', pathParameters: {
-                                'uniBalance': sendUniPiiink.toString() != 'null'
-                                    ? sendUniPiiink.toString()
-                                    : '0'
-                              });
-          },
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width,
-            height: 55.h,
-            child: ListTile(
-              tileColor: GlobalColors.appWhiteBackgroundColor,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(5.0)),
-              title: Padding(
-                padding: const EdgeInsets.only(top: 1.0),
-                // Text Name
-                child: AutoSizeText(
-                  additionalList[index],
-                  style: profileListStyle,
+  TextStyle _bodyTextStyle() {
+    return TextStyle(
+      color: _bodyColor,
+      fontSize: 14.sp,
+      fontWeight: FontWeight.w600,
+      height: 1.42,
+      fontFamily: 'Sans',
+    );
+  }
+
+  TextStyle _captionTextStyle() {
+    return TextStyle(
+      color: _bodyColor,
+      fontSize: 12.5.sp,
+      fontWeight: FontWeight.w600,
+      fontFamily: 'Sans',
+    );
+  }
+
+  List<transaction.Datum> _latestSavings(
+      transaction.TransactionResModel model) {
+    final List<transaction.Datum> transactions = model.data?.values
+            .expand(
+                (List<transaction.Datum> dayTransactions) => dayTransactions)
+            .where((transaction.Datum item) => (item.discountAmount ?? 0) > 0)
+            .toList() ??
+        [];
+
+    transactions.sort((transaction.Datum a, transaction.Datum b) {
+      final DateTime aDate =
+          a.transactionDate ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final DateTime bDate =
+          b.transactionDate ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return bDate.compareTo(aDate);
+    });
+
+    return transactions;
+  }
+
+  double _totalMemberSavings(List<transaction.Datum> transactions) {
+    return transactions.fold<double>(
+      0,
+      (double total, transaction.Datum item) =>
+          total + (item.discountAmount ?? 0),
+    );
+  }
+
+  String _formatCurrency(num value) {
+    return NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(value);
+  }
+
+  Future<void> _refreshSavings() async {
+    final Future<UniversalGetMyWallet?> newWalletLoad = loadWallet();
+    final Future<transaction.TransactionResModel?> newRecentSavingsLoad =
+        loadRecentSavings();
+
+    setState(() {
+      walletLoad = newWalletLoad;
+      recentSavingsLoad = newRecentSavingsLoad;
+    });
+
+    await Future.wait([
+      newWalletLoad,
+      newRecentSavingsLoad,
+    ]);
+  }
+
+  void _openTransactionHistory() {
+    context.pushNamed('statement', pathParameters: {
+      'uniBalance':
+          sendUniPiiink.toString() != 'null' ? sendUniPiiink.toString() : '0',
+    });
+  }
+
+  void _showTsdcExplainer() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return SafeArea(
+          child: Container(
+            margin: EdgeInsets.all(16.r),
+            padding: EdgeInsets.all(20.r),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24.r),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _sectionHeader(
+                  icon: Icons.info_outline,
+                  title: 'TouristSaver Discount Credits',
                 ),
-              ),
-              // Arrow
-              trailing: Padding(
-                padding: const EdgeInsets.only(top: 1.0),
-                child: Icon(
-                  Icons.arrow_forward_ios,
-                  size: 25,
-                  color: GlobalColors.gray.withValues(alpha: 0.5),
+                SizedBox(height: 14.h),
+                Text(
+                  'TSDCs help unlock discounts with participating merchants. They are not cash, tokens or a currency balance.',
+                  style: _bodyTextStyle(),
                 ),
-              ),
+                SizedBox(height: 12.h),
+                Text(
+                  'When you use TouristSaver, the merchant discount amount is deducted from your available TSDCs. You then pay the merchant the discounted total.',
+                  style: _bodyTextStyle(),
+                ),
+                SizedBox(height: 12.h),
+                Text(
+                  'Merchant TSDCs are rewards from a specific merchant and can be used toward future purchases with that merchant.',
+                  style: _bodyTextStyle(),
+                ),
+                SizedBox(height: 18.h),
+                _outlineLinkButton(
+                  label: 'Got it',
+                  icon: Icons.check_rounded,
+                  onTap: () => context.pop(),
+                ),
+              ],
             ),
           ),
         );
@@ -692,5 +1028,36 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
         }
       });
     }
+  }
+}
+
+class _SavingsCard extends StatelessWidget {
+  const _SavingsCard({
+    required this.child,
+    this.padding,
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: padding ?? EdgeInsets.all(18.r),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22.r),
+        border: Border.all(color: _LogWalletScreenState._borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0A236B).withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: child,
+    );
   }
 }

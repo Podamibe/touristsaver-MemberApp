@@ -471,7 +471,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           // checking and loading more
           if (isLoadingMore == true)
             const CircularProgressIndicator(
-              color: GlobalColors.appColor,
+              color: GlobalColors.loaderColor,
               strokeWidth: 2.0,
             ),
         ],

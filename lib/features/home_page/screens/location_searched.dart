@@ -380,8 +380,7 @@ class _LocationSearchMerchantState extends State<LocationSearchMerchant> {
                           child: isButtonTapped == true
                               ? const CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  backgroundColor: GlobalColors.appColor1,
-                                  color: GlobalColors.appColor)
+                                  color: GlobalColors.loaderColor)
                               : Row(
                                   children: [
                                     const Icon(
@@ -451,8 +450,7 @@ class _LocationSearchMerchantState extends State<LocationSearchMerchant> {
                           child: isButtonTapped1 == true
                               ? const CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  backgroundColor: GlobalColors.appColor1,
-                                  color: GlobalColors.appColor,
+                                  color: GlobalColors.loaderColor,
                                 )
                               : Row(
                                   children: [

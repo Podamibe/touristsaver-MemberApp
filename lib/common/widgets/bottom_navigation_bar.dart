@@ -236,10 +236,10 @@ class _BottomBarState extends State<BottomBar> {
             label: S.of(context).pay,
           ),
 
-          // Wallet Screen
+          // Savings Screen
           BottomNavigationBarItem(
-            icon: const Icon(Icons.wallet),
-            label: S.of(context).myWallet,
+            icon: const Icon(Icons.savings_outlined),
+            label: 'My Savings',
           ),
 
           // Profile Screen

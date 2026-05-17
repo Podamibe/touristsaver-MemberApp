@@ -1,14 +1,16 @@
-import 'dart:math';
-
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
-import 'package:new_piiink/constants/global_colors.dart';
 
 class VideoIntroScreen extends StatefulWidget {
-  const VideoIntroScreen({super.key});
+  const VideoIntroScreen({
+    super.key,
+    this.returnRouteName,
+  });
+
+  final String? returnRouteName;
 
   @override
   State<VideoIntroScreen> createState() => _VideoIntroScreenState();
@@ -23,9 +25,8 @@ class _VideoIntroScreenState extends State<VideoIntroScreen> {
     super.initState();
 
     // 1. FIRST, assign the controller
-    _controller = VideoPlayerController.networkUrl(
-      Uri.parse(
-          "https://touristsaver.org/wp-content/uploads/2025/10/TouristSaver3.0.mp4"),
+    _controller = VideoPlayerController.asset(
+      'assets/videos/welcome_intro_au.mp4',
     );
 
     // 2. THEN set the volume (this helps iOS recognize the audio session)
@@ -33,6 +34,7 @@ class _VideoIntroScreenState extends State<VideoIntroScreen> {
 
     // 3. Initialize and play
     _controller.initialize().then((_) {
+      if (!mounted) return;
       setState(() {});
       _controller.play();
       _controller.setLooping(false);
@@ -48,7 +50,7 @@ class _VideoIntroScreenState extends State<VideoIntroScreen> {
             setState(() {
               _isVideoEnded = true;
             });
-            context.goNamed("intro-screen");
+            _closeVideo();
           }
         }
       }
@@ -61,18 +63,23 @@ class _VideoIntroScreenState extends State<VideoIntroScreen> {
     super.dispose();
   }
 
-  void goNext() {
+  void _closeVideo() {
+    final returnRouteName = widget.returnRouteName;
+
+    if (returnRouteName != null && returnRouteName.isNotEmpty) {
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.goNamed(returnRouteName);
+      }
+      return;
+    }
+
     context.pushReplacementNamed('intro-screen');
   }
 
   @override
   Widget build(BuildContext context) {
-    void showIntro() {
-      context.pushReplacementNamed(
-        'intro-screen',
-      );
-    }
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -92,10 +99,13 @@ class _VideoIntroScreenState extends State<VideoIntroScreen> {
                     ),
                   )
                 : Center(
-                    child: Image.asset(
-                      "assets/images/tourist.png", // placeholder thumbnail
-                      width: 100,
-                      height: 100,
+                    child: SizedBox(
+                      width: 28.w,
+                      height: 28.w,
+                      child: const CircularProgressIndicator(
+                        color: Color(0xFF009FE3),
+                        strokeWidth: 3,
+                      ),
                     ),
                   ),
           ),
@@ -106,7 +116,7 @@ class _VideoIntroScreenState extends State<VideoIntroScreen> {
               top: 40.h,
               right: 20.w,
               child: TextButton(
-                onPressed: showIntro,
+                onPressed: _closeVideo,
                 child: AutoSizeText(
                   "Skip",
                   style: TextStyle(
