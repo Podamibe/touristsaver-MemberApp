@@ -1,12 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:new_piiink/common/app_variables.dart';
 import 'package:new_piiink/common/models/merchant_summary.dart';
 import 'package:new_piiink/common/services/dio_common.dart';
-import 'package:new_piiink/common/services/location_service.dart';
 import 'package:new_piiink/common/widgets/custom_snackbar.dart';
 import 'package:new_piiink/common/widgets/error.dart';
 import 'package:new_piiink/common/widgets/merchant_result_tile.dart';
@@ -22,13 +19,11 @@ import '../../connectivity/screens/connectivity_screen.dart';
 import '../../home_page/bloc/category_blocs.dart';
 import '../../home_page/bloc/category_events.dart';
 import '../../home_page/bloc/category_states.dart';
-import '../../home_page/services/home_dio.dart';
 import '../../home_page/widget/tab_container.dart';
-import '../../merchant/services/dio_merchant.dart';
+import '../../merchant/discovery/merchant_discovery_controller.dart';
+import '../../merchant/discovery/merchant_discovery_state.dart';
 import 'package:new_piiink/generated/l10n.dart';
 
-import '../../../models/request/mark_fav_req.dart';
-import '../../../models/response/common_res.dart';
 import '../../../models/response/piiink_info_res.dart';
 
 class MerchantScreen extends StatefulWidget {
@@ -47,20 +42,11 @@ class _MerchantScreenState extends State<MerchantScreen> {
   static const Color _borderColor = Color(0xFFE2E8F3);
   static const Color _surfaceColor = Color(0xFFF7F9FC);
 
+  late final MerchantDiscoveryController _discovery;
   final TextEditingController searchController = TextEditingController();
   // For reading the country ID and countryName
   String? counName;
   Future<PiiinkInfoResModel?>? showRecommend;
-  Timer? _searchDebounce;
-  int _searchRequestId = 0;
-  List<MerchantSummary> _rawResults = [];
-  List<MerchantSummary> _visibleResults = [];
-  bool _isLoadingResults = false;
-  String? _resultsTitle;
-  String? _resultsError;
-  String _selectedSort = 'Relevance';
-  double? _selectedRadiusKm;
-  String _activeSource = 'none';
 
   Future<PiiinkInfoResModel?> getShowRecommend() async {
     return DioCommon().piiinkInfo();
@@ -73,6 +59,8 @@ class _MerchantScreenState extends State<MerchantScreen> {
 
   @override
   void initState() {
+    _discovery = MerchantDiscoveryController();
+    _discovery.addListener(_handleDiscoveryChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       context
           .read<CategoryBloc>()
@@ -88,260 +76,57 @@ class _MerchantScreenState extends State<MerchantScreen> {
 
   @override
   void dispose() {
-    _searchDebounce?.cancel();
+    _discovery.removeListener(_handleDiscoveryChanged);
+    _discovery.dispose();
     searchController.dispose();
     ConnectivityCubit().close();
     super.dispose();
   }
 
-  Future<void> _loadSearch(String value) async {
-    final String query = value.trim();
-    final int requestId = ++_searchRequestId;
-    _searchDebounce?.cancel();
-    if (query.length < 3) {
-      setState(() {
-        _activeSource = 'none';
-        _resultsTitle = null;
-        _resultsError = null;
-        _rawResults = [];
-        _visibleResults = [];
-        _isLoadingResults = false;
-      });
-      return;
-    }
-
-    _searchDebounce = Timer(const Duration(milliseconds: 350), () async {
-      if (!mounted) return;
-      setState(() {
-        _activeSource = 'search';
-        _resultsTitle = 'Search results';
-        _resultsError = null;
-        _isLoadingResults = true;
-      });
-
-      final response = await DioHome().getSearched(name: query);
-      if (!mounted ||
-          requestId != _searchRequestId ||
-          searchController.text.trim() != query ||
-          _activeSource != 'search') {
-        return;
-      }
-      final summaries = (response?.merchants ?? [])
-          .map(
-            (merchant) => MerchantSummaryAdapters.fromSearchMerchant(
-              merchant,
-              currentLatitude: AppVariables.latitude,
-              currentLongitude: AppVariables.longitude,
-            ),
-          )
-          .whereType<MerchantSummary>()
-          .toList();
-
-      setState(() {
-        _rawResults = summaries;
-        _isLoadingResults = false;
-        _applyFiltersAndSort();
-      });
-    });
+  void _handleDiscoveryChanged() {
+    if (mounted) setState(() {});
   }
 
-  Future<void> _loadCategory(int categoryId, String categoryName) async {
-    FocusManager.instance.primaryFocus?.unfocus();
-    _searchDebounce?.cancel();
-    _searchRequestId++;
-    setState(() {
-      _activeSource = 'category';
-      _resultsTitle = categoryName;
-      _resultsError = null;
-      _isLoadingResults = true;
-      searchController.clear();
-    });
-
-    final response = await DioHome().getAllMerchant(
-      pageNumber: 1,
-      categoryId: categoryId,
-    );
-    if (!mounted) return;
-    final summaries = (response?.data ?? [])
-        .map(
-          (merchant) => MerchantSummaryAdapters.fromMerchantGetAll(
-            merchant,
-            currentLatitude: AppVariables.latitude,
-            currentLongitude: AppVariables.longitude,
-            categoryLabel: categoryName,
-          ),
-        )
-        .whereType<MerchantSummary>()
-        .toList();
-
-    setState(() {
-      _rawResults = summaries;
-      _isLoadingResults = false;
-      _applyFiltersAndSort();
-    });
+  Future<void> _loadSearch(String value) {
+    return _discovery.loadSearch(value);
   }
 
-  Future<void> _loadNearMe() async {
+  Future<void> _loadCategory(int categoryId, String categoryName) {
     FocusManager.instance.primaryFocus?.unfocus();
-    _searchDebounce?.cancel();
-    _searchRequestId++;
-    double? latitude = AppVariables.latitude;
-    double? longitude = AppVariables.longitude;
-    if (latitude == null || longitude == null) {
-      setState(() {
-        _activeSource = 'nearMe';
-        _resultsTitle = 'Near me';
-        _resultsError = null;
-        _isLoadingResults = true;
-        _rawResults = [];
-        _visibleResults = [];
-        searchController.clear();
-      });
+    searchController.clear();
+    return _discovery.loadCategory(categoryId, categoryName);
+  }
 
-      final bool locationReady =
-          await LocationService().enableLocationAndFetchCountry();
-      if (!mounted) return;
-      latitude = AppVariables.latitude;
-      longitude = AppVariables.longitude;
-      if (!locationReady || latitude == null || longitude == null) {
-        setState(() {
-          _isLoadingResults = false;
-          _resultsError =
-              'Location is needed to show nearby merchants. Try Map View or update your location.';
-          _rawResults = [];
-          _visibleResults = [];
-        });
-        return;
-      }
-    }
-
-    final double radius = _selectedRadiusKm ?? 25;
-    setState(() {
-      _activeSource = 'nearMe';
-      _resultsTitle = 'Near me';
-      _resultsError = null;
-      _isLoadingResults = true;
-      searchController.clear();
-    });
-
-    final response = await DioHome().getNearbyOffers(
-      latitude: latitude,
-      longitude: longitude,
-      radius: radius,
-    );
-    if (!mounted) return;
-    final summaries = (response?.data ?? [])
-        .map(MerchantSummaryAdapters.fromNearbyViewAll)
-        .whereType<MerchantSummary>()
-        .toList();
-
-    setState(() {
-      _rawResults = summaries;
-      _isLoadingResults = false;
-      _applyFiltersAndSort();
-    });
+  Future<void> _loadNearMe() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    searchController.clear();
+    return _discovery.loadNearMe();
   }
 
   Future<void> _toggleFavourite(MerchantSummary merchant) async {
-    if (AppVariables.accessToken == null) return;
-    final bool shouldAdd = merchant.isFavourite != true;
-    dynamic response;
-    if (shouldAdd) {
-      response = await DioMerchant().markFavouriteMerchants(
-        markFavouriteReqModel: MarkFavouriteReqModel(
-          merchantId: merchant.merchantId,
-        ),
-      );
-    } else {
-      response = await DioMerchant().removeFavouriteMerchants(
-        merchantID: merchant.merchantId,
-      );
-    }
-    if (!mounted) return;
-
-    final bool success = response is CommonResModel
-        ? response.status == 'Success'
-        : response is SecondCommonResModel
-            ? response.status == 'Success'
-            : false;
-
+    final bool success = await _discovery.toggleFavourite(merchant);
     if (!success) {
       GlobalSnackBar.showError(context, S.of(context).somethingWentWrong);
-      return;
     }
-
-    setState(() {
-      _rawResults = _rawResults
-          .map(
-            (item) => item.merchantId == merchant.merchantId
-                ? item.copyWith(isFavourite: shouldAdd)
-                : item,
-          )
-          .toList();
-      _applyFiltersAndSort();
-    });
   }
 
   void _setSort(String sort) {
-    setState(() {
-      _selectedSort = sort;
-      _applyFiltersAndSort();
-    });
+    _discovery.setSort(sort);
   }
 
   void _setRadius(double? radius) {
-    setState(() {
-      _selectedRadiusKm = radius;
-    });
-    if (_activeSource == 'nearMe') {
-      _loadNearMe();
-    } else {
-      setState(_applyFiltersAndSort);
-    }
+    _discovery.setRadius(radius);
   }
 
   void _clearDiscovery() {
-    _searchDebounce?.cancel();
-    _searchRequestId++;
     FocusManager.instance.primaryFocus?.unfocus();
-    setState(() {
-      searchController.clear();
-      _activeSource = 'none';
-      _resultsTitle = null;
-      _resultsError = null;
-      _rawResults = [];
-      _visibleResults = [];
-      _isLoadingResults = false;
-    });
-  }
-
-  void _applyFiltersAndSort() {
-    List<MerchantSummary> results = List<MerchantSummary>.from(_rawResults);
-    final double? radius = _selectedRadiusKm;
-    if (radius != null && _activeSource != 'nearMe') {
-      results = results
-          .where((merchant) =>
-              merchant.distanceKm != null && merchant.distanceKm! <= radius)
-          .toList();
-    }
-
-    if (_selectedSort == 'Name') {
-      results.sort((left, right) => left.merchantName
-          .toLowerCase()
-          .compareTo(right.merchantName.toLowerCase()));
-    } else if (_selectedSort == 'Distance') {
-      results.sort((left, right) {
-        final double leftDistance = left.distanceKm ?? double.infinity;
-        final double rightDistance = right.distanceKm ?? double.infinity;
-        return leftDistance.compareTo(rightDistance);
-      });
-    }
-
-    _visibleResults = results;
+    searchController.clear();
+    _discovery.clear();
   }
 
   @override
   Widget build(BuildContext context) {
+    final MerchantDiscoveryState discoveryState = _discovery.state;
     return Scaffold(
       backgroundColor: _surfaceColor,
       appBar: PreferredSize(
@@ -496,14 +281,12 @@ class _MerchantScreenState extends State<MerchantScreen> {
                         },
                       ),
                       const SizedBox(height: 28),
-                      if (_activeSource != 'none' ||
-                          _isLoadingResults ||
-                          _resultsError != null) ...[
+                      if (discoveryState.hasResultsPanel) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 18),
                           child: _FilterSortBar(
-                            selectedSort: _selectedSort,
-                            selectedRadiusKm: _selectedRadiusKm,
+                            selectedSort: discoveryState.selectedSort,
+                            selectedRadiusKm: discoveryState.selectedRadiusKm,
                             onSortSelected: _setSort,
                             onRadiusSelected: _setRadius,
                           ),
@@ -512,10 +295,10 @@ class _MerchantScreenState extends State<MerchantScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 18),
                           child: _MerchantResultsSection(
-                            title: _resultsTitle ?? 'Results',
-                            isLoading: _isLoadingResults,
-                            error: _resultsError,
-                            merchants: _visibleResults,
+                            title: discoveryState.title,
+                            isLoading: discoveryState.isLoading,
+                            error: discoveryState.error,
+                            merchants: discoveryState.results,
                             onClear: _clearDiscovery,
                             onMerchantTap: (merchant) {
                               context.pushNamed('details-screen', extra: {
