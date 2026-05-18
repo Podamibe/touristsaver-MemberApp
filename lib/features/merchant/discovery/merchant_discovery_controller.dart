@@ -273,19 +273,32 @@ class MerchantDiscoveryController extends ChangeNotifier {
           .toList();
     }
 
-    if (state.selectedSort == 'Name') {
+    if (state.selectedSort == 'Favourites') {
+      results.sort((left, right) {
+        final int favouriteCompare =
+            _favouriteRank(left).compareTo(_favouriteRank(right));
+        if (favouriteCompare != 0) return favouriteCompare;
+        return _compareDistance(left, right);
+      });
+    } else if (state.selectedSort == 'Name') {
       results.sort((left, right) => left.merchantName
           .toLowerCase()
           .compareTo(right.merchantName.toLowerCase()));
     } else if (state.selectedSort == 'Distance') {
-      results.sort((left, right) {
-        final double leftDistance = left.distanceKm ?? double.infinity;
-        final double rightDistance = right.distanceKm ?? double.infinity;
-        return leftDistance.compareTo(rightDistance);
-      });
+      results.sort(_compareDistance);
     }
 
     return results;
+  }
+
+  int _favouriteRank(MerchantSummary merchant) {
+    return merchant.isFavourite == true ? 0 : 1;
+  }
+
+  int _compareDistance(MerchantSummary left, MerchantSummary right) {
+    final double leftDistance = left.distanceKm ?? double.infinity;
+    final double rightDistance = right.distanceKm ?? double.infinity;
+    return leftDistance.compareTo(rightDistance);
   }
 
   void _cancelSearch() {

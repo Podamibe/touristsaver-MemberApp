@@ -69,6 +69,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
         showRecommend = getShowRecommend();
       }
       await gettingLocation();
+      if (!mounted) return;
       setState(() {});
     });
     super.initState();
@@ -105,6 +106,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
 
   Future<void> _toggleFavourite(MerchantSummary merchant) async {
     final bool success = await _discovery.toggleFavourite(merchant);
+    if (!mounted) return;
     if (!success) {
       GlobalSnackBar.showError(context, S.of(context).somethingWentWrong);
     }
@@ -547,9 +549,9 @@ class _FilterSortBar extends StatelessWidget {
           runSpacing: 8,
           children: [
             _DiscoveryChip(
-              label: 'Relevance',
-              selected: selectedSort == 'Relevance',
-              onTap: () => onSortSelected('Relevance'),
+              label: 'Favourites',
+              selected: selectedSort == 'Favourites',
+              onTap: () => onSortSelected('Favourites'),
             ),
             _DiscoveryChip(
               label: 'Distance',

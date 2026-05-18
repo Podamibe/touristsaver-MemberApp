@@ -14,7 +14,7 @@ class MerchantDiscoveryState {
     this.selectedCategoryId,
     this.selectedCategoryName,
     this.selectedRadiusKm,
-    this.selectedSort = 'Relevance',
+    this.selectedSort = 'Distance',
     this.isLoading = false,
     this.error,
     this.results = const [],
