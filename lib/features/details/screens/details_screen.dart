@@ -1,12 +1,12 @@
 // ignore_for_file: deprecated_member_use
 
-import 'dart:convert';
 import 'dart:io';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -201,48 +201,51 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 isFavoritez == isFavoritez ? context.pop(true) : context.pop();
                 return true;
               },
-              child: Scaffold(
-                appBar: PreferredSize(
-                  preferredSize: const Size.fromHeight(kToolbarHeight),
-                  child: CustomAppBar(
-                    text: merchantDetail.data!.merchantName!,
-                    icon: Icons.arrow_back_ios,
-                    leadingWidth: 42,
-                    titleSpacing: 0,
-                    reserveEmptyActions: false,
-                    onPressed: () {
-                      isFavoritez == isFavoritez
-                          ? context.pop(true)
-                          : context.pop();
-                    },
-                  ),
+              child: AnnotatedRegion<SystemUiOverlayStyle>(
+                value: const SystemUiOverlayStyle(
+                  statusBarColor: Colors.transparent,
+                  statusBarIconBrightness: Brightness.light,
+                  statusBarBrightness: Brightness.dark,
                 ),
-                body: IgnorePointer(
-                  ignoring: isLoading,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SingleChildScrollView(
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 10),
-                            CarouselWidget(imageList: imageList),
-                            const SizedBox(height: 20),
-                            detailPage(merchantDetail),
-                          ],
-                        ),
-                      ),
-                      if (isLoading)
-                        Positioned(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: GlobalColors.gray.withValues(alpha: 0.5),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: const CustomAllLoader1(),
+                child: Scaffold(
+                  extendBodyBehindAppBar: true,
+                  body: IgnorePointer(
+                    ignoring: isLoading,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              CarouselWidget(
+                                imageList: imageList,
+                                heroMode: true,
+                                autoPlay: false,
+                                heroTitle:
+                                    merchantDetail.data!.merchantName ?? '',
+                                onBack: () {
+                                  isFavoritez == isFavoritez
+                                      ? context.pop(true)
+                                      : context.pop();
+                                },
+                              ),
+                              SizedBox(height: 18.h),
+                              detailPage(merchantDetail),
+                            ],
                           ),
                         ),
-                    ],
+                        if (isLoading)
+                          Positioned(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: GlobalColors.gray.withValues(alpha: 0.5),
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: const CustomAllLoader1(),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
                 // floatingActionButton: IgnorePointer(
@@ -365,10 +368,12 @@ class _DetailsScreenState extends State<DetailsScreen> {
         break;
       }
     }
-    if (todayTimeStr == null)
+    if (todayTimeStr == null) {
       return _headerText("Opening Hours", "", Colors.black87);
-    if (todayTimeStr.toLowerCase().contains('closed'))
+    }
+    if (todayTimeStr.toLowerCase().contains('closed')) {
       return _headerText("Closed", " · Today", const Color(0xFFD93025));
+    }
 
     // Calculate if it's open right now
     try {
@@ -397,7 +402,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
         }
       }
     } catch (e) {
-      print(" parsing hours: $e");
+      debugPrint(" parsing hours: $e");
       // Ignore parsing errors and fallback
     }
 

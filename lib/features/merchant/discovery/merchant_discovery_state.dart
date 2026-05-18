@@ -19,6 +19,7 @@ class MerchantDiscoveryState {
     this.isLoading = false,
     this.error,
     this.results = const [],
+    this.pendingFavouriteMerchantIds = const {},
   });
 
   static const Object _unset = Object();
@@ -33,6 +34,7 @@ class MerchantDiscoveryState {
   final bool isLoading;
   final String? error;
   final List<MerchantSummary> results;
+  final Set<int> pendingFavouriteMerchantIds;
 
   bool get hasResultsPanel =>
       source != MerchantDiscoverySource.none || isLoading || error != null;
@@ -57,6 +59,7 @@ class MerchantDiscoveryState {
     bool? isLoading,
     Object? error = _unset,
     List<MerchantSummary>? results,
+    Set<int>? pendingFavouriteMerchantIds,
   }) {
     return MerchantDiscoveryState(
       source: source ?? this.source,
@@ -75,6 +78,8 @@ class MerchantDiscoveryState {
       isLoading: isLoading ?? this.isLoading,
       error: error == _unset ? this.error : error as String?,
       results: results ?? this.results,
+      pendingFavouriteMerchantIds:
+          pendingFavouriteMerchantIds ?? this.pendingFavouriteMerchantIds,
     );
   }
 }

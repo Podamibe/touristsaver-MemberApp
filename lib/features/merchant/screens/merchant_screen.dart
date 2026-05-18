@@ -108,7 +108,10 @@ class _MerchantScreenState extends State<MerchantScreen> {
     final bool success = await _discovery.toggleFavourite(merchant);
     if (!mounted) return;
     if (!success) {
-      GlobalSnackBar.showError(context, S.of(context).somethingWentWrong);
+      GlobalSnackBar.showError(
+        context,
+        'Could not update favourite. Please try again.',
+      );
     }
   }
 
@@ -205,12 +208,12 @@ class _MerchantScreenState extends State<MerchantScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
                       BlocBuilder<CategoryBloc, CategoryState>(
                         builder: (context, state) {
                           if (state is CategoryLoadingState) {
                             return SizedBox(
-                              height: 125,
+                              height: 96,
                               child: ListView.separated(
                                   scrollDirection: Axis.horizontal,
                                   padding: const EdgeInsets.only(
@@ -229,7 +232,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
                                 state.categoryList;
                             return SizedBox(
                               height:
-                                  categoryList.data!.data!.isEmpty ? 50 : 125,
+                                  categoryList.data!.data!.isEmpty ? 50 : 96,
                               child: categoryList.data!.data!.isEmpty
                                   ? EmptyData(
                                       text: S.of(context).noCategoryFound)
@@ -275,7 +278,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
                           }
                         },
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
                       if (discoveryState.hasResultsPanel) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -296,6 +299,8 @@ class _MerchantScreenState extends State<MerchantScreen> {
                             isLoading: discoveryState.isLoading,
                             error: discoveryState.error,
                             merchants: discoveryState.results,
+                            pendingFavouriteMerchantIds:
+                                discoveryState.pendingFavouriteMerchantIds,
                             onClear: _clearDiscovery,
                             onMerchantTap: (merchant) {
                               context.pushNamed('details-screen', extra: {
@@ -548,6 +553,11 @@ class _FilterSortBar extends StatelessWidget {
           runSpacing: 8,
           children: [
             _DiscoveryChip(
+              label: 'Best Offer',
+              selected: bestOfferFirst,
+              onTap: () => onBestOfferChanged(!bestOfferFirst),
+            ),
+            _DiscoveryChip(
               label: 'Favourites',
               selected: selectedSort == 'Favourites',
               onTap: () => onSortSelected('Favourites'),
@@ -570,16 +580,11 @@ class _FilterSortBar extends StatelessWidget {
           runSpacing: 8,
           children: [
             _DiscoveryChip(
-              label: 'Best Offer',
-              selected: bestOfferFirst,
-              onTap: () => onBestOfferChanged(!bestOfferFirst),
-            ),
-            _DiscoveryChip(
               label: 'Any distance',
               selected: selectedRadiusKm == null,
               onTap: () => onRadiusSelected(null),
             ),
-            for (final radius in const [5.0, 10.0, 25.0, 50.0])
+            for (final radius in const [5.0, 15.0, 50.0])
               _DiscoveryChip(
                 label: '${radius.toInt()} km',
                 selected: selectedRadiusKm == radius,
@@ -638,6 +643,7 @@ class _MerchantResultsSection extends StatelessWidget {
     required this.isLoading,
     required this.error,
     required this.merchants,
+    required this.pendingFavouriteMerchantIds,
     required this.onClear,
     required this.onMerchantTap,
     required this.onFavouriteTap,
@@ -647,6 +653,7 @@ class _MerchantResultsSection extends StatelessWidget {
   final bool isLoading;
   final String? error;
   final List<MerchantSummary> merchants;
+  final Set<int> pendingFavouriteMerchantIds;
   final VoidCallback onClear;
   final ValueChanged<MerchantSummary> onMerchantTap;
   final ValueChanged<MerchantSummary> onFavouriteTap;
@@ -722,6 +729,8 @@ class _MerchantResultsSection extends StatelessWidget {
                 return MerchantResultTile(
                   merchant: merchant,
                   onTap: () => onMerchantTap(merchant),
+                  isFavouritePending:
+                      pendingFavouriteMerchantIds.contains(merchant.merchantId),
                   onFavouriteTap: AppVariables.accessToken == null ||
                           merchant.isFavourite == null
                       ? null

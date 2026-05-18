@@ -197,35 +197,44 @@ class MerchantDiscoveryController extends ChangeNotifier {
 
   Future<bool> toggleFavourite(MerchantSummary merchant) async {
     if (AppVariables.accessToken == null) return true;
+    if (state.pendingFavouriteMerchantIds.contains(merchant.merchantId)) {
+      return true;
+    }
 
     final bool shouldAdd = merchant.isFavourite != true;
-    final dynamic response = shouldAdd
-        ? await DioMerchant().markFavouriteMerchants(
-            markFavouriteReqModel: MarkFavouriteReqModel(
-              merchantId: merchant.merchantId,
-            ),
+    _setFavouritePending(merchant.merchantId, true);
+
+    try {
+      final dynamic response = shouldAdd
+          ? await DioMerchant().markFavouriteMerchants(
+              markFavouriteReqModel: MarkFavouriteReqModel(
+                merchantId: merchant.merchantId,
+              ),
+            )
+          : await DioMerchant().removeFavouriteMerchants(
+              merchantID: merchant.merchantId,
+            );
+
+      if (_disposed) return false;
+      final bool success = response is CommonResModel
+          ? response.status == 'Success'
+          : response is SecondCommonResModel
+              ? response.status == 'Success'
+              : false;
+      if (!success) return false;
+
+      _rawResults = _rawResults
+          .map(
+            (item) => item.merchantId == merchant.merchantId
+                ? item.copyWith(isFavourite: shouldAdd)
+                : item,
           )
-        : await DioMerchant().removeFavouriteMerchants(
-            merchantID: merchant.merchantId,
-          );
-
-    if (_disposed) return false;
-    final bool success = response is CommonResModel
-        ? response.status == 'Success'
-        : response is SecondCommonResModel
-            ? response.status == 'Success'
-            : false;
-    if (!success) return false;
-
-    _rawResults = _rawResults
-        .map(
-          (item) => item.merchantId == merchant.merchantId
-              ? item.copyWith(isFavourite: shouldAdd)
-              : item,
-        )
-        .toList();
-    _refreshVisibleResults();
-    return true;
+          .toList();
+      _refreshVisibleResults();
+      return true;
+    } finally {
+      _setFavouritePending(merchant.merchantId, false);
+    }
   }
 
   void setSort(String sort) {
@@ -266,6 +275,17 @@ class MerchantDiscoveryController extends ChangeNotifier {
 
   void _refreshVisibleResults() {
     _emit(state.copyWith(results: _filteredAndSortedResults()));
+  }
+
+  void _setFavouritePending(int merchantId, bool isPending) {
+    if (_disposed) return;
+    final pendingIds = Set<int>.from(state.pendingFavouriteMerchantIds);
+    if (isPending) {
+      pendingIds.add(merchantId);
+    } else {
+      pendingIds.remove(merchantId);
+    }
+    _emit(state.copyWith(pendingFavouriteMerchantIds: pendingIds));
   }
 
   List<MerchantSummary> _filteredAndSortedResults() {

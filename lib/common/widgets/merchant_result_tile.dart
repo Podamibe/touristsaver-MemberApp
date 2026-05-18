@@ -12,6 +12,7 @@ class MerchantResultTile extends StatelessWidget {
     required this.onTap,
     this.onFavouriteTap,
     this.showFavourite = true,
+    this.isFavouritePending = false,
   });
 
   static const Color _primaryBlue = Color(0xFF0009FE);
@@ -23,6 +24,7 @@ class MerchantResultTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onFavouriteTap;
   final bool showFavourite;
+  final bool isFavouritePending;
 
   @override
   Widget build(BuildContext context) {
@@ -107,20 +109,30 @@ class MerchantResultTile extends StatelessWidget {
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (showFavourite && onFavouriteTap != null)
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    constraints: const BoxConstraints(),
-                    padding: EdgeInsets.zero,
-                    onPressed: onFavouriteTap,
-                    icon: Icon(
-                      merchant.isFavourite == true
-                          ? Icons.favorite
-                          : Icons.favorite_border,
-                      color: _primaryBlue,
-                      size: 22.sp,
+                if (showFavourite)
+                  if (isFavouritePending)
+                    SizedBox(
+                      width: 22.sp,
+                      height: 22.sp,
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: _primaryBlue,
+                      ),
+                    )
+                  else if (onFavouriteTap != null)
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      constraints: const BoxConstraints(),
+                      padding: EdgeInsets.zero,
+                      onPressed: onFavouriteTap,
+                      icon: Icon(
+                        merchant.isFavourite == true
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: _primaryBlue,
+                        size: 22.sp,
+                      ),
                     ),
-                  ),
                 SizedBox(height: 8.h),
                 Icon(
                   Icons.arrow_forward_ios_rounded,
