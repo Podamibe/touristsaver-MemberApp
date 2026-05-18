@@ -2,13 +2,12 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:new_piiink/common/app_variables.dart';
-import 'package:new_piiink/constants/decimal_remove.dart';
+import 'package:new_piiink/common/widgets/merchant_distance.dart';
+import 'package:new_piiink/common/widgets/merchant_discount_badge.dart';
 import 'package:new_piiink/constants/global_colors.dart';
 import 'package:new_piiink/constants/style.dart';
 
-import '../../../constants/fixed_decimal.dart';
 import '../../../common/widgets/custom_loader.dart';
-import 'package:new_piiink/generated/l10n.dart';
 
 class BigTabContainer extends StatelessWidget {
   final String bigDiscountGiven;
@@ -31,7 +30,7 @@ class BigTabContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double contWidth = MediaQuery.of(context).size.width / 1.7;
+    double contWidth = (MediaQuery.of(context).size.width - 34) / 2;
     // double contImgHeight = contWidth / 2;
     return GestureDetector(
       onTap: bigOnTap,
@@ -122,11 +121,12 @@ class BigTabContainer extends StatelessWidget {
                     Expanded(
                       flex: 4,
                       child: AutoSizeText(
-                        '${toFixed2DecimalPlaces(bigDistance!)} ${S.of(context).km}${S.of(context).away}',
+                        formatMerchantDistance(bigDistance),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: merchantNameStyle.copyWith(
-                            color: GlobalColors.appColor1),
+                          color: const Color(0xFF63708A),
+                        ),
                       ),
                     ),
                     const SizedBox(
@@ -134,14 +134,9 @@ class BigTabContainer extends StatelessWidget {
                     ),
                     Expanded(
                       flex: 5,
-                      child: AutoSizeText(
-                        S.of(context).upToXdiscount.replaceAll(
-                            '&x', removeTrailingZero(bigDiscountGiven)),
-                        // 'Up to ${removeTrailingZero(bigDiscountGiven)}% Dis',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: merchantDisStyle,
+                      child: MerchantDiscountBadge(
+                        discount: bigDiscountGiven,
+                        alignment: Alignment.center,
                       ),
                     ),
                   ],
@@ -294,11 +289,8 @@ class NewBigTabContainerWithFav extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  AutoSizeText(
-                    S.of(context).upToXdiscount.replaceAll(
-                        '&x', removeTrailingZero(newbigDiscountGiven)),
-                    // 'Up to ${removeTrailingZero(newbigDiscountGiven)}% Discount',
-                    style: merchantDisStyle,
+                  Flexible(
+                    child: MerchantDiscountBadge(discount: newbigDiscountGiven),
                   ),
 
                   const SizedBox(width: 5),

@@ -84,7 +84,7 @@
 	"noNotificationFrom":"No notifications from &S to &E",
 	"youDoNotHaveAnyTransactionHistoryToViewBetweenXTOY":"You do not have any Transaction history to view between &X to &Y",
 	"youDoNotHaveAnyTopUpHistoryToViewBetweenXTOY":"You do not have any TopUp history to view between @X to @Y",
-	"upToXdiscount":"upto &x% discount",
+	"upToXdiscount":"Up to &x% off",
 	"accept": "Accept",
 	"acceptToUseTouristSavers": "Accept to use TouristSavers",
 	"addReview": "Add Review",

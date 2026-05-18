@@ -3,13 +3,12 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_piiink/common/app_variables.dart';
-import 'package:new_piiink/constants/decimal_remove.dart';
+import 'package:new_piiink/common/widgets/merchant_distance.dart';
+import 'package:new_piiink/common/widgets/merchant_discount_badge.dart';
 import 'package:new_piiink/constants/global_colors.dart';
 import 'package:new_piiink/constants/style.dart';
 
-import '../../constants/fixed_decimal.dart';
 import 'custom_loader.dart';
-import 'package:new_piiink/generated/l10n.dart';
 
 class SmallTabContainer extends StatelessWidget {
   final VoidCallback smallOnTap;
@@ -94,9 +93,11 @@ class SmallTabContainer extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.only(left: 5, bottom: 5),
                   child: Text(
-                    '${toFixed2DecimalPlaces(distance!)} ${S.of(context).km}${S.of(context).away}',
+                    formatMerchantDistance(distance),
                     style: merchantNameStyle.copyWith(
-                        fontSize: 15.sp, color: GlobalColors.appColor1),
+                      fontSize: 15.sp,
+                      color: const Color(0xFF63708A),
+                    ),
                   ),
                 ),
               ),
@@ -121,13 +122,7 @@ class SmallTabContainer extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 5.0, right: 5.0),
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: AutoSizeText(
-                    S.of(context).upToXdiscount.replaceAll(
-                        '&x', removeTrailingZero(smallDiscountGiven)),
-                    //s 'Up to ${removeTrailingZero(smallDiscountGiven)}% Discount',
-                    // textAlign: TextAlign.left,
-                    style: merchantDisStyle.copyWith(fontSize: 15.sp),
-                  ),
+                  child: MerchantDiscountBadge(discount: smallDiscountGiven),
                 ),
               ),
             )
@@ -232,12 +227,7 @@ class NewSmallTabContainer extends StatelessWidget {
               padding: const EdgeInsets.only(left: 5.0, right: 5.0),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: AutoSizeText(
-                  S.of(context).upToXdiscount.replaceAll(
-                      '&x', removeTrailingZero(newSmallDiscountGiven)),
-                  //  'Up to ${removeTrailingZero(newSmallDiscountGiven)}% Discount',
-                  style: merchantDisStyle.copyWith(fontSize: 15.sp),
-                ),
+                child: MerchantDiscountBadge(discount: newSmallDiscountGiven),
               ),
             )
           ],
@@ -350,14 +340,9 @@ class NewSmallTabContainerWithFav extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(
-                  width: size.width * 0.35,
-                  child: AutoSizeText(
-                    S.of(context).upToXdiscount.replaceAll(
-                        '&x', removeTrailingZero(newSmallDiscountGiven)),
-                    //  'Up to ${removeTrailingZero(newSmallDiscountGiven)}% Discount',
-                    style: merchantDisStyle.copyWith(fontSize: 15.sp),
-                    maxLines: 1,
+                Flexible(
+                  child: MerchantDiscountBadge(
+                    discount: newSmallDiscountGiven,
                   ),
                 ),
 

@@ -287,7 +287,7 @@ class SEn extends S {
       'You do not have any TopUp history to view between @X to @Y';
 
   @override
-  String get upToXdiscount => 'upto &x% discount';
+  String get upToXdiscount => 'Up to &x% off';
 
   @override
   String get accept => 'Accept';

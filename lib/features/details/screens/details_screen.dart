@@ -54,6 +54,12 @@ class DetailsScreen extends StatefulWidget {
 }
 
 class _DetailsScreenState extends State<DetailsScreen> {
+  static const Color _primaryBlue = Color(0xFF0009FE);
+  static const Color _ctaCyan = Color(0xFF18C6FF);
+  static const Color _headingColor = Color(0xFF111C44);
+  static const Color _bodyColor = Color(0xFF63708A);
+  static const Color _borderColor = Color(0xFFE2E8F3);
+
   //For title in Google Map
   String? addressDetail;
   bool isHoursExpanded = false;
@@ -199,13 +205,17 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 appBar: PreferredSize(
                   preferredSize: const Size.fromHeight(kToolbarHeight),
                   child: CustomAppBar(
-                      text: merchantDetail.data!.merchantName!,
-                      icon: Icons.arrow_back_ios,
-                      onPressed: () {
-                        isFavoritez == isFavoritez
-                            ? context.pop(true)
-                            : context.pop();
-                      }),
+                    text: merchantDetail.data!.merchantName!,
+                    icon: Icons.arrow_back_ios,
+                    leadingWidth: 42,
+                    titleSpacing: 0,
+                    reserveEmptyActions: false,
+                    onPressed: () {
+                      isFavoritez == isFavoritez
+                          ? context.pop(true)
+                          : context.pop();
+                    },
+                  ),
                 ),
                 body: IgnorePointer(
                   ignoring: isLoading,
@@ -556,6 +566,278 @@ class _DetailsScreenState extends State<DetailsScreen> {
   }
 
   // Detail Page
+  Widget _memberOfferCard(MerchantDetailResModel merchantDetail) {
+    final String discount = removeTrailingZero(
+      merchantDetail.data?.discountAtHourOfDay.toString() ??
+          S.of(context).noDiscount,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(16.r),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18.r),
+          border: Border.all(color: _borderColor),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0A236B).withValues(alpha: 0.06),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 46.w,
+                  height: 46.w,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF7FF),
+                    borderRadius: BorderRadius.circular(15.r),
+                  ),
+                  child: Icon(
+                    Icons.local_offer_outlined,
+                    color: _primaryBlue,
+                    size: 24.sp,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Member offer',
+                        style: TextStyle(
+                          color: _headingColor,
+                          fontSize: 17.sp,
+                          fontWeight: FontWeight.w900,
+                          fontFamily: 'Sans',
+                        ),
+                      ),
+                      SizedBox(height: 5.h),
+                      Text(
+                        'Available for TouristSaver members',
+                        style: TextStyle(
+                          color: _bodyColor,
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Sans',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (AppVariables.accessToken != null)
+                  isLoading
+                      ? const SizedBox(
+                          width: 34,
+                          height: 34,
+                          child: FittedBox(child: CustomAllLoader1()),
+                        )
+                      : IconButton(
+                          onPressed: () async {
+                            setState(() {
+                              isLoading = true;
+                            });
+                            int merchantId = int.parse(widget.merchantID!);
+                            isFavoritez == true
+                                ? removeFromFavorites(merchantId)
+                                : addToFavorites(merchantId);
+                          },
+                          icon: Icon(
+                            isFavoritez == true
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                          ),
+                          color: _primaryBlue,
+                          tooltip: 'Save offer',
+                        ),
+              ],
+            ),
+            SizedBox(height: 15.h),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 9.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF4F8FF),
+                borderRadius: BorderRadius.circular(14.r),
+                border: Border.all(color: _borderColor),
+              ),
+              child: Text(
+                'Up to $discount% off',
+                style: TextStyle(
+                  color: _primaryBlue,
+                  fontSize: 23.sp,
+                  fontWeight: FontWeight.w900,
+                  fontFamily: 'Sans',
+                ),
+              ),
+            ),
+            if (AppVariables.accessToken != null) ...[
+              SizedBox(height: 16.h),
+              _primaryGradientButton(
+                label: S.of(context).pay,
+                onTap: () {
+                  context.pushNamed(
+                    'pay',
+                    extra: merchantDetail.data?.merchantName,
+                  );
+                },
+              ),
+            ],
+            SizedBox(height: 10.h),
+            Row(
+              children: [
+                Expanded(
+                  child: _secondaryOutlineButton(
+                    label: S.of(context).moreOffers,
+                    onTap: () {
+                      context.pushNamed('more-offers', extra: {
+                        'argImageList': imageList,
+                        'merchantID': widget.merchantID,
+                      });
+                    },
+                  ),
+                ),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: _secondaryOutlineButton(
+                    label: S.of(context).reviews,
+                    onTap: () {
+                      context.pushNamed(
+                        'merchant-rating',
+                        extra: {'merchantId': widget.merchantID},
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _primaryGradientButton({
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16.r),
+        onTap: onTap,
+        child: Ink(
+          height: 50.h,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [_primaryBlue, _ctaCyan],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(16.r),
+            boxShadow: [
+              BoxShadow(
+                color: _primaryBlue.withValues(alpha: 0.18),
+                blurRadius: 14,
+                offset: const Offset(0, 7),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w900,
+                fontFamily: 'Sans',
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _secondaryOutlineButton({
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(15.r),
+        onTap: onTap,
+        child: Ink(
+          height: 46.h,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15.r),
+            border: Border.all(color: _primaryBlue.withValues(alpha: 0.55)),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _headingColor,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w800,
+                fontFamily: 'Sans',
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _contactCircleIcon(
+    IconData icon, {
+    bool enabled = true,
+    double size = 32,
+    double iconSize = 18,
+  }) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: enabled ? _primaryBlue : const Color(0xffb0b0b0),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        icon,
+        color: Colors.white,
+        size: iconSize,
+      ),
+    );
+  }
+
+  Map<String, Style> get _compactDescriptionHtmlStyle {
+    return {
+      'body': Style(
+        margin: Margins.zero,
+        padding: HtmlPaddings.zero,
+        lineHeight: LineHeight.number(1.12),
+        color: _bodyColor,
+        fontSize: FontSize(14.sp),
+      ),
+      'p': Style(
+        margin: Margins.only(bottom: 6),
+        lineHeight: LineHeight.number(1.12),
+      ),
+    };
+  }
+
   detailPage(MerchantDetailResModel merchantDetail) {
     //Getting address
     addressDetail =
@@ -626,232 +908,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
       await launchUrl(emailOpen);
     }
 
-    //For Exact Time with device
-    DateFormat dateFormat = DateFormat(" HH:mm");
-    String dateTime = dateFormat.format(DateTime.now());
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // More Offers
-        Center(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 10.0),
-            decoration: BoxDecoration(
-                color: GlobalColors.appWhiteBackgroundColor,
-                borderRadius: BorderRadius.circular(5.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withValues(alpha: 0.2),
-                    blurRadius: 4,
-                    spreadRadius: 1,
-                    offset: const Offset(2, 2),
-                  )
-                ]),
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20.0),
-              child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Image.asset(
-                          'assets/images/percentage.png',
-                          height: 50.h,
-                          filterQuality: FilterQuality.high,
-                          fit: BoxFit.contain,
-                        ),
-                        Column(
-                          children: [
-                            // Date
-                            AutoSizeText(
-                              DateFormat('EEEE').format(
-                                        DateTime.now(),
-                                      ) ==
-                                      'Sunday'
-                                  ? S.of(context).sunday + dateTime.toString()
-                                  : DateFormat('EEEE').format(
-                                            DateTime.now(),
-                                          ) ==
-                                          'Monday'
-                                      ? S.of(context).monday +
-                                          dateTime.toString()
-                                      : DateFormat('EEEE').format(
-                                                DateTime.now(),
-                                              ) ==
-                                              'Tuesday'
-                                          ? S.of(context).tuesday +
-                                              dateTime.toString()
-                                          : DateFormat('EEEE').format(
-                                                    DateTime.now(),
-                                                  ) ==
-                                                  'Wednesday'
-                                              ? S.of(context).wednesday +
-                                                  dateTime.toString()
-                                              : DateFormat('EEEE').format(
-                                                        DateTime.now(),
-                                                      ) ==
-                                                      'Thursday'
-                                                  ? S.of(context).thursday +
-                                                      dateTime.toString()
-                                                  : DateFormat('EEEE').format(
-                                                            DateTime.now(),
-                                                          ) ==
-                                                          'Friday'
-                                                      ? S.of(context).friday +
-                                                          dateTime.toString()
-                                                      : S.of(context).saturday +
-                                                          dateTime
-                                                              .toString(), //gives 12 hour time format
-                              style: transactionTextStyle,
-                            ),
-                            SizedBox(height: 5.h),
-                            // Discount
-                            AutoSizeText(
-                              '${removeTrailingZero(merchantDetail.data?.discountAtHourOfDay.toString() ?? S.of(context).noDiscount)}%',
-                              style: TextStyle(
-                                  fontSize: 30.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black.withValues(alpha: 0.8)),
-                            ),
-                          ],
-                        ),
-                        AppVariables.accessToken == null
-                            ? Image.asset(
-                                'assets/images/percentage.png',
-                                height: 50.h,
-                                filterQuality: FilterQuality.high,
-                                fit: BoxFit.contain,
-                              )
-                            : SizedBox(
-                                height: 50.h,
-                                child: FittedBox(
-                                  fit: BoxFit.fitHeight,
-                                  child: isLoading
-                                      ? const CustomAllLoader1()
-                                      : IconButton(
-                                          onPressed: () async {
-                                            setState(() {
-                                              isLoading = true;
-                                            });
-                                            int merchantId =
-                                                int.parse(widget.merchantID!);
-                                            isFavoritez == true
-                                                ? removeFromFavorites(
-                                                    merchantId)
-                                                : addToFavorites(merchantId);
-                                          },
-                                          iconSize: 50.h,
-                                          padding: EdgeInsets.zero,
-                                          icon: Icon(isFavoritez == true
-                                              ? Icons.favorite
-                                              : Icons.favorite_border),
-                                          color: GlobalColors.appColor,
-                                        ),
-                                ),
-                              ),
-                      ],
-                    ),
-                    SizedBox(height: 20.h),
-                    if (AppVariables.accessToken != null)
-                      Container(
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(5.0)),
-                        height: 45.h,
-                        width: MediaQuery.of(context).size.width,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            context.pushNamed('pay',
-                                extra: merchantDetail.data?.merchantName);
-                          },
-                          style: styleMainButton,
-                          child: AutoSizeText(
-                            S.of(context).pay,
-                            style: buttonText,
-                          ),
-                        ),
-                      ),
-                    SizedBox(height: 10.h),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(5.0),
-                                boxShadow: [
-                                  BoxShadow(
-                                      color: Colors.grey.withValues(alpha: 0.2),
-                                      spreadRadius: 1,
-                                      blurRadius: 4,
-                                      offset: const Offset(2, 2))
-                                ]),
-                            height: 45.h,
-                            //  width: MediaQuery.of(context).size.width,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                context.pushNamed('more-offers', extra: {
-                                  'argImageList': imageList,
-                                  'merchantID': widget.merchantID,
-                                });
-                              },
-                              style: styleMainButton.copyWith(
-                                side: WidgetStateProperty.all(const BorderSide(
-                                    color: GlobalColors.appColor1, width: 2)),
-                                backgroundColor: WidgetStateProperty.all(
-                                    GlobalColors.appWhiteBackgroundColor),
-                              ),
-                              child: AutoSizeText(
-                                S.of(context).moreOffers,
-                                style: buttonText.copyWith(
-                                    color: GlobalColors.appColor1),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 10.w,
-                        ),
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(5.0)),
-                            height: 45.h,
-                            //  width: MediaQuery.of(context).size.width,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                // context.pushNamed('detail-pay',
-                                //     pathParameters: {
-                                //       'merchantName': merchantDetail
-                                //           .data!.merchantName!,
-                                //       'transactionCode': merchantDetail
-                                //               .data!.transactionCode ??
-                                //           'No Transaction Code',
-                                // //     });
-                                context.pushNamed('merchant-rating',
-                                    extra: {'merchantId': widget.merchantID});
-                              },
-                              style: styleMainButton.copyWith(
-                                side: WidgetStateProperty.all(const BorderSide(
-                                    color: GlobalColors.appColor1, width: 2)),
-                                backgroundColor: WidgetStateProperty.all(
-                                    GlobalColors.appWhiteBackgroundColor),
-                              ),
-                              child: AutoSizeText(
-                                S.of(context).reviews,
-                                style: buttonText.copyWith(
-                                    color: GlobalColors.appColor1),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ]),
-            ),
-          ),
-        ),
+        _memberOfferCard(merchantDetail),
 
         SizedBox(height: 20.h),
 
@@ -884,20 +944,25 @@ class _DetailsScreenState extends State<DetailsScreen> {
                           margin: const EdgeInsets.symmetric(horizontal: 10.0),
                           decoration: BoxDecoration(
                               color: GlobalColors.appWhiteBackgroundColor,
-                              borderRadius: BorderRadius.circular(5.0),
+                              borderRadius: BorderRadius.circular(14.0),
+                              border: Border.all(color: _borderColor),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.grey.withValues(alpha: 0.2),
-                                  blurRadius: 4,
-                                  spreadRadius: 1,
-                                  offset: const Offset(2, 2),
+                                  color: const Color(0xFF0A236B)
+                                      .withValues(alpha: 0.05),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 8),
                                 )
                               ]),
-                          padding: const EdgeInsets.all(20.0),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 14.w,
+                            vertical: 12.h,
+                          ),
                           child: merchantDetail.data!.merchantWebsiteInfo!
                                       .merchantDescription!.length <=
                                   200
                               ? Html(
+                                  style: _compactDescriptionHtmlStyle,
                                   data: merchantDetail.data!
                                       .merchantWebsiteInfo!.merchantDescription
                                       .toString(),
@@ -920,6 +985,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                   children: [
                                     // Description Text
                                     Html(
+                                      style: _compactDescriptionHtmlStyle,
                                       data: isExpand == false
                                           ? '${merchantDetail.data!.merchantWebsiteInfo!.merchantDescription!.substring(0, 200)}..'
                                           : merchantDetail
@@ -944,7 +1010,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                       },
                                     ),
 
-                                    const SizedBox(height: 10),
+                                    SizedBox(height: 4.h),
 
                                     //See More or See Less Text
                                     GestureDetector(
@@ -963,7 +1029,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                             isExpand == false
                                                 ? S.of(context).seeMore
                                                 : S.of(context).seeLess,
-                                            style: viewAllStyle,
+                                            style: viewAllStyle.copyWith(
+                                              color: _primaryBlue,
+                                              fontWeight: FontWeight.w800,
+                                            ),
                                           ),
                                           Padding(
                                             padding:
@@ -972,7 +1041,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                               isExpand == false
                                                   ? Icons.expand_more
                                                   : Icons.expand_less,
-                                              color: GlobalColors.appColor,
+                                              color: _primaryBlue,
                                               size: 20,
                                             ),
                                           )
@@ -1030,15 +1099,15 @@ class _DetailsScreenState extends State<DetailsScreen> {
                         });
                       },
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        padding: EdgeInsets.zero,
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Teal Clock Icon
-                            const Padding(
-                              padding: EdgeInsets.only(top: 2.0),
-                              child: Icon(Icons.access_time,
-                                  color: Color(0xFF00796B), size: 24),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 1.0),
+                              child: _contactCircleIcon(
+                                Icons.access_time_filled,
+                              ),
                             ),
                             const SizedBox(width: 12),
 
@@ -1068,7 +1137,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                               isHoursExpanded
                                   ? Icons.keyboard_arrow_up
                                   : Icons.keyboard_arrow_down,
-                              color: Colors.grey[600],
+                              color: _primaryBlue,
                             ),
                           ],
                         ),
@@ -1091,24 +1160,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 15),
-
-                const SizedBox(height: 15),
+                const SizedBox(height: 16),
                 Row(
                   children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: const BoxDecoration(shape: BoxShape.circle),
-                      child: Padding(
-                        padding: const EdgeInsets.all(
-                            4.0), // adjust padding as needed
-                        child: Image.asset(
-                          'assets/images/redo.png',
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
+                    _contactCircleIcon(Icons.directions_outlined),
                     const SizedBox(width: 10),
                     Expanded(
                       child: InkWell(
@@ -1137,19 +1192,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 const SizedBox(height: 15),
                 Row(
                   children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: const BoxDecoration(shape: BoxShape.circle),
-                      child: Padding(
-                        padding: const EdgeInsets.all(
-                            4.0), // adjust padding as needed
-                        child: Image.asset(
-                          'assets/images/call.png',
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
+                    _contactCircleIcon(Icons.phone_outlined),
                     const SizedBox(width: 10),
                     Expanded(
                       child: GestureDetector(
@@ -1195,19 +1238,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.max,
                     children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: const BoxDecoration(shape: BoxShape.circle),
-                        child: Padding(
-                          padding: const EdgeInsets.all(
-                              4.0), // adjust padding as needed
-                          child: Image.asset(
-                            'assets/images/gps.png',
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ),
+                      _contactCircleIcon(Icons.location_on_outlined),
                       const SizedBox(width: 10),
                       Expanded(
                         child: AutoSizeText(
@@ -1288,32 +1319,16 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                     },
                       child: Column(
                         children: [
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: merchantDetail.data?.merchantWebsiteInfo
-                                                ?.facebookLink ==
-                                            '' ||
-                                        merchantDetail.data?.merchantWebsiteInfo
-                                                ?.facebookLink ==
-                                            null
-                                    ? Color(0xffb0b0b0)
-                                    : Colors.white),
-                            child: Center(
-                              child: merchantDetail.data?.merchantWebsiteInfo
-                                              ?.facebookLink ==
-                                          '' ||
-                                      merchantDetail.data?.merchantWebsiteInfo
-                                              ?.facebookLink ==
-                                          null
-                                  ? FaIcon(FontAwesomeIcons.facebook,
-                                      size: 30, color: Colors.white)
-                                  : Image.asset(
-                                      'assets/images/facebook.png',
-                                    ),
-                            ),
+                          _contactCircleIcon(
+                            FontAwesomeIcons.facebookF,
+                            enabled: merchantDetail.data?.merchantWebsiteInfo
+                                        ?.facebookLink !=
+                                    '' &&
+                                merchantDetail.data?.merchantWebsiteInfo
+                                        ?.facebookLink !=
+                                    null,
+                            size: 50,
+                            iconSize: 24,
                           ),
                           const SizedBox(height: 10),
                           AutoSizeText(S.of(context).facebook,
@@ -1343,30 +1358,16 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                     },
                       child: Column(
                         children: [
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: merchantDetail.data?.merchantWebsiteInfo
-                                                ?.instagramLink ==
-                                            '' ||
-                                        merchantDetail.data?.merchantWebsiteInfo
-                                                ?.instagramLink ==
-                                            null
-                                    ? Color(0xffb0b0b0)
-                                    : Colors.white),
-                            child: Center(
-                              child: merchantDetail.data?.merchantWebsiteInfo
-                                              ?.instagramLink ==
-                                          '' ||
-                                      merchantDetail.data?.merchantWebsiteInfo
-                                              ?.instagramLink ==
-                                          null
-                                  ? FaIcon(FontAwesomeIcons.instagram,
-                                      size: 30, color: Colors.white)
-                                  : Image.asset('assets/images/instagram.png'),
-                            ),
+                          _contactCircleIcon(
+                            FontAwesomeIcons.instagram,
+                            enabled: merchantDetail.data?.merchantWebsiteInfo
+                                        ?.instagramLink !=
+                                    '' &&
+                                merchantDetail.data?.merchantWebsiteInfo
+                                        ?.instagramLink !=
+                                    null,
+                            size: 50,
+                            iconSize: 25,
                           ),
                           const SizedBox(height: 10),
                           AutoSizeText(S.of(context).instagram,
@@ -1396,28 +1397,16 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                     },
                       child: Column(
                         children: [
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: merchantDetail.data?.merchantWebsiteInfo
-                                                ?.websiteLink ==
-                                            '' ||
-                                        merchantDetail.data?.merchantWebsiteInfo
-                                                ?.websiteLink ==
-                                            null
-                                    ? Color(0xffb0b0b0)
-                                    : Colors.white),
-                            child: merchantDetail.data?.merchantWebsiteInfo
-                                            ?.websiteLink ==
-                                        '' ||
-                                    merchantDetail.data?.merchantWebsiteInfo
-                                            ?.websiteLink ==
-                                        null
-                                ? Icon(Icons.language,
-                                    size: 30, color: Colors.white)
-                                : Image.asset('assets/images/world.png'),
+                          _contactCircleIcon(
+                            Icons.language,
+                            enabled: merchantDetail.data?.merchantWebsiteInfo
+                                        ?.websiteLink !=
+                                    '' &&
+                                merchantDetail.data?.merchantWebsiteInfo
+                                        ?.websiteLink !=
+                                    null,
+                            size: 50,
+                            iconSize: 27,
                           ),
                           const SizedBox(height: 10),
                           AutoSizeText(S.of(context).website,
@@ -1443,22 +1432,12 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                     },
                       child: Column(
                         children: [
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: merchantDetail.data?.merchantEmail ==
-                                            '' ||
-                                        merchantDetail.data?.merchantEmail ==
-                                            null
-                                    ? Color(0xffb0b0b0)
-                                    : Colors.white),
-                            child: merchantDetail.data?.merchantEmail == '' ||
-                                    merchantDetail.data?.merchantEmail == null
-                                ? const Icon(Icons.email,
-                                    size: 30, color: Colors.white)
-                                : Image.asset('assets/images/email.png'),
+                          _contactCircleIcon(
+                            Icons.email_outlined,
+                            enabled: merchantDetail.data?.merchantEmail != '' &&
+                                merchantDetail.data?.merchantEmail != null,
+                            size: 50,
+                            iconSize: 27,
                           ),
                           const SizedBox(height: 10),
                           AutoSizeText(S.of(context).emailA,

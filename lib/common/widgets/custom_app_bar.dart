@@ -16,6 +16,9 @@ class CustomAppBar extends StatelessWidget {
   final Color? textColor;
   final double? fontSize;
   final FontWeight? fontWeight;
+  final bool reserveEmptyActions;
+  final double? leadingWidth;
+  final double? titleSpacing;
 
   const CustomAppBar({
     super.key,
@@ -31,6 +34,9 @@ class CustomAppBar extends StatelessWidget {
     this.textColor,
     this.fontSize,
     this.fontWeight,
+    this.reserveEmptyActions = true,
+    this.leadingWidth,
+    this.titleSpacing,
   });
 
   @override
@@ -48,6 +54,8 @@ class CustomAppBar extends StatelessWidget {
             ]),
       ),
       elevation: 0.0,
+      leadingWidth: leadingWidth,
+      titleSpacing: titleSpacing,
       leading: IconButton(
         icon: Icon(icon),
         color: Colors.black.withValues(alpha: 0.8),
@@ -73,19 +81,35 @@ class CustomAppBar extends StatelessWidget {
       centerTitle: true,
 
       // For icon is right side
-      actions: [
-        IconButton(
-          onPressed: onPressed1,
-          icon: Icon(icon1),
-          color: GlobalColors.appColor1,
-        ),
-        IconButton(
-          onPressed: onPressed2,
-          icon: Icon(icon2),
-          color: icon2Color,
-          iconSize: 30,
-        ),
-      ],
+      actions: reserveEmptyActions
+          ? [
+              IconButton(
+                onPressed: onPressed1,
+                icon: Icon(icon1),
+                color: GlobalColors.appColor1,
+              ),
+              IconButton(
+                onPressed: onPressed2,
+                icon: Icon(icon2),
+                color: icon2Color,
+                iconSize: 30,
+              ),
+            ]
+          : [
+              if (icon1 != null)
+                IconButton(
+                  onPressed: onPressed1,
+                  icon: Icon(icon1),
+                  color: GlobalColors.appColor1,
+                ),
+              if (icon2 != null)
+                IconButton(
+                  onPressed: onPressed2,
+                  icon: Icon(icon2),
+                  color: icon2Color,
+                  iconSize: 30,
+                ),
+            ],
 
       bottom: tabs,
     );

@@ -9,7 +9,6 @@ import 'package:new_piiink/common/widgets/custom_app_bar.dart';
 import 'package:new_piiink/common/widgets/custom_loader.dart';
 import 'package:new_piiink/common/widgets/error.dart';
 import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/constants/style.dart';
 import 'package:new_piiink/features/more_offers/bloc/discount_bloc.dart';
 import 'package:new_piiink/features/more_offers/bloc/discount_events.dart';
 import 'package:new_piiink/features/more_offers/bloc/discount_states.dart';
@@ -34,6 +33,9 @@ class MoreOffersScreen extends StatefulWidget {
 }
 
 class _MoreOffersScreenState extends State<MoreOffersScreen> {
+  static const Color _headingColor = Color(0xFF111C44);
+  static const Color _bodyColor = Color(0xFF63708A);
+
   //For showing Images
   List imageList = [];
   int current = 0;
@@ -65,15 +67,8 @@ class _MoreOffersScreenState extends State<MoreOffersScreen> {
             imageSection(),
             const SizedBox(height: 20),
 
-            // More Offers
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10.0),
-              child: AutoSizeText(
-                S.of(context).moreOffers,
-                style: topicStyle,
-              ),
-            ),
-            const SizedBox(height: 10),
+            _scheduleHeader(),
+            SizedBox(height: 16.h),
 
             BlocProvider(
               lazy: false,
@@ -93,80 +88,7 @@ class _MoreOffersScreenState extends State<MoreOffersScreen> {
                 //Loaded State
                 if (state is MerchantDiscountLoadedState) {
                   GetAllDiscountResModel discountAll = state.merchantDiscount;
-                  return Column(
-                    children: [
-                      // Monday
-                      DayTimeDis(
-                        itemCount: discountAll.data!.monday!.length,
-                        day: discountAll.data!.monday!,
-                        dayText: S.of(context).monday,
-                      ),
-
-                      const SizedBox(
-                        height: 10,
-                      ),
-
-                      //Tuesday
-                      DayTimeDis(
-                        itemCount: discountAll.data!.tuesday!.length,
-                        day: discountAll.data!.tuesday!,
-                        dayText: S.of(context).tuesday,
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-
-                      // Wednesday
-                      DayTimeDis(
-                        itemCount: discountAll.data!.wednesday!.length,
-                        day: discountAll.data!.wednesday!,
-                        dayText: S.of(context).wednesday,
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-
-                      //Thrusday
-                      DayTimeDis(
-                        itemCount: discountAll.data!.thursday!.length,
-                        day: discountAll.data!.thursday!,
-                        dayText: S.of(context).thursday,
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-
-                      // Friday
-                      DayTimeDis(
-                        itemCount: discountAll.data!.friday!.length,
-                        day: discountAll.data!.friday!,
-                        dayText: S.of(context).friday,
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-
-                      // Saturday
-                      DayTimeDis(
-                        itemCount: discountAll.data!.saturday!.length,
-                        day: discountAll.data!.saturday!,
-                        dayText: S.of(context).saturday,
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-
-                      // Sunday
-                      DayTimeDis(
-                        itemCount: discountAll.data!.sunday!.length,
-                        day: discountAll.data!.sunday!,
-                        dayText: S.of(context).sunday,
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                    ],
-                  );
+                  return _scheduleList(discountAll.data);
                 }
                 //Error State
                 else if (state is MerchantDiscountErrorState) {
@@ -179,6 +101,135 @@ class _MoreOffersScreenState extends State<MoreOffersScreen> {
 
             const SizedBox(height: 20),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _scheduleHeader() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 18.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AutoSizeText(
+            'Offer schedule',
+            style: TextStyle(
+              color: _headingColor,
+              fontSize: 22.sp,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Sans',
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            'Discounts may change by day and time. TouristSaver checks the current offer when you scan the merchant QR.',
+            style: TextStyle(
+              color: _bodyColor,
+              fontSize: 14.sp,
+              height: 1.35,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Sans',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _scheduleList(Data? discountData) {
+    if (discountData == null) {
+      return _emptySchedule();
+    }
+
+    final int today = DateTime.now().weekday;
+    final List<Widget> cards = [
+      _daySchedule(
+        dayText: S.of(context).monday,
+        offers: discountData.monday ?? [],
+        isToday: today == DateTime.monday,
+      ),
+      _daySchedule(
+        dayText: S.of(context).tuesday,
+        offers: discountData.tuesday ?? [],
+        isToday: today == DateTime.tuesday,
+      ),
+      _daySchedule(
+        dayText: S.of(context).wednesday,
+        offers: discountData.wednesday ?? [],
+        isToday: today == DateTime.wednesday,
+      ),
+      _daySchedule(
+        dayText: S.of(context).thursday,
+        offers: discountData.thursday ?? [],
+        isToday: today == DateTime.thursday,
+      ),
+      _daySchedule(
+        dayText: S.of(context).friday,
+        offers: discountData.friday ?? [],
+        isToday: today == DateTime.friday,
+      ),
+      _daySchedule(
+        dayText: S.of(context).saturday,
+        offers: discountData.saturday ?? [],
+        isToday: today == DateTime.saturday,
+      ),
+      _daySchedule(
+        dayText: S.of(context).sunday,
+        offers: discountData.sunday ?? [],
+        isToday: today == DateTime.sunday,
+      ),
+    ].where((widget) => widget is! SizedBox).toList();
+
+    if (cards.isEmpty) {
+      return _emptySchedule();
+    }
+
+    return Column(
+      children: [
+        for (int index = 0; index < cards.length; index++) ...[
+          if (index > 0) SizedBox(height: 12.h),
+          cards[index],
+        ],
+      ],
+    );
+  }
+
+  Widget _daySchedule({
+    required String dayText,
+    required List<Day> offers,
+    required bool isToday,
+  }) {
+    if (offers.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return DayTimeDis(
+      itemCount: offers.length,
+      day: offers,
+      dayText: dayText,
+      isToday: isToday,
+    );
+  }
+
+  Widget _emptySchedule() {
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.symmetric(horizontal: 18.w),
+      padding: EdgeInsets.all(18.r),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: const Color(0xFFE2E8F3)),
+      ),
+      child: Text(
+        'No scheduled offers are available for this merchant yet.',
+        style: TextStyle(
+          color: _bodyColor,
+          fontSize: 14.sp,
+          height: 1.35,
+          fontWeight: FontWeight.w600,
+          fontFamily: 'Sans',
         ),
       ),
     );

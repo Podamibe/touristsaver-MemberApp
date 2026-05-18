@@ -611,7 +611,7 @@ abstract class S {
   /// No description provided for @upToXdiscount.
   ///
   /// In en, this message translates to:
-  /// **'upto &x% discount'**
+  /// **'Up to &x% off'**
   String get upToXdiscount;
 
   /// No description provided for @accept.

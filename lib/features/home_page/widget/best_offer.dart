@@ -7,8 +7,8 @@ import 'package:new_piiink/common/widgets/custom_loader.dart';
 import 'package:new_piiink/common/widgets/error.dart';
 import 'package:new_piiink/common/widgets/no_merchant.dart';
 import 'package:new_piiink/features/home_page/services/home_dio.dart';
+import 'package:new_piiink/features/home_page/widget/home_section_header.dart';
 
-import '../../../constants/global_colors.dart';
 import '../../../constants/location_not_enable.dart';
 import '../../../constants/style.dart';
 import '../../../models/request/nearby_req.dart';
@@ -137,55 +137,36 @@ class BestOfferState extends State<BestOffer> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      AutoSizeText(
-                        S.of(context).bestOffers,
-                        style: topicStyle,
-                      ),
-                      if (nearbyMerchants.isNotEmpty)
-                        InkWell(
-                          onTap: () {
-                            context.pushNamed('home-view-all', pathParameters: {
-                              'appBarName': 'Best Offers'
-                            }).then((value) {
-                              if (value == true) {
-                                AppVariables.locationEnabledStatus.value += 1;
-                              }
-                            });
-                          },
-                          child: Row(
-                            children: [
-                              AutoSizeText(
-                                S.of(context).viewAll,
-                                style: viewAllStyle,
-                              ),
-                              const SizedBox(width: 5),
-                              const Icon(
-                                Icons.arrow_forward_ios,
-                                size: 15,
-                                color: GlobalColors.appColor,
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
+                HomeSectionHeader(
+                  title: S.of(context).bestOffers,
+                  viewAllLabel: S.of(context).viewAll,
+                  onViewAllTap: nearbyMerchants.isEmpty
+                      ? null
+                      : () {
+                          context.pushNamed('home-view-all', pathParameters: {
+                            'appBarName': 'Best Offers'
+                          }).then((value) {
+                            if (value == true) {
+                              AppVariables.locationEnabledStatus.value += 1;
+                            }
+                          });
+                        },
                 ),
-                const SizedBox(height: 15),
+                const SizedBox(height: 12),
                 nearbyMerchants.isEmpty
                     ? const NoMerchantCard()
                     : SizedBox(
-                        height: 280,
+                        height: 230,
                         child: ListView.separated(
+                          clipBehavior: Clip.none,
                           scrollDirection: Axis.horizontal,
                           shrinkWrap: true,
-                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                          padding: const EdgeInsetsDirectional.only(
+                            start: 10.0,
+                            end: 28.0,
+                          ),
                           separatorBuilder: (context, index) {
-                            return const SizedBox(width: 25);
+                            return const SizedBox(width: 14);
                           },
                           itemCount: nearbyMerchants.length,
                           itemBuilder: (context, index) {

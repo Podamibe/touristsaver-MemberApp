@@ -230,6 +230,14 @@ class _HomeScreenState extends State<HomeScreen>
 
   dynamic bannerData;
 
+  void _openSearchMerchant() {
+    context.pushNamed('search-merchant').then((value) {
+      if (AppVariables.locationEnabledStatus.value > 1 && value == true) {
+        AppVariables.locationEnabledStatus.value += 1;
+      }
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -307,6 +315,10 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     if (bannerData == null) return const SizedBox();
+    final String bannerInformation = (bannerData?['information'] ?? '')
+        .toString()
+        .replaceAll('4000+', '4500+')
+        .replaceAll('4,000+', '4,500+');
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
@@ -316,16 +328,19 @@ class _HomeScreenState extends State<HomeScreen>
         onTap: _launchBannerUrl,
         child: Container(
           width: double.infinity,
-          padding: EdgeInsets.symmetric(vertical: 11.h, horizontal: 15.w),
+          padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 15.w),
           decoration: BoxDecoration(
-            // ✅ Exact background color from the image (Bright Royal Blue)
-            color: const Color(0xFF5271FF),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF0009FE), Color(0xFF18C6FF)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
             borderRadius: BorderRadius.circular(40.r), // Perfectly oval ends
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
+                color: const Color(0xFF0009FE).withOpacity(0.18),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
@@ -333,19 +348,17 @@ class _HomeScreenState extends State<HomeScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                bannerData?['information'] ?? "",
+                bannerInformation,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white,
                   fontFamily: 'Montserrat',
-                  // ✅ Bold sans-serif font matching the image
-                  fontSize: 25.sp,
-                  fontWeight:
-                      FontWeight.w800, // Extra bold for "Tap for 4000+..."
-                  letterSpacing: -0.5,
+                  fontSize: 22.sp,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0,
                 ),
               ),
-              SizedBox(height: 4.h), // Tight spacing like the reference
+              SizedBox(height: 2.h),
               Text(
                 bannerData?['country'] ?? "",
                 textAlign: TextAlign.center,
@@ -353,7 +366,7 @@ class _HomeScreenState extends State<HomeScreen>
                   color: Colors.white,
                   fontFamily: 'Montserrat',
                   // ✅ Thinner, slightly smaller font for "Australia & New Zealand"
-                  fontSize: 18.sp,
+                  fontSize: 16.sp,
                   fontWeight: FontWeight.w500, // Medium weight
                   letterSpacing: 0.2,
                 ),
@@ -370,98 +383,83 @@ class _HomeScreenState extends State<HomeScreen>
     // final localeData = context.read<LocaleCubit>().state;
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size(MediaQuery.of(context).size.width, 122),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Image or Logo
-                  Container(
-                    margin: const EdgeInsets.only(top: 15),
-                    child: Image.asset(
-                      "assets/images/tourist.png",
-                      width: 100,
-                      height: 50,
-                    ),
-                  ),
-                  if (AppVariables.accessToken != null &&
-                      hideNotificationIcon == false)
-                    InkWell(
-                      onTap: () async {
-                        // log('home log notification ${AppVariables.notificationLabel.value}');
-                        AppVariables.notificationLabel.value = 0;
-                        await Pref().writeInt(
-                            key: 'notificationsCount',
-                            value: AppVariables.notificationLabel.value);
-                        if (!mounted) return;
-                        context.pushNamed('notification');
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 10, right: 10),
-                        child: ValueListenableBuilder(
-                          valueListenable: AppVariables.notificationLabel,
-                          builder: (context, value, child) {
-                            return Badge(
-                              backgroundColor: GlobalColors.appColor1,
-                              smallSize: 10,
-                              isLabelVisible: value != 0,
-                              child: const Icon(
-                                Icons.notifications_outlined,
-                                color: Color(0xFFF146EA),
-                                size: 30,
-                              ),
-                            );
-                          },
+        preferredSize: Size(MediaQuery.of(context).size.width, 76),
+        child: SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 10.h),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Image or Logo
+                Image.asset(
+                  "assets/images/tourist.png",
+                  width: 112.w,
+                  height: 46.h,
+                  fit: BoxFit.contain,
+                ),
+                Row(
+                  children: [
+                    Material(
+                      color: Colors.white,
+                      shape: const CircleBorder(),
+                      elevation: 2,
+                      shadowColor: Colors.black12,
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: _openSearchMerchant,
+                        child: SizedBox(
+                          width: 42.w,
+                          height: 42.w,
+                          child: const Icon(
+                            Icons.search_rounded,
+                            color: Color(0xFF0009FE),
+                            size: 25,
+                          ),
                         ),
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              GestureDetector(
-                onTap: () {
-                  context.pushNamed('search-merchant').then((value) {
-                    if (AppVariables.locationEnabledStatus.value > 1 &&
-                        value == true) {
-                      AppVariables.locationEnabledStatus.value += 1;
-                    }
-                  });
-                },
-                child: Container(
-                  height: 45,
-                  decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(
-                          color: GlobalColors.appColor.withValues(alpha: 0.5)),
-                      borderRadius: BorderRadius.circular(5),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withValues(alpha: 0.2),
-                          blurRadius: 4,
-                          spreadRadius: 1,
-                          offset: const Offset(2, 2),
-                        )
-                      ]),
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 10),
-                      Image.asset('assets/images/search.png', height: 20),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: Text(
-                          S.of(context).searchForMerchantsCategoryLocation,
-                          overflow: TextOverflow.ellipsis,
-                          style: searchStyle.copyWith(fontSize: 15),
+                    if (AppVariables.accessToken != null &&
+                        hideNotificationIcon == false) ...[
+                      SizedBox(width: 10.w),
+                      InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () async {
+                          // log('home log notification ${AppVariables.notificationLabel.value}');
+                          AppVariables.notificationLabel.value = 0;
+                          await Pref().writeInt(
+                              key: 'notificationsCount',
+                              value: AppVariables.notificationLabel.value);
+                          if (!mounted) return;
+                          context.pushNamed('notification');
+                        },
+                        child: SizedBox(
+                          width: 42.w,
+                          height: 42.w,
+                          child: Center(
+                            child: ValueListenableBuilder(
+                              valueListenable: AppVariables.notificationLabel,
+                              builder: (context, value, child) {
+                                return Badge(
+                                  backgroundColor: GlobalColors.appColor1,
+                                  smallSize: 10,
+                                  isLabelVisible: value != 0,
+                                  child: const Icon(
+                                    Icons.notifications_outlined,
+                                    color: Color(0xFFF146EA),
+                                    size: 29,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
                         ),
                       ),
                     ],
-                  ),
+                  ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -495,14 +493,6 @@ class _HomeScreenState extends State<HomeScreen>
                     const SizedBox(height: 5.0),
                     adSlider(),
                     const SizedBox(height: 10),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                      child: AutoSizeText(
-                        S.of(context).whatAreYouLookingFor,
-                        style: topicStyle,
-                      ),
-                    ),
-                    const SizedBox(height: 15),
                     categoryWidget(),
                     const SizedBox(height: 5), // Reduced from 15/20 to 5
                     ValueListenableBuilder(
