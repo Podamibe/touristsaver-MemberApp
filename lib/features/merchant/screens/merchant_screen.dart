@@ -120,6 +120,10 @@ class _MerchantScreenState extends State<MerchantScreen> {
     _discovery.setRadius(radius);
   }
 
+  void _setBestOfferFirst(bool value) {
+    _discovery.setBestOfferFirst(value);
+  }
+
   void _clearDiscovery() {
     FocusManager.instance.primaryFocus?.unfocus();
     searchController.clear();
@@ -183,7 +187,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
+                        padding: const EdgeInsets.fromLTRB(18, 6, 18, 0),
                         child: _SearchEntryCard(
                           controller: searchController,
                           onChanged: _loadSearch,
@@ -191,7 +195,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
                           onClear: _clearDiscovery,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 18),
                         child: _DiscoveryActions(
@@ -201,18 +205,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 18),
-                        child: Text(
-                          'Browse categories',
-                          style: topicStyle.copyWith(
-                            color: _headingColor,
-                            fontSize: 20,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 12),
                       BlocBuilder<CategoryBloc, CategoryState>(
                         builder: (context, state) {
                           if (state is CategoryLoadingState) {
@@ -282,18 +275,20 @@ class _MerchantScreenState extends State<MerchantScreen> {
                           }
                         },
                       ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 12),
                       if (discoveryState.hasResultsPanel) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 18),
                           child: _FilterSortBar(
                             selectedSort: discoveryState.selectedSort,
                             selectedRadiusKm: discoveryState.selectedRadiusKm,
+                            bestOfferFirst: discoveryState.bestOfferFirst,
                             onSortSelected: _setSort,
                             onRadiusSelected: _setRadius,
+                            onBestOfferChanged: _setBestOfferFirst,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 18),
                           child: _MerchantResultsSection(
@@ -314,7 +309,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
                             onFavouriteTap: _toggleFavourite,
                           ),
                         ),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 18),
                       ],
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -530,14 +525,18 @@ class _FilterSortBar extends StatelessWidget {
   const _FilterSortBar({
     required this.selectedSort,
     required this.selectedRadiusKm,
+    required this.bestOfferFirst,
     required this.onSortSelected,
     required this.onRadiusSelected,
+    required this.onBestOfferChanged,
   });
 
   final String selectedSort;
   final double? selectedRadiusKm;
+  final bool bestOfferFirst;
   final ValueChanged<String> onSortSelected;
   final ValueChanged<double?> onRadiusSelected;
+  final ValueChanged<bool> onBestOfferChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -565,11 +564,16 @@ class _FilterSortBar extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 6),
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
+            _DiscoveryChip(
+              label: 'Best Offer',
+              selected: bestOfferFirst,
+              onTap: () => onBestOfferChanged(!bestOfferFirst),
+            ),
             _DiscoveryChip(
               label: 'Any distance',
               selected: selectedRadiusKm == null,
@@ -746,7 +750,7 @@ class _DiscoveryActions extends StatelessWidget {
       children: [
         Expanded(
           child: _DiscoveryActionCard(
-            icon: Icons.near_me_rounded,
+            icon: Icons.my_location_rounded,
             title: 'Near me',
             subtitle: 'Use current location',
             onTap: onNearMe,
@@ -785,18 +789,17 @@ class _DiscoveryActionCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(18),
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: _MerchantScreenState._borderColor),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
             Container(
-              width: 36,
-              height: 36,
+              width: 34,
+              height: 34,
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -806,26 +809,34 @@ class _DiscoveryActionCard extends StatelessWidget {
                 ),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: Colors.white, size: 20),
+              child: Icon(icon, color: Colors.white, size: 18),
             ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: textStyle15.copyWith(
-                color: _MerchantScreenState._headingColor,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: searchStyle.copyWith(
-                color: _MerchantScreenState._bodyColor,
-                fontSize: 12,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textStyle15.copyWith(
+                      color: _MerchantScreenState._headingColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: searchStyle.copyWith(
+                      color: _MerchantScreenState._bodyColor,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

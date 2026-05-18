@@ -242,6 +242,11 @@ class MerchantDiscoveryController extends ChangeNotifier {
     }
   }
 
+  void setBestOfferFirst(bool value) {
+    _emit(state.copyWith(bestOfferFirst: value));
+    _refreshVisibleResults();
+  }
+
   void clear() {
     _cancelSearch();
     _requestId++;
@@ -278,14 +283,22 @@ class MerchantDiscoveryController extends ChangeNotifier {
         final int favouriteCompare =
             _favouriteRank(left).compareTo(_favouriteRank(right));
         if (favouriteCompare != 0) return favouriteCompare;
+        if (state.bestOfferFirst) {
+          final int offerCompare = _compareOffer(left, right);
+          if (offerCompare != 0) return offerCompare;
+        }
         return _compareDistance(left, right);
       });
-    } else if (state.selectedSort == 'Name') {
-      results.sort((left, right) => left.merchantName
-          .toLowerCase()
-          .compareTo(right.merchantName.toLowerCase()));
+    } else if (state.bestOfferFirst) {
+      results.sort((left, right) {
+        final int offerCompare = _compareOffer(left, right);
+        if (offerCompare != 0) return offerCompare;
+        return _compareSelectedSort(left, right);
+      });
     } else if (state.selectedSort == 'Distance') {
       results.sort(_compareDistance);
+    } else if (state.selectedSort == 'Name') {
+      results.sort(_compareName);
     }
 
     return results;
@@ -299,6 +312,28 @@ class MerchantDiscoveryController extends ChangeNotifier {
     final double leftDistance = left.distanceKm ?? double.infinity;
     final double rightDistance = right.distanceKm ?? double.infinity;
     return leftDistance.compareTo(rightDistance);
+  }
+
+  int _compareName(MerchantSummary left, MerchantSummary right) {
+    return left.merchantName
+        .toLowerCase()
+        .compareTo(right.merchantName.toLowerCase());
+  }
+
+  int _compareOffer(MerchantSummary left, MerchantSummary right) {
+    final double leftDiscount = _offerValue(left);
+    final double rightDiscount = _offerValue(right);
+    return rightDiscount.compareTo(leftDiscount);
+  }
+
+  double _offerValue(MerchantSummary merchant) {
+    final double? discount = merchant.maxDiscount;
+    return discount != null && discount > 0 ? discount : -1;
+  }
+
+  int _compareSelectedSort(MerchantSummary left, MerchantSummary right) {
+    if (state.selectedSort == 'Name') return _compareName(left, right);
+    return _compareDistance(left, right);
   }
 
   void _cancelSearch() {
