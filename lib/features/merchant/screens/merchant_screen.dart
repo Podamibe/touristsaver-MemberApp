@@ -47,9 +47,6 @@ class _MerchantScreenState extends State<MerchantScreen> {
   static const Color _borderColor = Color(0xFFE2E8F3);
   static const Color _surfaceColor = Color(0xFFF7F9FC);
 
-  // For the refresh Indicator
-  final GlobalKey<RefreshIndicatorState> refreshIndicatorMerchant =
-      GlobalKey<RefreshIndicatorState>();
   final TextEditingController searchController = TextEditingController();
   // For reading the country ID and countryName
   String? counName;
@@ -390,176 +387,163 @@ class _MerchantScreenState extends State<MerchantScreen> {
           } else if (state == ConnectivityState.disconnected) {
             return const NoConnectivityScreen();
           } else if (state == ConnectivityState.connected) {
-            return RefreshIndicator(
-              key: refreshIndicatorMerchant,
-              color: GlobalColors.appColor,
-              onRefresh: () async {
-                await Future.delayed(const Duration(seconds: 2));
-                if (!mounted) return;
-                context
-                    .read<CategoryBloc>()
-                    .add(LoadCategoryEvent(AppVariables.selectedLanguageNow));
-                setState(() {});
-              },
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
+                        child: _SearchEntryCard(
+                          controller: searchController,
+                          onChanged: _loadSearch,
+                          onSubmitted: _loadSearch,
+                          onClear: _clearDiscovery,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        child: _DiscoveryActions(
+                          onNearMe: _loadNearMe,
+                          onMapView: () => context.pushNamed(
+                            'map-view-merchant',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        child: Text(
+                          'Browse categories',
+                          style: topicStyle.copyWith(
+                            color: _headingColor,
+                            fontSize: 20,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      BlocBuilder<CategoryBloc, CategoryState>(
+                        builder: (context, state) {
+                          if (state is CategoryLoadingState) {
+                            return SizedBox(
+                              height: 125,
+                              child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  padding: const EdgeInsets.only(
+                                      left: 10.0, right: 10.0),
+                                  separatorBuilder: (context, index) {
+                                    return const SizedBox(width: 20);
+                                  },
+                                  itemCount: 10,
+                                  itemBuilder: (context, index) {
+                                    return const TabContainer(
+                                        icon: '', text: '...');
+                                  }),
+                            );
+                          } else if (state is CategoryLoadedState) {
+                            CategoryListResModel categoryList =
+                                state.categoryList;
+                            return SizedBox(
+                              height:
+                                  categoryList.data!.data!.isEmpty ? 50 : 125,
+                              child: categoryList.data!.data!.isEmpty
+                                  ? EmptyData(
+                                      text: S.of(context).noCategoryFound)
+                                  : ListView.separated(
+                                      scrollDirection: Axis.horizontal,
+                                      padding: const EdgeInsets.only(
+                                          left: 10.0, right: 10.0),
+                                      separatorBuilder: (context, index) {
+                                        return const SizedBox(width: 20);
+                                      },
+                                      itemCount:
+                                          categoryList.data!.data!.length,
+                                      itemBuilder: (context, index) {
+                                        return InkWell(
+                                          onTap: () {
+                                            final category =
+                                                categoryList.data!.data![index];
+                                            final int? categoryId = category.id;
+                                            final String categoryName =
+                                                category.name ?? '';
+                                            if (categoryId == null) return;
+                                            _loadCategory(
+                                              categoryId,
+                                              categoryName,
+                                            );
+                                          },
+                                          child: TabContainer(
+                                            icon: categoryList
+                                                .data!.data![index].imageName!,
+                                            text: categoryList
+                                                .data!.data![index].name!,
+                                          ),
+                                        );
+                                      }),
+                            );
+                          } else if (state is CategoryErrorState) {
+                            return const Padding(
+                              padding: EdgeInsets.only(bottom: 10.0),
+                              child: Error(),
+                            );
+                          } else {
+                            return const SizedBox();
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 28),
+                      if (_activeSource != 'none' ||
+                          _isLoadingResults ||
+                          _resultsError != null) ...[
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
-                          child: _SearchEntryCard(
-                            controller: searchController,
-                            onChanged: _loadSearch,
-                            onSubmitted: _loadSearch,
-                            onClear: _clearDiscovery,
+                          padding: const EdgeInsets.symmetric(horizontal: 18),
+                          child: _FilterSortBar(
+                            selectedSort: _selectedSort,
+                            selectedRadiusKm: _selectedRadiusKm,
+                            onSortSelected: _setSort,
+                            onRadiusSelected: _setRadius,
                           ),
                         ),
                         const SizedBox(height: 16),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 18),
-                          child: _DiscoveryActions(
-                            onNearMe: _loadNearMe,
-                            onMapView: () => context.pushNamed(
-                              'map-view-merchant',
-                            ),
+                          child: _MerchantResultsSection(
+                            title: _resultsTitle ?? 'Results',
+                            isLoading: _isLoadingResults,
+                            error: _resultsError,
+                            merchants: _visibleResults,
+                            onClear: _clearDiscovery,
+                            onMerchantTap: (merchant) {
+                              context.pushNamed('details-screen', extra: {
+                                'merchantID': merchant.merchantId.toString(),
+                              }).then((value) {
+                                if (value == true && mounted) {
+                                  setState(() {});
+                                }
+                              });
+                            },
+                            onFavouriteTap: _toggleFavourite,
                           ),
-                        ),
-                        const SizedBox(height: 24),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 18),
-                          child: Text(
-                            'Browse categories',
-                            style: topicStyle.copyWith(
-                              color: _headingColor,
-                              fontSize: 20,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        BlocBuilder<CategoryBloc, CategoryState>(
-                          builder: (context, state) {
-                            if (state is CategoryLoadingState) {
-                              return SizedBox(
-                                height: 125,
-                                child: ListView.separated(
-                                    scrollDirection: Axis.horizontal,
-                                    padding: const EdgeInsets.only(
-                                        left: 10.0, right: 10.0),
-                                    separatorBuilder: (context, index) {
-                                      return const SizedBox(width: 20);
-                                    },
-                                    itemCount: 10,
-                                    itemBuilder: (context, index) {
-                                      return const TabContainer(
-                                          icon: '', text: '...');
-                                    }),
-                              );
-                            } else if (state is CategoryLoadedState) {
-                              CategoryListResModel categoryList =
-                                  state.categoryList;
-                              return SizedBox(
-                                height:
-                                    categoryList.data!.data!.isEmpty ? 50 : 125,
-                                child: categoryList.data!.data!.isEmpty
-                                    ? EmptyData(
-                                        text: S.of(context).noCategoryFound)
-                                    : ListView.separated(
-                                        scrollDirection: Axis.horizontal,
-                                        padding: const EdgeInsets.only(
-                                            left: 10.0, right: 10.0),
-                                        separatorBuilder: (context, index) {
-                                          return const SizedBox(width: 20);
-                                        },
-                                        itemCount:
-                                            categoryList.data!.data!.length,
-                                        itemBuilder: (context, index) {
-                                          return InkWell(
-                                            onTap: () {
-                                              final category = categoryList
-                                                  .data!.data![index];
-                                              final int? categoryId =
-                                                  category.id;
-                                              final String categoryName =
-                                                  category.name ?? '';
-                                              if (categoryId == null) return;
-                                              _loadCategory(
-                                                categoryId,
-                                                categoryName,
-                                              );
-                                            },
-                                            child: TabContainer(
-                                              icon: categoryList.data!
-                                                  .data![index].imageName!,
-                                              text: categoryList
-                                                  .data!.data![index].name!,
-                                            ),
-                                          );
-                                        }),
-                              );
-                            } else if (state is CategoryErrorState) {
-                              return const Padding(
-                                padding: EdgeInsets.only(bottom: 10.0),
-                                child: Error(),
-                              );
-                            } else {
-                              return const SizedBox();
-                            }
-                          },
                         ),
                         const SizedBox(height: 28),
-                        if (_activeSource != 'none' ||
-                            _isLoadingResults ||
-                            _resultsError != null) ...[
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 18),
-                            child: _FilterSortBar(
-                              selectedSort: _selectedSort,
-                              selectedRadiusKm: _selectedRadiusKm,
-                              onSortSelected: _setSort,
-                              onRadiusSelected: _setRadius,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 18),
-                            child: _MerchantResultsSection(
-                              title: _resultsTitle ?? 'Results',
-                              isLoading: _isLoadingResults,
-                              error: _resultsError,
-                              merchants: _visibleResults,
-                              onClear: _clearDiscovery,
-                              onMerchantTap: (merchant) {
-                                context.pushNamed('details-screen', extra: {
-                                  'merchantID': merchant.merchantId.toString(),
-                                }).then((value) {
-                                  if (value == true && mounted) {
-                                    setState(() {});
-                                  }
-                                });
-                              },
-                              onFavouriteTap: _toggleFavourite,
-                            ),
-                          ),
-                          const SizedBox(height: 28),
-                        ],
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 18),
-                          child: _HelperCard(
-                            title: 'Find savings faster',
-                            body:
-                                'Search by merchant name, browse a category, or open the map when you are nearby.',
-                          ),
-                        ),
-                        const SizedBox(height: 24),
                       ],
-                    ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        child: _HelperCard(
+                          title: 'Find savings faster',
+                          body:
+                              'Search by merchant name, browse a category, or open the map when you are nearby.',
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             );
           } else {
             return const SizedBox();
