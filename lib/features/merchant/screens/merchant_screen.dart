@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:new_piiink/common/app_variables.dart';
 import 'package:new_piiink/common/models/merchant_summary.dart';
 import 'package:new_piiink/common/services/dio_common.dart';
+import 'package:new_piiink/common/services/location_service.dart';
 import 'package:new_piiink/common/widgets/custom_snackbar.dart';
 import 'package:new_piiink/common/widgets/error.dart';
 import 'package:new_piiink/common/widgets/merchant_result_tile.dart';
@@ -54,6 +55,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
   String? counName;
   Future<PiiinkInfoResModel?>? showRecommend;
   Timer? _searchDebounce;
+  int _searchRequestId = 0;
   List<MerchantSummary> _rawResults = [];
   List<MerchantSummary> _visibleResults = [];
   bool _isLoadingResults = false;
@@ -97,6 +99,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
 
   Future<void> _loadSearch(String value) async {
     final String query = value.trim();
+    final int requestId = ++_searchRequestId;
     _searchDebounce?.cancel();
     if (query.length < 3) {
       setState(() {
@@ -120,7 +123,12 @@ class _MerchantScreenState extends State<MerchantScreen> {
       });
 
       final response = await DioHome().getSearched(name: query);
-      if (!mounted) return;
+      if (!mounted ||
+          requestId != _searchRequestId ||
+          searchController.text.trim() != query ||
+          _activeSource != 'search') {
+        return;
+      }
       final summaries = (response?.merchants ?? [])
           .map(
             (merchant) => MerchantSummaryAdapters.fromSearchMerchant(
@@ -142,6 +150,8 @@ class _MerchantScreenState extends State<MerchantScreen> {
 
   Future<void> _loadCategory(int categoryId, String categoryName) async {
     FocusManager.instance.primaryFocus?.unfocus();
+    _searchDebounce?.cancel();
+    _searchRequestId++;
     setState(() {
       _activeSource = 'category';
       _resultsTitle = categoryName;
@@ -176,18 +186,36 @@ class _MerchantScreenState extends State<MerchantScreen> {
 
   Future<void> _loadNearMe() async {
     FocusManager.instance.primaryFocus?.unfocus();
-    final double? latitude = AppVariables.latitude;
-    final double? longitude = AppVariables.longitude;
+    _searchDebounce?.cancel();
+    _searchRequestId++;
+    double? latitude = AppVariables.latitude;
+    double? longitude = AppVariables.longitude;
     if (latitude == null || longitude == null) {
       setState(() {
         _activeSource = 'nearMe';
         _resultsTitle = 'Near me';
-        _resultsError =
-            'Location is needed to show nearby merchants. Try Map View or update your location.';
+        _resultsError = null;
+        _isLoadingResults = true;
         _rawResults = [];
         _visibleResults = [];
+        searchController.clear();
       });
-      return;
+
+      final bool locationReady =
+          await LocationService().enableLocationAndFetchCountry();
+      if (!mounted) return;
+      latitude = AppVariables.latitude;
+      longitude = AppVariables.longitude;
+      if (!locationReady || latitude == null || longitude == null) {
+        setState(() {
+          _isLoadingResults = false;
+          _resultsError =
+              'Location is needed to show nearby merchants. Try Map View or update your location.';
+          _rawResults = [];
+          _visibleResults = [];
+        });
+        return;
+      }
     }
 
     final double radius = _selectedRadiusKm ?? 25;
@@ -277,6 +305,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
 
   void _clearDiscovery() {
     _searchDebounce?.cancel();
+    _searchRequestId++;
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
       searchController.clear();

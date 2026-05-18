@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:new_piiink/common/models/merchant_summary.dart';
 import 'package:new_piiink/common/widgets/merchant_discount_badge.dart';
 import 'package:new_piiink/common/widgets/merchant_distance.dart';
-import 'package:new_piiink/constants/app_image_string.dart';
 
 class MerchantResultTile extends StatelessWidget {
   const MerchantResultTile({
@@ -170,7 +169,7 @@ class _MerchantAvatar extends StatelessWidget {
         height: 66.w,
         color: const Color(0xFFF2F6FC),
         child: url == null
-            ? Image.asset('assets/images/no_image.jpg', fit: BoxFit.cover)
+            ? _fallbackImage()
             : CachedNetworkImage(
                 imageUrl: url,
                 fit: BoxFit.cover,
@@ -184,12 +183,13 @@ class _MerchantAvatar extends StatelessWidget {
                     ),
                   ),
                 ),
-                errorWidget: (context, url, error) => CachedNetworkImage(
-                  imageUrl: AppImageString.appNoImageURL,
-                  fit: BoxFit.cover,
-                ),
+                errorWidget: (context, url, error) => _fallbackImage(),
               ),
       ),
     );
+  }
+
+  Widget _fallbackImage() {
+    return Image.asset('assets/images/no_image.jpg', fit: BoxFit.cover);
   }
 }
