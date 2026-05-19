@@ -8,8 +8,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:new_piiink/common/models/merchant_summary.dart';
 import 'package:new_piiink/common/widgets/custom_loader.dart';
-import 'package:new_piiink/common/widgets/merchant_distance.dart';
+import 'package:new_piiink/common/widgets/merchant_result_tile.dart';
 import 'package:new_piiink/constants/global_colors.dart';
 import 'package:new_piiink/constants/style.dart';
 import 'package:new_piiink/features/home_page/services/home_dio.dart';
@@ -279,8 +280,20 @@ class _SearchMerchantState extends State<SearchMerchant> {
                         state.data!.merchantCategories ?? [];
                     final merchants = state.data!.merchants ?? [];
                     final visibleMerchants = _visibleMerchants(merchants);
+                    final visibleMerchantSummaries = visibleMerchants
+                        .map(
+                          (merchant) =>
+                              MerchantSummaryAdapters.fromSearchMerchant(
+                            merchant,
+                            currentLatitude: AppVariables.latitude,
+                            currentLongitude: AppVariables.longitude,
+                          ),
+                        )
+                        .whereType<MerchantSummary>()
+                        .toList();
                     final hasUnfilteredMerchantMatches = merchants.isNotEmpty;
-                    final hasMerchantMatches = visibleMerchants.isNotEmpty;
+                    final hasMerchantMatches =
+                        visibleMerchantSummaries.isNotEmpty;
 
                     return FutureBuilder<List<MerchantCategory>>(
                       future: _categoriesWithMerchants(merchantCategories),
@@ -320,20 +333,18 @@ class _SearchMerchantState extends State<SearchMerchant> {
                                 separatorBuilder: (context, index) {
                                   return SizedBox(height: 10.h);
                                 },
-                                itemCount: visibleMerchants.length,
+                                itemCount: visibleMerchantSummaries.length,
                                 itemBuilder: (context, index) {
-                                  return _searchResultTile(
-                                    title:
-                                        visibleMerchants[index].merchantName!,
-                                    subtitle: _merchantDistanceLabel(
-                                      visibleMerchants[index],
-                                    ),
+                                  final merchant =
+                                      visibleMerchantSummaries[index];
+                                  return MerchantResultTile(
+                                    merchant: merchant,
+                                    showFavourite: false,
                                     onTap: () {
                                       context
                                           .pushNamed('details-screen', extra: {
-                                        'merchantID': visibleMerchants[index]
-                                            .id
-                                            .toString(),
+                                        'merchantID':
+                                            merchant.merchantId.toString(),
                                       }).then((value) {
                                         if (value == true) {
                                           if (recallMerchantApi == false) {
@@ -670,11 +681,6 @@ class _SearchMerchantState extends State<SearchMerchant> {
         ),
       ),
     );
-  }
-
-  String _merchantDistanceLabel(Merchant merchant) {
-    final double? distance = _distanceKmFromCurrentLocation(merchant.latlon);
-    return formatMerchantDistance(distance);
   }
 
   List<Merchant> _visibleMerchants(List<Merchant> merchants) {

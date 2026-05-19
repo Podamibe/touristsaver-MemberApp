@@ -76,6 +76,7 @@ const merchantDetail = '/merchant/general/getOneByApp/';
 const agreement = '/page/getForApp/';
 const discountInfo = '/merchant/general/discountSummaryApp/';
 const appSlide = '/globalSetting/appSlider/getAll';
+const homeFeedPosts = '/home-feed/posts';
 const searchMerchant = '/merchant/merchantForApp/getAllbyName/';
 const otherMerchant = '/merchant/merchantForApp/otherMerchant/';
 const isPay = '/country/getOne/';

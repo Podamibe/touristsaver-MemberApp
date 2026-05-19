@@ -2,9 +2,10 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:new_piiink/common/app_variables.dart';
-import 'package:new_piiink/features/home_page/widget/big_tab_container.dart';
+import 'package:new_piiink/common/models/merchant_summary.dart';
 import 'package:new_piiink/common/widgets/custom_loader.dart';
 import 'package:new_piiink/common/widgets/error.dart';
+import 'package:new_piiink/common/widgets/merchant_result_tile.dart';
 import 'package:new_piiink/common/widgets/no_merchant.dart';
 import 'package:new_piiink/features/home_page/services/home_dio.dart';
 import 'package:new_piiink/features/home_page/widget/home_section_header.dart';
@@ -131,8 +132,13 @@ class BestOfferState extends State<BestOffer> {
           } else {
             List<Datum> nearbyMerchants = snapshot.data!.data!;
             nearbyMerchants.sort((a, b) {
-              return b.maxDiscount!.compareTo(a.maxDiscount!);
+              return (b.maxDiscount ?? 0).compareTo(a.maxDiscount ?? 0);
             });
+            final bestOfferMerchants = nearbyMerchants
+                .map(MerchantSummaryAdapters.fromNearby)
+                .whereType<MerchantSummary>()
+                .take(5)
+                .toList();
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -153,41 +159,28 @@ class BestOfferState extends State<BestOffer> {
                         },
                 ),
                 const SizedBox(height: 12),
-                nearbyMerchants.isEmpty
+                bestOfferMerchants.isEmpty
                     ? const NoMerchantCard()
-                    : SizedBox(
-                        height: 230,
+                    : Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
                         child: ListView.separated(
-                          clipBehavior: Clip.none,
-                          scrollDirection: Axis.horizontal,
                           shrinkWrap: true,
-                          padding: const EdgeInsetsDirectional.only(
-                            start: 10.0,
-                            end: 28.0,
-                          ),
-                          separatorBuilder: (context, index) {
-                            return const SizedBox(width: 14);
-                          },
-                          itemCount: nearbyMerchants.length,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.zero,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 10),
+                          itemCount: bestOfferMerchants.length,
                           itemBuilder: (context, index) {
-                            var nearbyMerchant = nearbyMerchants[index];
-                            return BigTabContainer(
-                              bigDistance: nearbyMerchant.distance,
-                              bigDiscountGiven:
-                                  nearbyMerchant.maxDiscount.toString(),
-                              bigMerchantName:
-                                  nearbyMerchant.merchantName ?? '......',
-                              bigImage:
-                                  nearbyMerchant.merchantImageInfoLogoUrl ?? '',
-                              // bigLogo:
-                              //     nearbyMerchant.merchantImageInfoLogoUrl ??
-                              //         nearbyMerchant.merchantImageInfoSlider1 ??
-                              //         '',
-                              bigOnTap: () {
+                            final merchant = bestOfferMerchants[index];
+                            return MerchantResultTile(
+                              merchant: merchant,
+                              showFavourite: false,
+                              onTap: () {
                                 context.pushNamed(
                                   'details-screen',
                                   extra: {
-                                    'merchantID': nearbyMerchant.id.toString(),
+                                    'merchantID':
+                                        merchant.merchantId.toString(),
                                   },
                                 ).then((value) {
                                   if (value == true) {
@@ -196,14 +189,6 @@ class BestOfferState extends State<BestOffer> {
                                   }
                                 });
                               },
-                              // child: Padding(
-                              //   padding: EdgeInsets.symmetric(vertical: 6.h),
-                              //   child: Text(
-                              //     '${toFixed2DecimalPlaces(nearbyMerchant.distance!)} KM Away',
-                              //     style: merchantNameStyle.copyWith(
-                              //         color: GlobalColors.appColor1),
-                              //   ),
-                              // ),
                             );
                           },
                         ),

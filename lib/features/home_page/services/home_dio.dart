@@ -278,7 +278,7 @@ class DioHome {
           ? await getClient()
           : await getClientNoToken();
       Response<String> response = await dio.get(
-          '$allMerchant?category=$categoryId&$enterLocationId&page=$pageNumber&order_by=popularOrder&ordering=ASC&fields=merchantName,maxDiscount&lang=${AppVariables.selectedLanguageNow}');
+          '$allMerchant?category=$categoryId&$enterLocationId&page=$pageNumber&order_by=popularOrder&ordering=ASC&fields=merchantName,maxDiscount,latlon&lang=${AppVariables.selectedLanguageNow}');
       return merchantGetAllResModelFromJson(response.data!);
     } catch (e) {
       return null;

@@ -42,8 +42,7 @@ import 'package:new_piiink/generated/l10n.dart';
 
 import '../bloc/category_states.dart';
 import '../widget/best_offer.dart';
-import '../widget/nearby_merchants.dart';
-import '../widget/popular_merchant.dart';
+import '../widget/home_feed_section.dart';
 import '../widget/tab_container.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -72,6 +71,7 @@ class _HomeScreenState extends State<HomeScreen>
   String? _build;
   bool _isUpdateDialogShown = false;
   bool _isShowing = false;
+  int _homeFeedRefreshTick = 0;
 
   // Banner data variable
 
@@ -418,6 +418,7 @@ class _HomeScreenState extends State<HomeScreen>
           await fetchBanner();
           if (!mounted) return;
           setState(() {
+            _homeFeedRefreshTick++;
             if (AppVariables.locationEnabledStatus.value > 1) {
               AppVariables.locationEnabledStatus.value++;
             }
@@ -452,13 +453,15 @@ class _HomeScreenState extends State<HomeScreen>
                               const SizedBox(height: 20),
                             ],
                             BestOffer(
-                                key: ValueKey(value), isLoading: isLoading),
+                              key: ValueKey('best-offer-$value'),
+                              isLoading: isLoading,
+                            ),
                             const SizedBox(height: 20),
-                            NearbyMerchants(
-                                key: ValueKey(value + 1), isLoading: isLoading),
-                            const SizedBox(height: 20),
-                            PopularMerchant(
-                                key: ValueKey(value + 2), isLoading: isLoading),
+                            HomeFeedSection(
+                              key: ValueKey(
+                                'home-feed-$_homeFeedRefreshTick',
+                              ),
+                            ),
                           ],
                         );
                       },
