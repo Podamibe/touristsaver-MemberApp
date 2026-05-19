@@ -16,6 +16,7 @@ import 'package:new_piiink/constants/initialize_stripe.dart';
 import 'package:new_piiink/constants/pref.dart';
 import 'package:new_piiink/constants/pref_key.dart';
 import 'package:new_piiink/features/home_page/screens/home_screen.dart';
+import 'package:new_piiink/features/merchant/discovery/merchant_discovery_intent.dart';
 import 'package:new_piiink/features/merchant/screens/merchant_screen.dart';
 import 'package:new_piiink/features/payment/screens/pay_screen.dart';
 import 'package:new_piiink/features/profile/screens/log_profile_screen.dart';
@@ -98,6 +99,9 @@ class _BottomBarState extends State<BottomBar> {
   void initState() {
     checkToken();
     _page = widget.page ?? 4;
+    MerchantDiscoveryIntentStore.bottomTabRequest
+        .addListener(_handleDiscoveryTabRequest);
+    _handleDiscoveryTabRequest();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await LocationService().enableLocationAndFetchCountry();
       await Pref().readData(key: savePublishableKey) == null
@@ -109,6 +113,30 @@ class _BottomBarState extends State<BottomBar> {
     });
     //   WidgetsBinding.instance.addObserver(this);
     super.initState();
+  }
+
+  void _handleDiscoveryTabRequest() {
+    final MerchantDiscoveryTabRequest? request =
+        MerchantDiscoveryIntentStore.bottomTabRequest.value;
+    if (request == null || _page == request.page) return;
+    if (mounted) {
+      setState(() {
+        _page = request.page;
+      });
+    } else {
+      _page = request.page;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant BottomBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final int nextPage = widget.page ?? 4;
+    if (oldWidget.page != widget.page && _page != nextPage) {
+      setState(() {
+        _page = nextPage;
+      });
+    }
   }
 
   @override
@@ -218,8 +246,8 @@ class _BottomBarState extends State<BottomBar> {
 
           // Merchant Screen
           BottomNavigationBarItem(
-            icon: const Icon(Icons.shopping_bag_rounded),
-            label: S.of(context).merchants,
+            icon: const Icon(Icons.saved_search_rounded),
+            label: 'Search',
           ),
 
           // Pay Screen
@@ -283,6 +311,8 @@ class _BottomBarState extends State<BottomBar> {
 
   @override
   void dispose() {
+    MerchantDiscoveryIntentStore.bottomTabRequest
+        .removeListener(_handleDiscoveryTabRequest);
     streamSubscription?.cancel();
     // WidgetsBinding.instance.removeObserver(this);
     super.dispose();

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -19,7 +20,7 @@ import 'package:new_piiink/features/connectivity/cubit/internet_cubit.dart';
 import 'package:new_piiink/features/home_page/bloc/slider_blocs.dart';
 import 'package:new_piiink/features/home_page/bloc/slider_events.dart';
 import 'package:new_piiink/features/home_page/bloc/slider_states.dart';
-import 'package:new_piiink/models/response/slider_res.dart';
+import 'package:new_piiink/models/response/slider_res.dart' hide Datum;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../common/utils.dart';
@@ -28,10 +29,11 @@ import '../../../common/widgets/custom_snackbar.dart';
 import '../../../common/widgets/empty_data.dart';
 import '../../../common/widgets/reg_log_slider.dart';
 import '../../../constants/convert_to_map_of_string.dart';
-import '../../../models/response/app_version_log_model.dart';
+import '../../../models/response/app_version_log_model.dart' hide Datum;
 import '../../../models/response/category_list_res.dart';
 import '../../connectivity/screens/connectivity.dart';
 import '../../connectivity/screens/connectivity_screen.dart';
+import '../../merchant/discovery/merchant_discovery_intent.dart';
 import '../bloc/category_blocs.dart';
 import '../bloc/category_events.dart';
 import '../../../common/services/dio_common.dart';
@@ -85,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> fetchBanner() async {
     try {
       var res = await DioCommon().getBanner();
-      print("Banner 1111111API Response: $res");
+      debugPrint("Banner API Response: $res");
       if (res != null && res['status'] == "Success") {
         setState(() {
           // We grab the inner 'data' object from the API response
@@ -231,11 +233,33 @@ class _HomeScreenState extends State<HomeScreen>
   dynamic bannerData;
 
   void _openSearchMerchant() {
-    context.pushNamed('search-merchant').then((value) {
-      if (AppVariables.locationEnabledStatus.value > 1 && value == true) {
-        AppVariables.locationEnabledStatus.value += 1;
-      }
-    });
+    if (kDebugMode) {
+      debugPrint('[Home] Search now tapped -> bottom tab 1');
+    }
+    MerchantDiscoveryIntentStore.focusSearch();
+    _openDiscoveryTab();
+  }
+
+  void _openDiscoveryTab() {
+    MerchantDiscoveryIntentStore.requestBottomTab(1);
+    context.goNamed('bottom-bar', pathParameters: {'page': '1'});
+  }
+
+  void _openCategoryDiscovery(Datum category) {
+    final int? categoryId = category.id;
+    final String categoryName = category.name?.trim() ?? '';
+    if (categoryId == null || categoryName.isEmpty) return;
+    if (kDebugMode) {
+      debugPrint(
+        '[Home] Category tapped -> id=$categoryId, name=$categoryName, '
+        'bottom tab 1',
+      );
+    }
+    MerchantDiscoveryIntentStore.launchCategory(
+      categoryId: categoryId,
+      categoryName: categoryName,
+    );
+    _openDiscoveryTab();
   }
 
   @override
@@ -301,7 +325,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget experienceBanner() {
     // Logic to handle redirection
-    Future<void> _launchBannerUrl() async {
+    Future<void> launchBannerUrl() async {
       final String? rawUrl = bannerData?['url'];
       if (rawUrl != null && rawUrl.isNotEmpty) {
         String prefixedUrl = prefixHttp(rawUrl);
@@ -325,7 +349,7 @@ class _HomeScreenState extends State<HomeScreen>
       child: InkWell(
         borderRadius:
             BorderRadius.circular(50.r), // More rounded corners like the image
-        onTap: _launchBannerUrl,
+        onTap: launchBannerUrl,
         child: Container(
           width: double.infinity,
           padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 15.w),
@@ -382,87 +406,7 @@ class _HomeScreenState extends State<HomeScreen>
   Widget build(BuildContext context) {
     // final localeData = context.read<LocaleCubit>().state;
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size(MediaQuery.of(context).size.width, 76),
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 10.h),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Image or Logo
-                Image.asset(
-                  "assets/images/tourist.png",
-                  width: 112.w,
-                  height: 46.h,
-                  fit: BoxFit.contain,
-                ),
-                Row(
-                  children: [
-                    Material(
-                      color: Colors.white,
-                      shape: const CircleBorder(),
-                      elevation: 2,
-                      shadowColor: Colors.black12,
-                      child: InkWell(
-                        customBorder: const CircleBorder(),
-                        onTap: _openSearchMerchant,
-                        child: SizedBox(
-                          width: 42.w,
-                          height: 42.w,
-                          child: const Icon(
-                            Icons.search_rounded,
-                            color: Color(0xFF0009FE),
-                            size: 25,
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (AppVariables.accessToken != null &&
-                        hideNotificationIcon == false) ...[
-                      SizedBox(width: 10.w),
-                      InkWell(
-                        customBorder: const CircleBorder(),
-                        onTap: () async {
-                          // log('home log notification ${AppVariables.notificationLabel.value}');
-                          AppVariables.notificationLabel.value = 0;
-                          await Pref().writeInt(
-                              key: 'notificationsCount',
-                              value: AppVariables.notificationLabel.value);
-                          if (!mounted) return;
-                          context.pushNamed('notification');
-                        },
-                        child: SizedBox(
-                          width: 42.w,
-                          height: 42.w,
-                          child: Center(
-                            child: ValueListenableBuilder(
-                              valueListenable: AppVariables.notificationLabel,
-                              builder: (context, value, child) {
-                                return Badge(
-                                  backgroundColor: GlobalColors.appColor1,
-                                  smallSize: 10,
-                                  isLabelVisible: value != 0,
-                                  child: const Icon(
-                                    Icons.notifications_outlined,
-                                    color: Color(0xFFF146EA),
-                                    size: 29,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+      backgroundColor: const Color(0xFFF7F9FC),
       body: RefreshIndicator(
         key: refreshIndicatorHome,
         color: GlobalColors.appColor,
@@ -490,8 +434,7 @@ class _HomeScreenState extends State<HomeScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 5.0),
-                    adSlider(),
+                    _homeHeroSection(),
                     const SizedBox(height: 10),
                     categoryWidget(),
                     const SizedBox(height: 5), // Reduced from 15/20 to 5
@@ -533,6 +476,67 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  Widget _homeHeroSection() {
+    return Stack(
+      children: [
+        adSlider(),
+        Positioned(
+          left: 0,
+          right: 0,
+          top: 0,
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 0),
+              child: _HomeFloatingHeader(
+                onSearch: _openSearchMerchant,
+                notificationButton: AppVariables.accessToken != null &&
+                        hideNotificationIcon == false
+                    ? _notificationButton()
+                    : null,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _notificationButton() {
+    return InkWell(
+      customBorder: const CircleBorder(),
+      onTap: () async {
+        AppVariables.notificationLabel.value = 0;
+        await Pref().writeInt(
+            key: 'notificationsCount',
+            value: AppVariables.notificationLabel.value);
+        if (!mounted) return;
+        context.pushNamed('notification');
+      },
+      child: SizedBox(
+        width: 42.w,
+        height: 42.w,
+        child: Center(
+          child: ValueListenableBuilder(
+            valueListenable: AppVariables.notificationLabel,
+            builder: (context, value, child) {
+              return Badge(
+                backgroundColor: GlobalColors.appColor1,
+                smallSize: 10,
+                isLabelVisible: value != 0,
+                child: const Icon(
+                  Icons.notifications_outlined,
+                  color: Color(0xFF0009FE),
+                  size: 26,
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
   categoryWidget() {
     return BlocBuilder<CategoryBloc, CategoryState>(
       builder: (context, state) {
@@ -563,17 +567,9 @@ class _HomeScreenState extends State<HomeScreen>
                     itemBuilder: (context, index) {
                       return InkWell(
                         onTap: () {
-                          context.pushNamed('category-screen', pathParameters: {
-                            'parentId':
-                                categoryList.data!.data![index].id.toString(),
-                          }).then((value) {
-                            if (value == true) {
-                              if (AppVariables.locationEnabledStatus.value >
-                                  1) {
-                                AppVariables.locationEnabledStatus.value += 1;
-                              }
-                            }
-                          });
+                          _openCategoryDiscovery(
+                            categoryList.data!.data![index],
+                          );
                         },
                         child: TabContainer(
                           icon: categoryList.data!.data![index].imageName!,
@@ -604,25 +600,19 @@ class _HomeScreenState extends State<HomeScreen>
             ? emptySliderData()
             : CarouselSlider(
                 options: CarouselOptions(
-                  height: 230.h,
+                  height: 300.h,
                   autoPlay: true,
                   autoPlayCurve: Curves.fastOutSlowIn,
                   enableInfiniteScroll: true,
                   autoPlayAnimationDuration: const Duration(milliseconds: 800),
-                  viewportFraction: 0.95,
+                  viewportFraction: 1,
                 ),
                 items: sliderList.data!.map<Widget>((i) {
                   return Builder(
                     builder: (BuildContext context) {
-                      return Container(
-                        margin: const EdgeInsets.all(8.0),
-                        height: 230.h,
+                      return SizedBox(
+                        height: 300.h,
                         width: MediaQuery.of(context).size.width,
-                        decoration: BoxDecoration(
-                          color: GlobalColors.appWhiteBackgroundColor,
-                          borderRadius: BorderRadius.circular(10.0),
-                          boxShadow: kElevationToShadow[2],
-                        ),
                         child: GestureDetector(
                           onTap: () {
                             if (i.hasLink == true) {
@@ -700,7 +690,10 @@ class _HomeScreenState extends State<HomeScreen>
                             }
                           },
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10.0),
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(30.r),
+                              bottomRight: Radius.circular(30.r),
+                            ),
                             child: CachedNetworkImage(
                               imageUrl: i.url!,
                               fit: BoxFit.cover,
@@ -728,22 +721,23 @@ class _HomeScreenState extends State<HomeScreen>
   emptySliderData() {
     return CarouselSlider(
         options: CarouselOptions(
-          height: 230,
+          height: 300.h,
           autoPlay: true,
           autoPlayCurve: Curves.fastOutSlowIn,
           enableInfiniteScroll: true,
           autoPlayAnimationDuration: const Duration(milliseconds: 800),
-          viewportFraction: 0.95,
+          viewportFraction: 1,
         ),
         items: [
           Container(
             width: MediaQuery.of(context).size.width,
-            height: 230,
-            margin: const EdgeInsets.all(8.0),
+            height: 300.h,
             decoration: BoxDecoration(
               color: GlobalColors.appWhiteBackgroundColor,
-              borderRadius: BorderRadius.circular(10.0),
-              boxShadow: kElevationToShadow[2],
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30.r),
+                bottomRight: Radius.circular(30.r),
+              ),
             ),
             child: Center(
                 child: AutoSizeText(
@@ -752,5 +746,93 @@ class _HomeScreenState extends State<HomeScreen>
             )),
           ),
         ]);
+  }
+}
+
+class _HomeFloatingHeader extends StatelessWidget {
+  const _HomeFloatingHeader({
+    required this.onSearch,
+    this.notificationButton,
+  });
+
+  final VoidCallback onSearch;
+  final Widget? notificationButton;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 54.w,
+          height: 54.w,
+          padding: EdgeInsets.all(7.w),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.84),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.52),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: ClipOval(
+            child: Image.asset(
+              'assets/images/touristsaver-app-logo.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        const Spacer(),
+        Material(
+          color: Colors.white.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(999),
+          elevation: 0,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(999),
+            onTap: onSearch,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 11.h),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.saved_search_rounded,
+                    color: Color(0xFF0009FE),
+                    size: 20,
+                  ),
+                  SizedBox(width: 6.w),
+                  Text(
+                    'Search now',
+                    style: TextStyle(
+                      color: const Color(0xFF111C44),
+                      fontFamily: 'Montserrat',
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (notificationButton != null) ...[
+          SizedBox(width: 8.w),
+          Container(
+            width: 42.w,
+            height: 42.w,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.9),
+              shape: BoxShape.circle,
+            ),
+            child: notificationButton,
+          ),
+        ],
+      ],
+    );
   }
 }

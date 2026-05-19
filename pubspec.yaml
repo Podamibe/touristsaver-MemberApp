@@ -93,7 +93,7 @@ dev_dependencies:
   json_serializable: ^6.6.0
 
 flutter_icons:
-  image_path: "assets/images/touristsaver-app-logo..png"
+  image_path: "assets/images/touristsaver-app-logo.png"
   android: true
   ios: true
   remove_alpha_ios: true

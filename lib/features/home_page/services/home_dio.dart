@@ -241,6 +241,7 @@ class DioHome {
       // print(response.data);
       return subCategoryListResModelFromJson(response.data!);
     } catch (e) {
+      debugPrint('getSubCategory failed for parentId=$parentId: $e');
       return null;
     }
   }
@@ -376,7 +377,7 @@ class DioHome {
       // 3. Return the parsed data
       return parsedData;
     } catch (e) {
-      print("Error fetching merchants: $e");
+      debugPrint("Error fetching merchants: $e");
       return null;
     }
   }
