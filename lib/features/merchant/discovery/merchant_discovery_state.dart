@@ -5,6 +5,7 @@ enum MerchantDiscoverySource {
   search,
   category,
   nearMe,
+  bestOffers,
 }
 
 class MerchantDiscoveryState {
@@ -45,6 +46,7 @@ class MerchantDiscoveryState {
       return selectedCategoryName ?? 'Results';
     }
     if (source == MerchantDiscoverySource.nearMe) return 'Near me';
+    if (source == MerchantDiscoverySource.bestOffers) return 'Best Offers';
     return 'Results';
   }
 

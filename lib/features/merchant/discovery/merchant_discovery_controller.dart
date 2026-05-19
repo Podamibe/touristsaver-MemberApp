@@ -7,6 +7,7 @@ import 'package:new_piiink/common/services/location_service.dart';
 import 'package:new_piiink/features/home_page/services/home_dio.dart';
 import 'package:new_piiink/features/merchant/discovery/merchant_discovery_state.dart';
 import 'package:new_piiink/features/merchant/services/dio_merchant.dart';
+import 'package:new_piiink/models/request/nearby_req.dart';
 import 'package:new_piiink/models/request/mark_fav_req.dart';
 import 'package:new_piiink/models/response/common_res.dart';
 
@@ -183,6 +184,71 @@ class MerchantDiscoveryController extends ChangeNotifier {
 
     _rawResults = (response?.data ?? [])
         .map(MerchantSummaryAdapters.fromNearbyViewAll)
+        .whereType<MerchantSummary>()
+        .toList();
+
+    _emit(
+      state.copyWith(
+        isLoading: false,
+        error: null,
+        results: _filteredAndSortedResults(),
+      ),
+    );
+  }
+
+  Future<void> loadBestOffers() async {
+    _cancelSearch();
+    final int requestId = ++_requestId;
+    double? latitude = AppVariables.latitude;
+    double? longitude = AppVariables.longitude;
+
+    _emit(
+      state.copyWith(
+        source: MerchantDiscoverySource.bestOffers,
+        searchText: '',
+        selectedCategoryId: null,
+        selectedCategoryName: null,
+        selectedRadiusKm: null,
+        bestOfferFirst: true,
+        isLoading: true,
+        error: null,
+        results: const [],
+      ),
+    );
+
+    if (latitude == null || longitude == null) {
+      final bool locationReady =
+          await LocationService().enableLocationAndFetchCountry();
+      if (_isStale(requestId)) return;
+
+      latitude = AppVariables.latitude;
+      longitude = AppVariables.longitude;
+      if (!locationReady || latitude == null || longitude == null) {
+        _rawResults = [];
+        _emit(
+          state.copyWith(
+            isLoading: false,
+            error:
+                'Location is needed to show best offers nearby. Try Map View or update your location.',
+            results: const [],
+          ),
+        );
+        return;
+      }
+    }
+
+    final response = await DioHome().getBestOffers(
+      nearByLocationReqModel: NearByLocationReqModel(
+        latitude: latitude,
+        longitude: longitude,
+        countryCode: AppVariables.countryCode,
+        page: 1,
+      ),
+    );
+    if (_isStale(requestId)) return;
+
+    _rawResults = (response?.data ?? [])
+        .map(MerchantSummaryAdapters.fromNearby)
         .whereType<MerchantSummary>()
         .toList();
 

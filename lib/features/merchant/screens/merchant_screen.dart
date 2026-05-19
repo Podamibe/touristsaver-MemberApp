@@ -148,6 +148,20 @@ class _MerchantScreenState extends State<MerchantScreen> {
       return;
     }
 
+    if (intent.showBestOffers) {
+      _scheduledLaunchIntentToken = intent.token;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        final MerchantDiscoveryLaunchIntent? activeIntent =
+            MerchantDiscoveryIntentStore.consume(intent.token);
+        if (activeIntent == null) return;
+        FocusManager.instance.primaryFocus?.unfocus();
+        searchController.clear();
+        await _discovery.loadBestOffers();
+      });
+      return;
+    }
+
     final int? categoryId = intent.categoryId;
     final String categoryName = intent.categoryName?.trim() ?? '';
     if (categoryId == null || categoryName.isEmpty) return;

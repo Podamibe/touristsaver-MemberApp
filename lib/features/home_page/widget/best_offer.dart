@@ -8,6 +8,7 @@ import 'package:new_piiink/common/widgets/merchant_result_tile.dart';
 import 'package:new_piiink/common/widgets/no_merchant.dart';
 import 'package:new_piiink/features/home_page/services/home_dio.dart';
 import 'package:new_piiink/features/home_page/widget/home_section_header.dart';
+import 'package:new_piiink/features/merchant/discovery/merchant_discovery_intent.dart';
 
 import '../../../constants/location_not_enable.dart';
 import '../../../constants/style.dart';
@@ -25,10 +26,13 @@ class BestOffer extends StatefulWidget {
 }
 
 class BestOfferState extends State<BestOffer> {
+  static const int _homeBestOfferCount = 3;
+
   bool isLoading = false;
 
   // Calling API of NearByLocation
   Future<NearByLocationResModel>? bestOfferRes;
+
   Future<NearByLocationResModel> getBestOfferRes() async {
     NearByLocationResModel nearByLocationResModel =
         await DioHome().getBestOffers(
@@ -38,17 +42,31 @@ class BestOfferState extends State<BestOffer> {
         countryCode: AppVariables.countryCode,
         page: 1,
       ),
+      limit: _homeBestOfferCount,
     );
     return nearByLocationResModel;
+  }
+
+  void _loadHomeBestOffers() {
+    bestOfferRes = getBestOfferRes();
   }
 
   @override
   void initState() {
     isLoading = widget.isLoading;
     if (AppVariables.locationEnabledStatus.value > 1) {
-      bestOfferRes = getBestOfferRes();
+      _loadHomeBestOffers();
     }
     super.initState();
+  }
+
+  @override
+  void didUpdateWidget(covariant BestOffer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    isLoading = widget.isLoading;
+    if (AppVariables.locationEnabledStatus.value > 1 && bestOfferRes == null) {
+      _loadHomeBestOffers();
+    }
   }
 
   @override
@@ -129,14 +147,15 @@ class BestOfferState extends State<BestOffer> {
               ],
             );
           } else {
-            List<Datum> nearbyMerchants = snapshot.data!.data!;
+            final List<Datum> nearbyMerchants =
+                List<Datum>.from(snapshot.data!.data ?? const <Datum>[]);
             nearbyMerchants.sort((a, b) {
               return (b.maxDiscount ?? 0).compareTo(a.maxDiscount ?? 0);
             });
             final bestOfferMerchants = nearbyMerchants
                 .map(MerchantSummaryAdapters.fromNearby)
                 .whereType<MerchantSummary>()
-                .take(5)
+                .take(_homeBestOfferCount)
                 .toList();
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,12 +167,10 @@ class BestOfferState extends State<BestOffer> {
                   onViewAllTap: nearbyMerchants.isEmpty
                       ? null
                       : () {
-                          context.pushNamed('home-view-all', pathParameters: {
-                            'appBarName': 'Best Offers'
-                          }).then((value) {
-                            if (value == true) {
-                              AppVariables.locationEnabledStatus.value += 1;
-                            }
+                          MerchantDiscoveryIntentStore.launchBestOffers();
+                          MerchantDiscoveryIntentStore.requestBottomTab(1);
+                          context.goNamed('bottom-bar', pathParameters: {
+                            'page': '1',
                           });
                         },
                 ),

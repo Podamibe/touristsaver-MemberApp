@@ -118,14 +118,17 @@ class _BottomBarState extends State<BottomBar> {
   void _handleDiscoveryTabRequest() {
     final MerchantDiscoveryTabRequest? request =
         MerchantDiscoveryIntentStore.bottomTabRequest.value;
-    if (request == null || _page == request.page) return;
-    if (mounted) {
-      setState(() {
+    if (request == null) return;
+    if (_page != request.page) {
+      if (mounted) {
+        setState(() {
+          _page = request.page;
+        });
+      } else {
         _page = request.page;
-      });
-    } else {
-      _page = request.page;
+      }
     }
+    MerchantDiscoveryIntentStore.clearBottomTabRequest(token: request.token);
   }
 
   @override
@@ -223,6 +226,10 @@ class _BottomBarState extends State<BottomBar> {
         backgroundColor: Colors.white,
         type: BottomNavigationBarType.fixed,
         onTap: (page) async {
+          if (page == 0) {
+            MerchantDiscoveryIntentStore.clear();
+            MerchantDiscoveryIntentStore.clearBottomTabRequest();
+          }
           if (AppVariables.accessToken == null) {
             if (page == 2) {
               await paySlider();

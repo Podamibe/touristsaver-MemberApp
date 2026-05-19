@@ -11,6 +11,7 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:new_piiink/common/app_variables.dart';
+import 'package:new_piiink/common/widgets/merchant_distance.dart';
 import 'package:new_piiink/common/widgets/custom_loader.dart';
 import 'package:new_piiink/common/widgets/error.dart';
 import 'package:new_piiink/constants/global_colors.dart';
@@ -20,6 +21,7 @@ import 'package:new_piiink/features/connectivity/cubit/internet_cubit.dart';
 import 'package:new_piiink/features/home_page/bloc/slider_blocs.dart';
 import 'package:new_piiink/features/home_page/bloc/slider_events.dart';
 import 'package:new_piiink/features/home_page/bloc/slider_states.dart';
+import 'package:new_piiink/features/home_page/services/home_dio.dart';
 import 'package:new_piiink/models/response/slider_res.dart' hide Datum;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -29,8 +31,10 @@ import '../../../common/widgets/custom_snackbar.dart';
 import '../../../common/widgets/empty_data.dart';
 import '../../../common/widgets/reg_log_slider.dart';
 import '../../../constants/convert_to_map_of_string.dart';
+import '../../../models/request/nearby_req.dart';
 import '../../../models/response/app_version_log_model.dart' hide Datum;
 import '../../../models/response/category_list_res.dart';
+import '../../../models/response/nearby_res.dart' as nearby;
 import '../../connectivity/screens/connectivity.dart';
 import '../../connectivity/screens/connectivity_screen.dart';
 import '../../merchant/discovery/merchant_discovery_intent.dart';
@@ -55,6 +59,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
+  static const double _homeHeroAspectRatio = 1.5;
+
   final GlobalKey<RefreshIndicatorState> refreshIndicatorHome =
       GlobalKey<RefreshIndicatorState>();
 
@@ -72,6 +78,8 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isUpdateDialogShown = false;
   bool _isShowing = false;
   int _homeFeedRefreshTick = 0;
+  bool _isGreatDealsMode = false;
+  Future<List<nearby.Datum>>? _greatDealsNearbyFuture;
 
   // Banner data variable
 
@@ -262,6 +270,47 @@ class _HomeScreenState extends State<HomeScreen>
     _openDiscoveryTab();
   }
 
+  double _homeHeroHeight(BuildContext context) {
+    return MediaQuery.of(context).size.width / _homeHeroAspectRatio;
+  }
+
+  void _toggleGreatDealsMode() {
+    setState(() {
+      _isGreatDealsMode = !_isGreatDealsMode;
+      if (_isGreatDealsMode) {
+        _greatDealsNearbyFuture = _loadGreatDealsNearby();
+      }
+    });
+  }
+
+  Future<List<nearby.Datum>> _loadGreatDealsNearby() async {
+    if (AppVariables.latitude == null || AppVariables.longitude == null) {
+      return const [];
+    }
+    final nearby.NearByLocationResModel? response =
+        await DioHome().getGreatDealsNearby(
+      nearByLocationReqModel: NearByLocationReqModel(
+        latitude: AppVariables.latitude,
+        longitude: AppVariables.longitude,
+        countryCode: AppVariables.countryCode,
+        page: 1,
+      ),
+    );
+    final List<nearby.Datum> deals = (response?.data ?? [])
+        .where(_isGreatDealMerchant)
+        .toList()
+      ..sort((a, b) => (a.distance ?? double.maxFinite)
+          .compareTo(b.distance ?? double.maxFinite));
+    return deals.take(10).toList();
+  }
+
+  bool _isGreatDealMerchant(nearby.Datum merchant) {
+    final String? listingType = merchant.merchantListingType?.trim();
+    return listingType != null &&
+        listingType.isNotEmpty &&
+        listingType.toLowerCase() != 'official_tsdc';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -402,6 +451,72 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  Widget _greatDealsNearbyButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(999),
+            onTap: _toggleGreatDealsMode,
+            child: Ink(
+              padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 9.h),
+              decoration: BoxDecoration(
+                color:
+                    _isGreatDealsMode ? const Color(0xFFEFF7FF) : Colors.white,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: const Color(0xFF0009FE).withValues(alpha: 0.22),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 12,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _isGreatDealsMode
+                        ? Icons.keyboard_arrow_left_rounded
+                        : Icons.local_offer_outlined,
+                    color: const Color(0xFF0009FE),
+                    size: 18.sp,
+                  ),
+                  SizedBox(width: 7.w),
+                  Text(
+                    _isGreatDealsMode
+                        ? 'Back to featured'
+                        : 'Great Deals Nearby',
+                    style: TextStyle(
+                      color: const Color(0xFF111C44),
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'Sans',
+                    ),
+                  ),
+                  if (!_isGreatDealsMode) ...[
+                    SizedBox(width: 6.w),
+                    Icon(
+                      Icons.near_me_outlined,
+                      color: const Color(0xFF18C6FF),
+                      size: 16.sp,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // final localeData = context.read<LocaleCubit>().state;
@@ -419,6 +534,9 @@ class _HomeScreenState extends State<HomeScreen>
           if (!mounted) return;
           setState(() {
             _homeFeedRefreshTick++;
+            if (_isGreatDealsMode) {
+              _greatDealsNearbyFuture = _loadGreatDealsNearby();
+            }
             if (AppVariables.locationEnabledStatus.value > 1) {
               AppVariables.locationEnabledStatus.value++;
             }
@@ -450,8 +568,10 @@ class _HomeScreenState extends State<HomeScreen>
                             if (isBannerVisible) ...[
                               const SizedBox(height: 1),
                               experienceBanner(),
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 10),
                             ],
+                            _greatDealsNearbyButton(),
+                            const SizedBox(height: 20),
                             BestOffer(
                               key: ValueKey('best-offer-$value'),
                               isLoading: isLoading,
@@ -482,7 +602,7 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _homeHeroSection() {
     return Stack(
       children: [
-        adSlider(),
+        _isGreatDealsMode ? _greatDealsHeroSlider() : adSlider(),
         Positioned(
           left: 0,
           right: 0,
@@ -593,17 +713,269 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  Widget _greatDealsHeroSlider() {
+    final double heroHeight = _homeHeroHeight(context);
+    return FutureBuilder<List<nearby.Datum>>(
+      future: _greatDealsNearbyFuture ??= _loadGreatDealsNearby(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return _featuredSliderWithNote('Finding Great Deals nearby...');
+        }
+        if (snapshot.hasError) {
+          return _featuredSliderWithNote(
+              'Great Deals are unavailable right now');
+        }
+
+        final List<nearby.Datum> deals = snapshot.data ?? const [];
+        if (deals.isEmpty) {
+          return _featuredSliderWithNote('No Great Deals nearby yet');
+        }
+
+        return CarouselSlider(
+          options: CarouselOptions(
+            height: heroHeight,
+            autoPlay: deals.length > 1,
+            autoPlayCurve: Curves.fastOutSlowIn,
+            enableInfiniteScroll: deals.length > 1,
+            autoPlayAnimationDuration: const Duration(milliseconds: 800),
+            viewportFraction: 1,
+          ),
+          items: deals
+              .map<Widget>(
+                (nearby.Datum merchant) =>
+                    _greatDealSlide(merchant, heroHeight),
+              )
+              .toList(),
+        );
+      },
+    );
+  }
+
+  Widget _featuredSliderWithNote(String message) {
+    return Stack(
+      children: [
+        adSlider(),
+        Positioned(
+          left: 16.w,
+          right: 16.w,
+          bottom: 18.h,
+          child: IgnorePointer(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.90),
+                  borderRadius: BorderRadius.circular(999),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  message,
+                  style: TextStyle(
+                    color: const Color(0xFF111C44),
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Sans',
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _heroStatusContainer({
+    required double heroHeight,
+    required Widget child,
+  }) {
+    return SizedBox(
+      height: heroHeight,
+      width: MediaQuery.of(context).size.width,
+      child: ClipRRect(
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30.r),
+          bottomRight: Radius.circular(30.r),
+        ),
+        child: Container(
+          color: GlobalColors.appWhiteBackgroundColor,
+          child: Center(child: child),
+        ),
+      ),
+    );
+  }
+
+  Widget _greatDealSlide(nearby.Datum merchant, double heroHeight) {
+    final String? imageUrl = _greatDealImageUrl(merchant);
+    final String distanceLabel = formatMerchantDistance(merchant.distance);
+    final String? badgeLabel = merchant.maxDiscount == null
+        ? merchant.externalUrlLabel
+        : 'Up to ${merchant.maxDiscount!.toStringAsFixed(0)}% off';
+
+    return Builder(
+      builder: (BuildContext context) {
+        return SizedBox(
+          height: heroHeight,
+          width: MediaQuery.of(context).size.width,
+          child: GestureDetector(
+            onTap: () {
+              final int? merchantId = merchant.id;
+              if (merchantId == null) return;
+              context.pushNamed(
+                'details-screen',
+                extra: {'merchantID': merchantId.toString()},
+              );
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30.r),
+                bottomRight: Radius.circular(30.r),
+              ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  imageUrl == null
+                      ? Image.asset('assets/images/no_image.jpg',
+                          fit: BoxFit.cover)
+                      : CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => const Center(
+                            child: FittedBox(child: CustomAllLoader1()),
+                          ),
+                          errorWidget: (context, url, error) => Image.asset(
+                            'assets/images/no_image.jpg',
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.08),
+                          Colors.black.withValues(alpha: 0.72),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 18.w,
+                    right: 18.w,
+                    bottom: 22.h,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (badgeLabel != null && badgeLabel.trim().isNotEmpty)
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10.w,
+                              vertical: 5.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.36),
+                              ),
+                            ),
+                            child: Text(
+                              badgeLabel.trim(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w800,
+                                fontFamily: 'Sans',
+                              ),
+                            ),
+                          ),
+                        SizedBox(height: 9.h),
+                        Text(
+                          merchant.merchantName ?? '',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24.sp,
+                            fontWeight: FontWeight.w900,
+                            fontFamily: 'Sans',
+                            letterSpacing: 0,
+                          ),
+                        ),
+                        if (distanceLabel.isNotEmpty) ...[
+                          SizedBox(height: 6.h),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.near_me_outlined,
+                                color: Colors.white.withValues(alpha: 0.88),
+                                size: 15.sp,
+                              ),
+                              SizedBox(width: 5.w),
+                              Text(
+                                distanceLabel,
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.90),
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Sans',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String? _greatDealImageUrl(nearby.Datum merchant) {
+    final List<String?> images = [
+      merchant.merchantImageInfoSlider1,
+      merchant.merchantImageInfoSlider2,
+      merchant.merchantImageInfoSlider3,
+      merchant.merchantImageInfoLogoUrl,
+    ];
+    for (final String? image in images) {
+      if (image != null && image.trim().isNotEmpty) return image.trim();
+    }
+    return null;
+  }
+
   adSlider() {
+    final double heroHeight = _homeHeroHeight(context);
     return BlocBuilder<SliderBloc, SliderState>(builder: (context, state) {
       if (state is SliderLoadingState) {
-        return const SliderLoader();
+        return _heroStatusContainer(
+          heroHeight: heroHeight,
+          child: const CustomAllLoader1(),
+        );
       } else if (state is SliderLoadedState) {
         SliderResModel sliderList = state.sliderList;
         return sliderList.data!.isEmpty
             ? emptySliderData()
             : CarouselSlider(
                 options: CarouselOptions(
-                  height: 300.h,
+                  height: heroHeight,
                   autoPlay: true,
                   autoPlayCurve: Curves.fastOutSlowIn,
                   enableInfiniteScroll: true,
@@ -614,7 +986,7 @@ class _HomeScreenState extends State<HomeScreen>
                   return Builder(
                     builder: (BuildContext context) {
                       return SizedBox(
-                        height: 300.h,
+                        height: heroHeight,
                         width: MediaQuery.of(context).size.width,
                         child: GestureDetector(
                           onTap: () {
@@ -714,7 +1086,10 @@ class _HomeScreenState extends State<HomeScreen>
                 }).toList(),
               );
       } else if (state is SliderErrorState) {
-        return const SliderError();
+        return _heroStatusContainer(
+          heroHeight: heroHeight,
+          child: const Error(),
+        );
       } else {
         return const SizedBox();
       }
@@ -722,9 +1097,10 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   emptySliderData() {
+    final double heroHeight = _homeHeroHeight(context);
     return CarouselSlider(
         options: CarouselOptions(
-          height: 300.h,
+          height: heroHeight,
           autoPlay: true,
           autoPlayCurve: Curves.fastOutSlowIn,
           enableInfiniteScroll: true,
@@ -734,7 +1110,7 @@ class _HomeScreenState extends State<HomeScreen>
         items: [
           Container(
             width: MediaQuery.of(context).size.width,
-            height: 300.h,
+            height: heroHeight,
             decoration: BoxDecoration(
               color: GlobalColors.appWhiteBackgroundColor,
               borderRadius: BorderRadius.only(

@@ -19,6 +19,18 @@ import '../../../models/response/get_nearby_merchants_res_model.dart';
 import '../../../models/response/cat_model.dart';
 
 class DioHome {
+  Future<String?> _selectedCountryId({int? fallbackCountryId}) async {
+    final String? selectedCountryId =
+        await Pref().readData(key: userChosenLocationID);
+    if (selectedCountryId == null ||
+        selectedCountryId.isEmpty ||
+        selectedCountryId == 'null' ||
+        selectedCountryId == '0') {
+      return fallbackCountryId?.toString();
+    }
+    return selectedCountryId;
+  }
+
   //App Slider
 //App Slider
   Future<SliderResModel?> getSlider() async {
@@ -110,14 +122,9 @@ class DioHome {
       {required NearByLocationReqModel nearByLocationReqModel,
       int? limit}) async {
     try {
-      final String? selectedCountryId =
-          await Pref().readData(key: userChosenLocationID);
-      final String? countryId = selectedCountryId == null ||
-              selectedCountryId.isEmpty ||
-              selectedCountryId == 'null' ||
-              selectedCountryId == '0'
-          ? nearByLocationReqModel.countryId?.toString()
-          : selectedCountryId;
+      final String? countryId = await _selectedCountryId(
+        fallbackCountryId: nearByLocationReqModel.countryId,
+      );
       Dio dio = AppVariables.accessToken != null
           ? await getClient()
           : await getClientNoToken();
@@ -141,6 +148,37 @@ class DioHome {
       return nearByLocationResModelFromJson(response.data!);
     } catch (e) {
       return;
+    }
+  }
+
+  Future<NearByLocationResModel?> getGreatDealsNearby({
+    required NearByLocationReqModel nearByLocationReqModel,
+  }) async {
+    try {
+      final String? countryId = await _selectedCountryId(
+        fallbackCountryId: nearByLocationReqModel.countryId,
+      );
+      Dio dio = AppVariables.accessToken != null
+          ? await getClient()
+          : await getClientNoToken();
+      final Map<String, dynamic> queryParameters = {
+        "limit": 10,
+        "ordering": "ASC",
+        "page": nearByLocationReqModel.page,
+        "latitude": nearByLocationReqModel.latitude,
+        "longitude": nearByLocationReqModel.longitude,
+        "radiusKm": 5,
+        "countryShortName": nearByLocationReqModel.countryCode,
+        "lang": AppVariables.selectedLanguageNow,
+      };
+      if (countryId != null && countryId.isNotEmpty) {
+        queryParameters["countryId"] = countryId;
+      }
+      Response<String> response =
+          await dio.get(nearByLocation, queryParameters: queryParameters);
+      return nearByLocationResModelFromJson(response.data!);
+    } catch (e) {
+      return null;
     }
   }
 

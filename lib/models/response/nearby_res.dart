@@ -91,6 +91,10 @@ class Datum {
     this.agreedTermAndCondition,
     this.stripeSubscriptionId,
     this.stripeCustomerId,
+    this.merchantListingType,
+    this.isOfficialTsdcMerchant,
+    this.canRedeemTsdcSavings,
+    this.externalUrlLabel,
     this.statename,
     this.countryname,
     this.distance,
@@ -152,6 +156,10 @@ class Datum {
   final bool? agreedTermAndCondition;
   final dynamic stripeSubscriptionId;
   final dynamic stripeCustomerId;
+  final String? merchantListingType;
+  final bool? isOfficialTsdcMerchant;
+  final bool? canRedeemTsdcSavings;
+  final String? externalUrlLabel;
   final String? statename;
   final String? countryname;
   final double? distance;
@@ -209,7 +217,7 @@ class Datum {
         isPending: json["isPending"],
         postalCodeUser: json["postalCodeUser"],
         packageExpirydate: json["packageExpirydate"],
-        maxDiscount: double.tryParse(json["maxDiscount"]),
+        maxDiscount: _doubleFromJson(json["maxDiscount"]),
         favoriteMerchant: json["favoritemerchant"],
         isAgreementComplete: json["isAgreementComplete"],
         isPopularFlag: json["isPopularFlag"],
@@ -219,9 +227,13 @@ class Datum {
         agreedTermAndCondition: json["agreedTermAndCondition"],
         stripeSubscriptionId: json["stripeSubscriptionId"],
         stripeCustomerId: json["stripeCustomerId"],
+        merchantListingType: _stringFromJson(json["merchantListingType"]),
+        isOfficialTsdcMerchant: _boolFromJson(json["isOfficialTsdcMerchant"]),
+        canRedeemTsdcSavings: _boolFromJson(json["canRedeemTsdcSavings"]),
+        externalUrlLabel: _stringFromJson(json["externalUrlLabel"]),
         statename: json["statename"],
         countryname: json["countryname"],
-        distance: json["distance"]?.toDouble(),
+        distance: _doubleFromJson(json["distance"]),
       );
 
   factory Datum.fromPostCallJson(Map<String, dynamic> json) => Datum(
@@ -229,7 +241,29 @@ class Datum {
         merchantName: json["merchantname"],
         latitude: json["latitude"]?.toDouble(),
         longitude: json["longitude"]?.toDouble(),
-        maxDiscount: double.tryParse(json["maxdiscount"]),
+        maxDiscount: _doubleFromJson(json["maxdiscount"]),
         favoriteMerchant: json["favoritemerchant"],
       );
+}
+
+double? _doubleFromJson(dynamic value) {
+  if (value == null) return null;
+  if (value is num) return value.toDouble();
+  return double.tryParse(value.toString());
+}
+
+bool? _boolFromJson(dynamic value) {
+  if (value == null) return null;
+  if (value is bool) return value;
+  final String normalized = value.toString().trim().toLowerCase();
+  if (normalized == 'true' || normalized == '1') return true;
+  if (normalized == 'false' || normalized == '0') return false;
+  return null;
+}
+
+String? _stringFromJson(dynamic value) {
+  if (value == null) return null;
+  final String stringValue = value.toString().trim();
+  if (stringValue.isEmpty || stringValue.toLowerCase() == 'null') return null;
+  return stringValue;
 }

@@ -7,6 +7,7 @@ class MerchantDiscoveryLaunchIntent {
     this.categoryName,
     this.openSubcategorySelector = true,
     this.focusSearch = false,
+    this.showBestOffers = false,
   });
 
   final int token;
@@ -14,6 +15,7 @@ class MerchantDiscoveryLaunchIntent {
   final String? categoryName;
   final bool openSubcategorySelector;
   final bool focusSearch;
+  final bool showBestOffers;
 }
 
 class MerchantDiscoveryTabRequest {
@@ -44,6 +46,13 @@ class MerchantDiscoveryIntentStore {
     );
   }
 
+  static void clearBottomTabRequest({int? token}) {
+    final MerchantDiscoveryTabRequest? request = bottomTabRequest.value;
+    if (request == null) return;
+    if (token != null && request.token != token) return;
+    bottomTabRequest.value = null;
+  }
+
   static void launchCategory({
     required int categoryId,
     required String categoryName,
@@ -61,6 +70,13 @@ class MerchantDiscoveryIntentStore {
     _pendingIntent = MerchantDiscoveryLaunchIntent(
       token: ++_nextToken,
       focusSearch: true,
+    );
+  }
+
+  static void launchBestOffers() {
+    _pendingIntent = MerchantDiscoveryLaunchIntent(
+      token: ++_nextToken,
+      showBestOffers: true,
     );
   }
 
