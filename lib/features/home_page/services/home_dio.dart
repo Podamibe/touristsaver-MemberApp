@@ -128,6 +128,7 @@ class DioHome {
         "page": nearByLocationReqModel.page,
         "latitude": nearByLocationReqModel.latitude,
         "longitude": nearByLocationReqModel.longitude,
+        "radiusKm": 50,
         "countryShortName": nearByLocationReqModel.countryCode,
         "lang": AppVariables.selectedLanguageNow,
       };
