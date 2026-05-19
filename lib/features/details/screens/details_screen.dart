@@ -545,6 +545,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
 
 //For locating merchant in google map
   onClicked(List<double>? latlang) async {
+    if (!_hasLatLon(latlang)) {
+      GlobalSnackBar.showError(context, S.of(context).somethingWentWrong);
+      return;
+    }
     double lat = latlang![0];
     double lon = latlang[1];
     String appleUrl =
@@ -571,6 +575,79 @@ class _DetailsScreenState extends State<DetailsScreen> {
   }
 
   // Detail Page
+  bool _isOfficialTsdcListing(Data? merchant) {
+    final String? listingType = merchant?.merchantListingType?.trim();
+    if (listingType != null && listingType.isNotEmpty) {
+      return listingType.toLowerCase() == 'official_tsdc';
+    }
+    if (merchant?.isOfficialTsdcMerchant != null) {
+      return merchant!.isOfficialTsdcMerchant!;
+    }
+    if (merchant?.canRedeemTsdcSavings != null) {
+      return merchant!.canRedeemTsdcSavings!;
+    }
+    return true;
+  }
+
+  String _publicListingLabel(String? listingType) {
+    switch (listingType?.trim().toLowerCase()) {
+      case 'public_deal':
+        return 'Public deal';
+      case 'place_of_interest':
+        return 'Place of interest';
+      case 'concierge_listing':
+      default:
+        return 'Concierge listing';
+    }
+  }
+
+  Future<void> _openExternalUrl(String externalUrl) async {
+    final Uri? uri = Uri.tryParse(prefixHttp(externalUrl.trim()));
+    if (uri == null || !uri.hasScheme) {
+      GlobalSnackBar.showError(context, S.of(context).somethingWentWrong);
+      return;
+    }
+
+    try {
+      final bool launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched && mounted) {
+        GlobalSnackBar.showError(context, S.of(context).somethingWentWrong);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      GlobalSnackBar.showError(context, S.of(context).somethingWentWrong);
+    }
+  }
+
+  Widget _favoriteButton() {
+    if (AppVariables.accessToken == null) return const SizedBox.shrink();
+    return isLoading
+        ? const SizedBox(
+            width: 34,
+            height: 34,
+            child: FittedBox(child: CustomAllLoader1()),
+          )
+        : IconButton(
+            onPressed: () async {
+              setState(() {
+                isLoading = true;
+              });
+              int merchantId = int.parse(widget.merchantID!);
+              isFavoritez == true
+                  ? removeFromFavorites(merchantId)
+                  : addToFavorites(merchantId);
+            },
+            icon: Icon(
+              isFavoritez == true ? Icons.favorite : Icons.favorite_border,
+            ),
+            color: _primaryBlue,
+            tooltip: 'Save offer',
+          );
+  }
+
   Widget _memberOfferCard(MerchantDetailResModel merchantDetail) {
     final String discount = removeTrailingZero(
       merchantDetail.data?.discountAtHourOfDay.toString() ??
@@ -640,31 +717,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     ],
                   ),
                 ),
-                if (AppVariables.accessToken != null)
-                  isLoading
-                      ? const SizedBox(
-                          width: 34,
-                          height: 34,
-                          child: FittedBox(child: CustomAllLoader1()),
-                        )
-                      : IconButton(
-                          onPressed: () async {
-                            setState(() {
-                              isLoading = true;
-                            });
-                            int merchantId = int.parse(widget.merchantID!);
-                            isFavoritez == true
-                                ? removeFromFavorites(merchantId)
-                                : addToFavorites(merchantId);
-                          },
-                          icon: Icon(
-                            isFavoritez == true
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                          ),
-                          color: _primaryBlue,
-                          tooltip: 'Save offer',
-                        ),
+                _favoriteButton(),
               ],
             ),
             SizedBox(height: 15.h),
@@ -725,6 +778,113 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 ),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _publicListingCard(MerchantDetailResModel merchantDetail) {
+    final Data? merchant = merchantDetail.data;
+    final String? description =
+        merchant?.merchantWebsiteInfo?.merchantDescription;
+    final bool hasDescription =
+        description != null && description.trim().isNotEmpty;
+    final String? externalUrl = merchant?.externalUrl;
+    final bool hasExternalUrl =
+        externalUrl != null && externalUrl.trim().isNotEmpty;
+    final String ctaLabel =
+        merchant?.externalUrlLabel?.trim().isNotEmpty == true
+            ? merchant!.externalUrlLabel!.trim()
+            : 'View offer';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(16.r),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18.r),
+          border: Border.all(color: _borderColor),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0A236B).withValues(alpha: 0.06),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 46.w,
+                  height: 46.w,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF7FF),
+                    borderRadius: BorderRadius.circular(15.r),
+                  ),
+                  child: Icon(
+                    Icons.info_outline_rounded,
+                    color: _primaryBlue,
+                    size: 24.sp,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _publicListingLabel(merchant?.merchantListingType),
+                        style: TextStyle(
+                          color: _headingColor,
+                          fontSize: 17.sp,
+                          fontWeight: FontWeight.w900,
+                          fontFamily: 'Sans',
+                        ),
+                      ),
+                      SizedBox(height: 5.h),
+                      Text(
+                        merchant?.merchantName ?? '',
+                        style: TextStyle(
+                          color: _bodyColor,
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Sans',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _favoriteButton(),
+              ],
+            ),
+            SizedBox(height: 15.h),
+            Text(
+              S.of(context).additionalInformation,
+              style: TextStyle(
+                color: _headingColor,
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w900,
+                fontFamily: 'Sans',
+              ),
+            ),
+            SizedBox(height: 8.h),
+            hasDescription
+                ? _descriptionHtml(description)
+                : NoMerchantCard(text: S.of(context).noMerchantDescription),
+            if (hasExternalUrl) ...[
+              SizedBox(height: 16.h),
+              _primaryGradientButton(
+                label: ctaLabel,
+                onTap: () => _openExternalUrl(externalUrl),
+              ),
+            ],
           ],
         ),
       ),
@@ -827,6 +987,33 @@ class _DetailsScreenState extends State<DetailsScreen> {
     );
   }
 
+  bool _hasLatLon(List<double>? latlon) {
+    return latlon != null && latlon.length >= 2;
+  }
+
+  String _merchantAddress(Data? merchant) {
+    final String? stateName = merchant?.state?.stateName;
+    final bool showState =
+        stateName != null && stateName.toLowerCase() != 'unallocated';
+    final List<String> addressParts = [
+      [
+        merchant?.buildingNo,
+        merchant?.streetInfo,
+      ]
+          .where((part) => part != null && part.trim().isNotEmpty)
+          .map((part) => part!.trim())
+          .join(' '),
+      merchant?.city,
+      if (showState) stateName,
+      merchant?.postalCodeUser?.toString(),
+      merchant?.country?.countryName,
+    ].where((part) => part != null && part.trim().isNotEmpty).map((part) {
+      return part!.trim();
+    }).toList();
+
+    return addressParts.join(', ');
+  }
+
   Map<String, Style> get _compactDescriptionHtmlStyle {
     return {
       'body': Style(
@@ -843,10 +1030,77 @@ class _DetailsScreenState extends State<DetailsScreen> {
     };
   }
 
+  Future<void> _openHtmlLink(String? url) async {
+    if (url == null || url.trim().isEmpty) return;
+    if (Platform.isIOS) {
+      await launchUrlString(
+        url,
+        mode: LaunchMode.externalApplication,
+      );
+    } else {
+      await launchUrlString(
+        url,
+        mode: LaunchMode.externalNonBrowserApplication,
+      );
+    }
+  }
+
+  Widget _descriptionHtml(String description) {
+    if (description.length <= 200) {
+      return Html(
+        style: _compactDescriptionHtmlStyle,
+        data: description,
+        onLinkTap: (url, _, __) => _openHtmlLink(url),
+      );
+    }
+
+    return Column(
+      children: [
+        Html(
+          style: _compactDescriptionHtmlStyle,
+          data: isExpand == false
+              ? '${description.substring(0, 200)}..'
+              : description,
+          onLinkTap: (url, _, __) => _openHtmlLink(url),
+        ),
+        SizedBox(height: 4.h),
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              isExpand = !isExpand;
+            });
+          },
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              AutoSizeText(
+                isExpand == false
+                    ? S.of(context).seeMore
+                    : S.of(context).seeLess,
+                style: viewAllStyle.copyWith(
+                  color: _primaryBlue,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 2.5),
+                child: Icon(
+                  isExpand == false ? Icons.expand_more : Icons.expand_less,
+                  color: _primaryBlue,
+                  size: 20,
+                ),
+              )
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   detailPage(MerchantDetailResModel merchantDetail) {
     //Getting address
-    addressDetail =
-        '${merchantDetail.data?.buildingNo ?? ''} ${merchantDetail.data?.streetInfo ?? ''}${merchantDetail.data?.streetInfo == null ? '' : merchantDetail.data?.streetInfo == '' ? '' : ', '}${merchantDetail.data?.city ?? ''}${merchantDetail.data?.city == null ? '' : merchantDetail.data?.city == '' ? '' : ', '}${merchantDetail.data?.state!.stateName!.toLowerCase() == 'unallocated' ? '' : merchantDetail.data?.state!.stateName}${merchantDetail.data?.state!.stateName!.toLowerCase() == 'unallocated' ? '' : ','}${merchantDetail.data?.postalCodeUser ?? ''}${merchantDetail.data?.postalCodeUser == null ? '' : merchantDetail.data?.postalCodeUser == '' ? '' : ', '}${merchantDetail.data?.country!.countryName}';
+    addressDetail = _merchantAddress(merchantDetail.data);
 
     //To open the dial pad of the phone
     callNum() async {
@@ -913,150 +1167,70 @@ class _DetailsScreenState extends State<DetailsScreen> {
       await launchUrl(emailOpen);
     }
 
+    final bool isOfficialListing = _isOfficialTsdcListing(merchantDetail.data);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _memberOfferCard(merchantDetail),
+        isOfficialListing
+            ? _memberOfferCard(merchantDetail)
+            : _publicListingCard(merchantDetail),
 
         SizedBox(height: 20.h),
 
         // Additional Information
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0),
-          child: AutoSizeText(
-            S.of(context).additionalInformation,
-            style: topicStyle,
+        if (isOfficialListing) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+            child: AutoSizeText(
+              S.of(context).additionalInformation,
+              style: topicStyle,
+            ),
           ),
-        ),
-        const SizedBox(height: 10),
-
-        Center(
-          child: merchantDetail.data?.merchantWebsiteInfo == null
-              ? NoMerchantCard(text: S.of(context).noMerchantDescription)
-              : merchantDetail.data!.merchantWebsiteInfo?.merchantDescription ==
-                      null
-                  ? NoMerchantCard(text: S.of(context).noMerchantDescription)
-                  : merchantDetail
-                              .data!.merchantWebsiteInfo?.merchantDescription ==
-                          ''
-                      ? NoMerchantCard(
-                          text: S.of(context).noMerchantDescription)
-                      : Container(
-                          width: MediaQuery.of(context).size.width / 1.05,
-                          constraints: const BoxConstraints(
-                              //To make height expandable according to the text
-                              maxHeight: double.infinity),
-                          margin: const EdgeInsets.symmetric(horizontal: 10.0),
-                          decoration: BoxDecoration(
-                              color: GlobalColors.appWhiteBackgroundColor,
-                              borderRadius: BorderRadius.circular(14.0),
-                              border: Border.all(color: _borderColor),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF0A236B)
-                                      .withValues(alpha: 0.05),
-                                  blurRadius: 14,
-                                  offset: const Offset(0, 8),
-                                )
-                              ]),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 14.w,
-                            vertical: 12.h,
+          const SizedBox(height: 10),
+          Center(
+            child: merchantDetail.data?.merchantWebsiteInfo == null
+                ? NoMerchantCard(text: S.of(context).noMerchantDescription)
+                : merchantDetail
+                            .data!.merchantWebsiteInfo?.merchantDescription ==
+                        null
+                    ? NoMerchantCard(text: S.of(context).noMerchantDescription)
+                    : merchantDetail.data!.merchantWebsiteInfo
+                                ?.merchantDescription ==
+                            ''
+                        ? NoMerchantCard(
+                            text: S.of(context).noMerchantDescription)
+                        : Container(
+                            width: MediaQuery.of(context).size.width / 1.05,
+                            constraints: const BoxConstraints(
+                                //To make height expandable according to the text
+                                maxHeight: double.infinity),
+                            margin:
+                                const EdgeInsets.symmetric(horizontal: 10.0),
+                            decoration: BoxDecoration(
+                                color: GlobalColors.appWhiteBackgroundColor,
+                                borderRadius: BorderRadius.circular(14.0),
+                                border: Border.all(color: _borderColor),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF0A236B)
+                                        .withValues(alpha: 0.05),
+                                    blurRadius: 14,
+                                    offset: const Offset(0, 8),
+                                  )
+                                ]),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 14.w,
+                              vertical: 12.h,
+                            ),
+                            child: _descriptionHtml(
+                              merchantDetail.data!.merchantWebsiteInfo!
+                                  .merchantDescription
+                                  .toString(),
+                            ),
                           ),
-                          child: merchantDetail.data!.merchantWebsiteInfo!
-                                      .merchantDescription!.length <=
-                                  200
-                              ? Html(
-                                  style: _compactDescriptionHtmlStyle,
-                                  data: merchantDetail.data!
-                                      .merchantWebsiteInfo!.merchantDescription
-                                      .toString(),
-                                  onLinkTap: (url, _, __) async {
-                                    if (Platform.isIOS) {
-                                      await launchUrlString(
-                                        url.toString(),
-                                        mode: LaunchMode.externalApplication,
-                                      );
-                                    } else {
-                                      await launchUrlString(
-                                        url.toString(),
-                                        mode: LaunchMode
-                                            .externalNonBrowserApplication,
-                                      );
-                                    }
-                                  },
-                                )
-                              : Column(
-                                  children: [
-                                    // Description Text
-                                    Html(
-                                      style: _compactDescriptionHtmlStyle,
-                                      data: isExpand == false
-                                          ? '${merchantDetail.data!.merchantWebsiteInfo!.merchantDescription!.substring(0, 200)}..'
-                                          : merchantDetail
-                                              .data!
-                                              .merchantWebsiteInfo!
-                                              .merchantDescription
-                                              .toString(),
-                                      onLinkTap: (url, _, __) async {
-                                        if (Platform.isIOS) {
-                                          await launchUrlString(
-                                            url.toString(),
-                                            mode:
-                                                LaunchMode.externalApplication,
-                                          );
-                                        } else {
-                                          await launchUrlString(
-                                            url.toString(),
-                                            mode: LaunchMode
-                                                .externalNonBrowserApplication,
-                                          );
-                                        }
-                                      },
-                                    ),
-
-                                    SizedBox(height: 4.h),
-
-                                    //See More or See Less Text
-                                    GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          isExpand = !isExpand;
-                                        });
-                                      },
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          AutoSizeText(
-                                            isExpand == false
-                                                ? S.of(context).seeMore
-                                                : S.of(context).seeLess,
-                                            style: viewAllStyle.copyWith(
-                                              color: _primaryBlue,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding:
-                                                const EdgeInsets.only(top: 2.5),
-                                            child: Icon(
-                                              isExpand == false
-                                                  ? Icons.expand_more
-                                                  : Icons.expand_less,
-                                              color: _primaryBlue,
-                                              size: 20,
-                                            ),
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                        ),
-        ),
+          ),
+        ],
 
         const SizedBox(height: 20),
 
@@ -1173,7 +1347,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     Expanded(
                       child: InkWell(
                         onTap: () {
-                          onClicked(merchantDetail.data!.latlon);
+                          onClicked(merchantDetail.data?.latlon);
                         },
                         child: AutoSizeText(
                           S.of(context).direction,
@@ -1232,11 +1406,16 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 // // Address
                 InkWell(
                   onTap: () {
+                    if (!_hasLatLon(merchantDetail.data?.latlon)) {
+                      GlobalSnackBar.showError(
+                          context, S.of(context).somethingWentWrong);
+                      return;
+                    }
                     Navigator.push(
                         context,
                         MaterialPageRoute(
                             builder: (context) => GoogleMapMerchant(
-                                  latlon: merchantDetail.data!.latlon,
+                                  latlon: merchantDetail.data?.latlon,
                                   placeTitle: addressDetail,
                                 )));
                   },

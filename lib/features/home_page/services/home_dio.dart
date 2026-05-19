@@ -110,11 +110,18 @@ class DioHome {
       {required NearByLocationReqModel nearByLocationReqModel,
       int? limit}) async {
     try {
+      final String? selectedCountryId =
+          await Pref().readData(key: userChosenLocationID);
+      final String? countryId = selectedCountryId == null ||
+              selectedCountryId.isEmpty ||
+              selectedCountryId == 'null' ||
+              selectedCountryId == '0'
+          ? nearByLocationReqModel.countryId?.toString()
+          : selectedCountryId;
       Dio dio = AppVariables.accessToken != null
           ? await getClient()
           : await getClientNoToken();
-      Response<String> response =
-          await dio.get(nearByLocation, queryParameters: {
+      final Map<String, dynamic> queryParameters = {
         "limit": limit ?? 15,
         "ordering": "DESC",
         "order_by": "maxDiscount",
@@ -122,8 +129,13 @@ class DioHome {
         "latitude": nearByLocationReqModel.latitude,
         "longitude": nearByLocationReqModel.longitude,
         "countryShortName": nearByLocationReqModel.countryCode,
-        "lang": AppVariables.selectedLanguageNow
-      });
+        "lang": AppVariables.selectedLanguageNow,
+      };
+      if (countryId != null && countryId.isNotEmpty) {
+        queryParameters["countryId"] = countryId;
+      }
+      Response<String> response =
+          await dio.get(nearByLocation, queryParameters: queryParameters);
       // log(response.data!);
       return nearByLocationResModelFromJson(response.data!);
     } catch (e) {

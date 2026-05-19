@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:new_piiink/common/app_variables.dart';
 import 'package:new_piiink/common/models/merchant_summary.dart';
-import 'package:new_piiink/common/widgets/custom_loader.dart';
 import 'package:new_piiink/common/widgets/error.dart';
 import 'package:new_piiink/common/widgets/merchant_result_tile.dart';
 import 'package:new_piiink/common/widgets/no_merchant.dart';
@@ -67,7 +66,7 @@ class BestOfferState extends State<BestOffer> {
                 ),
               ),
               const SizedBox(height: 15),
-              const CustomLoader(itemCount: 2),
+              const _BestOffersLoadingIndicator(),
             ],
           )
         : AppVariables.locationEnabledStatus.value > 1
@@ -126,7 +125,7 @@ class BestOfferState extends State<BestOffer> {
                   ),
                 ),
                 const SizedBox(height: 15),
-                const CustomLoader(itemCount: 2),
+                const _BestOffersLoadingIndicator(),
               ],
             );
           } else {
@@ -197,5 +196,26 @@ class BestOfferState extends State<BestOffer> {
             );
           }
         });
+  }
+}
+
+class _BestOffersLoadingIndicator extends StatelessWidget {
+  const _BestOffersLoadingIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      height: 72,
+      child: Center(
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.4,
+            color: Color(0xFF0009FE),
+          ),
+        ),
+      ),
+    );
   }
 }

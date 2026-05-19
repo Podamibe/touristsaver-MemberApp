@@ -56,6 +56,11 @@ class Data {
     this.memberAsRefererId,
     this.whiteLabelId,
     this.merchantPackageId,
+    this.merchantListingType,
+    this.isOfficialTsdcMerchant,
+    this.canRedeemTsdcSavings,
+    this.externalUrl,
+    this.externalUrlLabel,
     this.isPremium,
     this.packageExpirydate,
     this.signerId,
@@ -103,6 +108,11 @@ class Data {
   final dynamic memberAsRefererId;
   final dynamic whiteLabelId;
   final int? merchantPackageId;
+  final String? merchantListingType;
+  final bool? isOfficialTsdcMerchant;
+  final bool? canRedeemTsdcSavings;
+  final String? externalUrl;
+  final String? externalUrlLabel;
   final bool? isPremium;
   final dynamic packageExpirydate;
   final int? signerId;
@@ -117,7 +127,7 @@ class Data {
   factory Data.fromJson(Map<String, dynamic> json) => Data(
         id: json["id"],
         merchantName: json["merchantName"],
-        maxDiscount: json["maxDiscount"].toDouble(),
+        maxDiscount: _doubleFromJson(json["maxDiscount"]),
         contactPersonFirstName: json["contactPersonFirstName"],
         contactPersonLastName: json["contactPersonLastName"],
         merchantEmail: json["merchantEmail"],
@@ -154,6 +164,11 @@ class Data {
         memberAsRefererId: json["memberAsRefererId"],
         whiteLabelId: json["whiteLabelId"],
         merchantPackageId: json["merchantPackageId"],
+        merchantListingType: _stringFromJson(json["merchantListingType"]),
+        isOfficialTsdcMerchant: _boolFromJson(json["isOfficialTsdcMerchant"]),
+        canRedeemTsdcSavings: _boolFromJson(json["canRedeemTsdcSavings"]),
+        externalUrl: _stringFromJson(json["externalUrl"]),
+        externalUrlLabel: _stringFromJson(json["externalUrlLabel"]),
         isPremium: json["isPremium"],
         packageExpirydate: json["packageExpirydate"],
         signerId: json["signerId"],
@@ -168,11 +183,33 @@ class Data {
         state: json["__state__"] == null
             ? null
             : States.fromJson(json["__state__"]),
-        discountAtHourOfDay: json["discountAtHourOfDay"].toDouble(),
+        discountAtHourOfDay: _doubleFromJson(json["discountAtHourOfDay"]),
         merchantImageInfo: json["__merchantImageInfo__"] == null
             ? null
             : MerchantImageInfo.fromJson(json["__merchantImageInfo__"]),
       );
+}
+
+double? _doubleFromJson(dynamic value) {
+  if (value == null) return null;
+  if (value is num) return value.toDouble();
+  return double.tryParse(value.toString());
+}
+
+bool? _boolFromJson(dynamic value) {
+  if (value == null) return null;
+  if (value is bool) return value;
+  final String normalized = value.toString().trim().toLowerCase();
+  if (normalized == 'true' || normalized == '1') return true;
+  if (normalized == 'false' || normalized == '0') return false;
+  return null;
+}
+
+String? _stringFromJson(dynamic value) {
+  if (value == null) return null;
+  final String stringValue = value.toString().trim();
+  if (stringValue.isEmpty || stringValue.toLowerCase() == 'null') return null;
+  return stringValue;
 }
 
 class Country {
