@@ -74,8 +74,8 @@ class _CarouselWidgetState extends State<CarouselWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final double sliderHeight = widget.heroMode ? 292.h : 180.h;
     final double sliderWidth = MediaQuery.of(context).size.width;
+    final double sliderHeight = widget.heroMode ? sliderWidth / 1.5 : 180.h;
     final BorderRadius imageRadius =
         BorderRadius.circular(widget.heroMode ? 0 : 5.0);
 

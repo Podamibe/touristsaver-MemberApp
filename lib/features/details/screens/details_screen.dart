@@ -229,7 +229,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                       : context.pop();
                                 },
                               ),
-                              SizedBox(height: 18.h),
+                              SizedBox(height: 10.h),
                               detailPage(merchantDetail),
                             ],
                           ),
@@ -648,11 +648,21 @@ class _DetailsScreenState extends State<DetailsScreen> {
           );
   }
 
+  String? _memberDiscountValue(Data? merchant) {
+    String? formatDiscount(double? value) {
+      if (value == null || value <= 0) return null;
+      return removeTrailingZero(value.toString());
+    }
+
+    return formatDiscount(merchant?.discountAtHourOfDay) ??
+        formatDiscount(merchant?.maxDiscount);
+  }
+
   Widget _memberOfferCard(MerchantDetailResModel merchantDetail) {
-    final String discount = removeTrailingZero(
-      merchantDetail.data?.discountAtHourOfDay.toString() ??
-          S.of(context).noDiscount,
-    );
+    final String? discount = _memberDiscountValue(merchantDetail.data);
+    final String primaryCtaLabel = discount == null
+        ? 'Claim Member Discount'
+        : 'Claim $discount% Discount';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
@@ -720,28 +730,11 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 _favoriteButton(),
               ],
             ),
-            SizedBox(height: 15.h),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 9.h),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF4F8FF),
-                borderRadius: BorderRadius.circular(14.r),
-                border: Border.all(color: _borderColor),
-              ),
-              child: Text(
-                'Up to $discount% off',
-                style: TextStyle(
-                  color: _primaryBlue,
-                  fontSize: 23.sp,
-                  fontWeight: FontWeight.w900,
-                  fontFamily: 'Sans',
-                ),
-              ),
-            ),
             if (AppVariables.accessToken != null) ...[
-              SizedBox(height: 16.h),
+              SizedBox(height: 14.h),
               _primaryGradientButton(
-                label: S.of(context).pay,
+                label: primaryCtaLabel,
+                subtitle: 'when paying your bill',
                 onTap: () {
                   context.pushNamed(
                     'pay',
@@ -750,7 +743,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 },
               ),
             ],
-            SizedBox(height: 10.h),
+            SizedBox(height: 8.h),
             Row(
               children: [
                 Expanded(
@@ -894,6 +887,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
   Widget _primaryGradientButton({
     required String label,
     required VoidCallback onTap,
+    String? subtitle,
   }) {
     return Material(
       color: Colors.transparent,
@@ -901,7 +895,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
         borderRadius: BorderRadius.circular(16.r),
         onTap: onTap,
         child: Ink(
-          height: 50.h,
+          height: subtitle == null ? 50.h : 58.h,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [_primaryBlue, _ctaCyan],
@@ -918,14 +912,37 @@ class _DetailsScreenState extends State<DetailsScreen> {
             ],
           ),
           child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w900,
-                fontFamily: 'Sans',
-              ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'Sans',
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  SizedBox(height: 2.h),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.82),
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Sans',
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ),
@@ -1176,7 +1193,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
             ? _memberOfferCard(merchantDetail)
             : _publicListingCard(merchantDetail),
 
-        SizedBox(height: 20.h),
+        SizedBox(height: 12.h),
 
         // Additional Information
         if (isOfficialListing) ...[
