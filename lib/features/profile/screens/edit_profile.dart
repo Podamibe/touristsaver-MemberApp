@@ -1,19 +1,15 @@
 import 'dart:async';
 
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:new_piiink/common/app_variables.dart';
 import 'package:new_piiink/common/widgets/custom_app_bar.dart';
-import 'package:new_piiink/common/widgets/custom_button.dart';
 import 'package:new_piiink/common/widgets/custom_loader.dart';
 import 'package:new_piiink/common/widgets/custom_snackbar.dart';
 import 'package:new_piiink/constants/pref.dart';
 import 'package:new_piiink/constants/read_sms_otp.dart';
 import 'package:new_piiink/common/widgets/error.dart';
-import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/constants/style.dart';
 import 'package:new_piiink/features/profile/services/dio_membership.dart';
 import 'package:new_piiink/features/profile/services/dio_profile.dart';
 import 'package:new_piiink/models/error_res.dart';
@@ -25,6 +21,11 @@ import 'package:new_piiink/models/response/user_detail_res.dart';
 import '../../../common/show_verify_email_bottom_sheet.dart';
 import 'package:new_piiink/generated/l10n.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+
+const Color _editProfileNavy = Color(0xFF111C44);
+const Color _editProfileMuted = Color(0xFF63708A);
+const Color _editProfileBorder = Color(0xFFE5EAF4);
+const Color _editProfileSurface = Color(0xFFF7F9FC);
 
 class EditProfile extends StatefulWidget {
   static const String routeName = '/edit-profile';
@@ -67,6 +68,43 @@ class _EditProfileState extends State<EditProfile> {
   }
 
   var isLoading = false;
+
+  InputDecoration _profileInputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(
+        color: _editProfileMuted,
+        fontWeight: FontWeight.w700,
+      ),
+      floatingLabelStyle: const TextStyle(
+        color: Color(0xFF0009FE),
+        fontWeight: FontWeight.w800,
+      ),
+      filled: true,
+      fillColor: _editProfileSurface,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: _editProfileBorder),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFF18C6FF), width: 1.4),
+      ),
+      disabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: _editProfileBorder),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFFE86F7F)),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFFE86F7F), width: 1.4),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -193,129 +231,163 @@ class _EditProfileState extends State<EditProfile> {
                   return Form(
                     key: editProfileKey,
                     child: Container(
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: 10.0, vertical: 10.0),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10.0, vertical: 20.0),
+                      margin: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                      padding: const EdgeInsets.all(18),
                       constraints:
                           const BoxConstraints(maxHeight: double.infinity),
                       decoration: BoxDecoration(
-                          color: GlobalColors.appWhiteBackgroundColor,
-                          borderRadius: BorderRadius.circular(5.0),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withValues(alpha: 0.2),
-                              blurRadius: 4,
-                              spreadRadius: 1,
-                              offset: const Offset(2, 2),
-                            )
-                          ]),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: _editProfileBorder),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
+                          )
+                        ],
+                      ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const SizedBox(height: 15),
+                          Text(
+                            S.of(context).editProfile,
+                            style: TextStyle(
+                              color: _editProfileNavy,
+                              fontSize: 22.sp,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Keep your TouristSaver membership details up to date.',
+                            style: TextStyle(
+                              color: _editProfileMuted,
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w600,
+                              height: 1.35,
+                            ),
+                          ),
+                          const SizedBox(height: 22),
 
                           // First Name
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width / 1.2,
-                            child: TextFormField(
-                              controller: firstNameController,
-                              cursorColor: GlobalColors.appColor,
-                              decoration: textInputDecoration2.copyWith(
-                                  labelText: S.of(context).firstName),
+                          TextFormField(
+                            controller: firstNameController,
+                            cursorColor: const Color(0xFF0009FE),
+                            style: const TextStyle(
+                              color: _editProfileNavy,
+                              fontWeight: FontWeight.w700,
                             ),
+                            decoration: _profileInputDecoration(
+                                S.of(context).firstName),
                           ),
 
                           const SizedBox(height: 15),
 
                           // Last Name
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width / 1.2,
-                            child: TextFormField(
-                              controller: lastNameController,
-                              cursorColor: GlobalColors.appColor,
-                              decoration: textInputDecoration2.copyWith(
-                                  labelText: S.of(context).lastName),
+                          TextFormField(
+                            controller: lastNameController,
+                            cursorColor: const Color(0xFF0009FE),
+                            style: const TextStyle(
+                              color: _editProfileNavy,
+                              fontWeight: FontWeight.w700,
                             ),
+                            decoration:
+                                _profileInputDecoration(S.of(context).lastName),
                           ),
                           const SizedBox(height: 15),
 
                           // Email
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width / 1.2,
-                            child: TextFormField(
-                              controller: emailController,
-                              style: locationStyle.copyWith(
-                                fontWeight: FontWeight.w500,
-                              ),
-                              decoration: textInputDecoration2.copyWith(
-                                labelText: S.of(context).email,
-                              ),
-                              enabled: isEmailVerified == true ? false : true,
+                          TextFormField(
+                            controller: emailController,
+                            style: TextStyle(
+                              color: isEmailVerified == true
+                                  ? _editProfileMuted
+                                  : _editProfileNavy,
+                              fontWeight: FontWeight.w700,
                             ),
+                            cursorColor: const Color(0xFF0009FE),
+                            decoration:
+                                _profileInputDecoration(S.of(context).email),
+                            enabled: isEmailVerified == true ? false : true,
                           ),
                           const SizedBox(height: 6),
                           if (isEmailVerified == false)
-                            SizedBox(
-                              width: MediaQuery.of(context).size.width / 1.2,
-                              child: Row(
-                                children: <Widget>[
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 15),
-                                    child: AutoSizeText(
-                                      S.of(context).emailNotVerified,
-                                      style: viewAllStyle.copyWith(
-                                          color: Colors.red, fontSize: 12.sp),
+                            Row(
+                              children: <Widget>[
+                                Expanded(
+                                  child: Text(
+                                    S.of(context).emailNotVerified,
+                                    style: TextStyle(
+                                      color: const Color(0xFFE86F7F),
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
-                                  InkWell(
-                                    onTap: () {
-                                      showVerifyEmailBottomSheet(context,
-                                          message: S
-                                              .of(context)
-                                              .sureVerifyYourEmail);
-                                    },
-                                    child: AutoSizeText(
+                                ),
+                                InkWell(
+                                  borderRadius: BorderRadius.circular(999),
+                                  onTap: () {
+                                    showVerifyEmailBottomSheet(context,
+                                        message:
+                                            S.of(context).sureVerifyYourEmail);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF0009FE)
+                                          .withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
                                       S.of(context).verifyNow,
-                                      style: viewAllStyle.copyWith(
-                                        color: GlobalColors.appColor1,
-                                        decoration: TextDecoration.underline,
+                                      style: TextStyle(
+                                        color: const Color(0xFF0009FE),
                                         fontSize: 12.sp,
+                                        fontWeight: FontWeight.w900,
                                       ),
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           const SizedBox(height: 15),
 
                           // Mobile Number
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               Container(
                                 height: 50,
                                 width: 80,
                                 decoration: BoxDecoration(
-                                  color: GlobalColors.paleGray,
-                                  borderRadius: BorderRadius.circular(5.0),
+                                  color: _editProfileSurface,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: _editProfileBorder),
                                 ),
                                 child: Center(
-                                  child: AutoSizeText(
+                                  child: Text(
                                     phoneNumberPrefix.toString(),
-                                    style: locationStyle.copyWith(
-                                      fontWeight: FontWeight.w500,
+                                    style: const TextStyle(
+                                      color: _editProfileNavy,
+                                      fontWeight: FontWeight.w800,
                                     ),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 5),
-                              SizedBox(
-                                width: MediaQuery.of(context).size.width / 1.7,
+                              const SizedBox(width: 10),
+                              Expanded(
                                 child: TextFormField(
                                   controller: mobileNumberController,
-                                  cursorColor: GlobalColors.appColor,
-                                  decoration: textInputDecoration2.copyWith(
-                                      labelText: S.of(context).mobileNumberA),
+                                  cursorColor: const Color(0xFF0009FE),
+                                  style: const TextStyle(
+                                    color: _editProfileNavy,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  decoration: _profileInputDecoration(
+                                      S.of(context).mobileNumberA),
                                   keyboardType: TextInputType.number,
                                 ),
                               ),
@@ -324,207 +396,186 @@ class _EditProfileState extends State<EditProfile> {
                           const SizedBox(height: 15),
 
                           // Postal Code
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width / 1.2,
-                            child: TextFormField(
-                              controller: postalCodeController,
-                              cursorColor: GlobalColors.appColor,
-                              decoration: textInputDecoration2.copyWith(
-                                labelText: S.of(context).postalZipCode,
-                              ),
+                          TextFormField(
+                            controller: postalCodeController,
+                            cursorColor: const Color(0xFF0009FE),
+                            style: const TextStyle(
+                              color: _editProfileNavy,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            decoration: _profileInputDecoration(
+                              S.of(context).postalZipCode,
                             ),
                           ),
                           const SizedBox(height: 30),
 
                           // Update
-                          isLoading == true
-                              ? const CustomButtonWithCircular()
-                              : CustomButton(
-                                  text: S.of(context).update,
-                                  onPressed: () async {
-                                    setState(() {
-                                      isLoading = true;
-                                    });
-                                    if (editProfileKey.currentState!
-                                        .validate()) {
-                                      if (firstNameController.text.isEmpty) {
-                                        GlobalSnackBar.valid(context,
-                                            S.of(context).pleaseFillFirstName);
-                                        setState(() {
-                                          isLoading = false;
-                                        });
-                                        return;
-                                      }
-                                      if (lastNameController.text.isEmpty) {
-                                        GlobalSnackBar.valid(context,
-                                            S.of(context).pleaseFillLastName);
-                                        setState(() {
-                                          isLoading = false;
-                                        });
-                                        return;
-                                      }
-                                      if (!reg.hasMatch(emailController.text) ||
-                                          emailController.text.isEmpty) {
-                                        GlobalSnackBar.valid(
-                                            context,
-                                            S
-                                                .of(context)
-                                                .pleaseFillTheCorrectEmail);
-                                        setState(() {
-                                          isLoading = false;
-                                        });
-                                        return;
-                                      }
-                                      if (postalCodeController.text.isEmpty ||
-                                          postalCodeController.text.length <
-                                              4) {
-                                        GlobalSnackBar.valid(
-                                            context,
-                                            S
-                                                .of(context)
-                                                .pleaseFillPostalCodeWith4Digits);
-                                        setState(() {
-                                          isLoading = false;
-                                        });
-                                        return;
-                                      }
+                          _EditProfileGradientButton(
+                            text: S.of(context).update,
+                            isLoading: isLoading,
+                            onPressed: () async {
+                              setState(() {
+                                isLoading = true;
+                              });
+                              if (editProfileKey.currentState!.validate()) {
+                                if (firstNameController.text.isEmpty) {
+                                  GlobalSnackBar.valid(context,
+                                      S.of(context).pleaseFillFirstName);
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+                                  return;
+                                }
+                                if (lastNameController.text.isEmpty) {
+                                  GlobalSnackBar.valid(context,
+                                      S.of(context).pleaseFillLastName);
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+                                  return;
+                                }
+                                if (!reg.hasMatch(emailController.text) ||
+                                    emailController.text.isEmpty) {
+                                  GlobalSnackBar.valid(context,
+                                      S.of(context).pleaseFillTheCorrectEmail);
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+                                  return;
+                                }
+                                if (postalCodeController.text.isEmpty ||
+                                    postalCodeController.text.length < 4) {
+                                  GlobalSnackBar.valid(
+                                      context,
+                                      S
+                                          .of(context)
+                                          .pleaseFillPostalCodeWith4Digits);
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+                                  return;
+                                }
 
-                                      if (mobileNumberController.text.isEmpty) {
-                                        GlobalSnackBar.valid(
-                                            context,
-                                            S
-                                                .of(context)
-                                                .pleaseFillThePhoneNumber);
-                                        setState(() {
-                                          isLoading = false;
-                                        });
-                                        return;
-                                      }
+                                if (mobileNumberController.text.isEmpty) {
+                                  GlobalSnackBar.valid(context,
+                                      S.of(context).pleaseFillThePhoneNumber);
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+                                  return;
+                                }
 
-                                      var res = isMobNumChanged ==
-                                              mobileNumberController.text
-                                          ? await DioProfile().editProfile(
-                                              editProfileReqModel:
-                                                  EditProfileReqModel(
-                                                firstname: firstNameController
-                                                    .text
-                                                    .trim(),
-                                                lastname: lastNameController
-                                                    .text
-                                                    .trim(),
-                                                postalCode: postalCodeController
-                                                    .text
-                                                    .trim(),
-                                                phoneNumber:
-                                                    mobileNumberController.text
-                                                        .trim(),
-                                                email:
-                                                    emailController.text.trim(),
-                                                phoneNumberPrefix:
-                                                    phoneNumberPrefix
-                                                        .toString(),
-                                                phoneVerifiedBy:
-                                                    phoneVerifiedBy!,
-                                              ),
-                                            )
-                                          : await DioProfile()
-                                              .editProfileNumber(
-                                              editProfileReqModelnumber:
-                                                  EditProfileReqModelNumber(
-                                                firstname: firstNameController
-                                                    .text
-                                                    .trim(),
-                                                lastname: lastNameController
-                                                    .text
-                                                    .trim(),
-                                                postalCode: postalCodeController
-                                                    .text
-                                                    .trim(),
-                                                phoneNumber:
-                                                    mobileNumberController.text
-                                                        .trim(),
-                                                email:
-                                                    emailController.text.trim(),
-                                                phoneNumberPrefix:
-                                                    phoneNumberPrefix
-                                                        .toString(),
-                                                phoneVerifiedBy:
-                                                    phoneVerifiedBy!,
-                                                appSign: getAsign,
-                                              ),
-                                            );
+                                var res = isMobNumChanged ==
+                                        mobileNumberController.text
+                                    ? await DioProfile().editProfile(
+                                        editProfileReqModel:
+                                            EditProfileReqModel(
+                                          firstname:
+                                              firstNameController.text.trim(),
+                                          lastname:
+                                              lastNameController.text.trim(),
+                                          postalCode:
+                                              postalCodeController.text.trim(),
+                                          phoneNumber: mobileNumberController
+                                              .text
+                                              .trim(),
+                                          email: emailController.text.trim(),
+                                          phoneNumberPrefix:
+                                              phoneNumberPrefix.toString(),
+                                          phoneVerifiedBy: phoneVerifiedBy!,
+                                        ),
+                                      )
+                                    : await DioProfile().editProfileNumber(
+                                        editProfileReqModelnumber:
+                                            EditProfileReqModelNumber(
+                                          firstname:
+                                              firstNameController.text.trim(),
+                                          lastname:
+                                              lastNameController.text.trim(),
+                                          postalCode:
+                                              postalCodeController.text.trim(),
+                                          phoneNumber: mobileNumberController
+                                              .text
+                                              .trim(),
+                                          email: emailController.text.trim(),
+                                          phoneNumberPrefix:
+                                              phoneNumberPrefix.toString(),
+                                          phoneVerifiedBy: phoneVerifiedBy!,
+                                          appSign: getAsign,
+                                        ),
+                                      );
 
-                                      if (!mounted) return;
-                                      if (res is EditProfileResModel) {
-                                        //checking the status
-                                        if (res.status == "update success") {
-                                          if (res.smsotpRequired == true) {
-                                            setState(() {
-                                              isLoading = false;
-                                            });
-                                            context.pushNamed('edit-number',
-                                                extra: {
-                                                  'mobileNumber':
-                                                      mobileNumberController
-                                                          .text
-                                                          .trim(),
-                                                  'email': emailController.text
-                                                      .trim(),
-                                                  'countryId': countryId!,
-                                                  'phoneNumberPrefix':
-                                                      phoneNumberPrefix
-                                                          .toString()
-                                                });
-                                          } else {
-                                            // Navigator.pop(context);
-                                            context.pushReplacementNamed(
-                                                'edit-profile');
-                                            setState(() {});
-                                            GlobalSnackBar.showSuccess(
-                                                context,
-                                                S
-                                                    .of(context)
-                                                    .profileUpdatedSuccessfully);
-                                          }
-                                        }
-                                      } else if (res is ErrorResModel) {
-                                        GlobalSnackBar.showError(
-                                            context,
-                                            res.message ??
-                                                S.of(context).serverError);
-                                        setState(() {
-                                          isLoading = false;
-                                        });
-                                        return;
-                                      } else {
-                                        GlobalSnackBar.showError(
-                                            context,
-                                            S
-                                                .of(context)
-                                                .errorInEditingProfile);
-                                        setState(() {
-                                          isLoading = false;
-                                        });
-                                        return;
-                                      }
-
-                                      // }
+                                if (!mounted) return;
+                                if (res is EditProfileResModel) {
+                                  //checking the status
+                                  if (res.status == "update success") {
+                                    if (res.smsotpRequired == true) {
+                                      setState(() {
+                                        isLoading = false;
+                                      });
+                                      context.pushNamed('edit-number', extra: {
+                                        'mobileNumber':
+                                            mobileNumberController.text.trim(),
+                                        'email': emailController.text.trim(),
+                                        'countryId': countryId!,
+                                        'phoneNumberPrefix':
+                                            phoneNumberPrefix.toString()
+                                      });
+                                    } else {
+                                      // Navigator.pop(context);
+                                      context
+                                          .pushReplacementNamed('edit-profile');
+                                      setState(() {});
+                                      GlobalSnackBar.showSuccess(
+                                          context,
+                                          S
+                                              .of(context)
+                                              .profileUpdatedSuccessfully);
                                     }
-                                  },
-                                ),
+                                  }
+                                } else if (res is ErrorResModel) {
+                                  GlobalSnackBar.showError(context,
+                                      res.message ?? S.of(context).serverError);
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+                                  return;
+                                } else {
+                                  GlobalSnackBar.showError(context,
+                                      S.of(context).errorInEditingProfile);
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+                                  return;
+                                }
+
+                                // }
+                              }
+                            },
+                          ),
                           const SizedBox(height: 20),
 
-// Delete Account Button
-                          TextButton(
-                            onPressed: () => _showDeleteConfirmation(context),
-                            child: Text(
-                              S
-                                  .of(context)
-                                  .deleteAccount, // Ensure this key exists in your ARB/l10n files
-                              style: viewAllStyle.copyWith(
-                                color: Colors.red,
-                                fontWeight: FontWeight.bold,
-                                decoration: TextDecoration.underline,
+                          Center(
+                            child: TextButton.icon(
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(0xFFE86F7F),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              onPressed: () => _showDeleteConfirmation(context),
+                              icon: const Icon(
+                                Icons.delete_outline_rounded,
+                                size: 17,
+                              ),
+                              label: Text(
+                                S.of(context).deleteAccount,
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                             ),
                           ),
@@ -534,6 +585,69 @@ class _EditProfileState extends State<EditProfile> {
                   );
                 }
               }),
+        ),
+      ),
+    );
+  }
+}
+
+class _EditProfileGradientButton extends StatelessWidget {
+  const _EditProfileGradientButton({
+    required this.text,
+    required this.onPressed,
+    this.isLoading = false,
+  });
+
+  final String text;
+  final VoidCallback onPressed;
+  final bool isLoading;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: isLoading ? null : onPressed,
+        child: Ink(
+          height: 52,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [
+                Color(0xFF0009FE),
+                Color(0xFF18C6FF),
+              ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0009FE).withValues(alpha: 0.18),
+                blurRadius: 18,
+                offset: const Offset(0, 9),
+              ),
+            ],
+          ),
+          child: Center(
+            child: isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(
+                    text,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+          ),
         ),
       ),
     );

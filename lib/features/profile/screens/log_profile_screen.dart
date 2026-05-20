@@ -1,7 +1,6 @@
 import 'dart:developer';
 
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -29,7 +28,6 @@ import 'package:new_piiink/models/response/piiink_info_res.dart';
 import 'package:new_piiink/models/response/user_delete_res.dart';
 import 'package:new_piiink/models/response/user_detail_res.dart';
 import 'package:new_piiink/splash_screen.dart';
-import 'package:outline_gradient_button/outline_gradient_button.dart';
 
 import '../../../common/app_variables.dart';
 import '../../../common/services/device_info.dart';
@@ -39,6 +37,36 @@ import '../../../constants/url_end_point.dart';
 import '../../connectivity/screens/connectivity.dart';
 
 import 'package:new_piiink/generated/l10n.dart';
+
+const Color _profileNavy = Color(0xFF111C44);
+const Color _profileMuted = Color(0xFF63708A);
+const Color _profileBorder = Color(0xFFE5EAF4);
+
+class _ProfileActionItem {
+  const _ProfileActionItem({
+    required this.title,
+    required this.icon,
+    this.subtitle,
+    this.onTap,
+  });
+
+  final String title;
+  final String? subtitle;
+  final IconData icon;
+  final VoidCallback? onTap;
+}
+
+class _TravelPreferenceItem {
+  const _TravelPreferenceItem({
+    required this.title,
+    required this.value,
+    required this.icon,
+  });
+
+  final String title;
+  final String value;
+  final IconData icon;
+}
 
 class LogProfileScreen extends StatefulWidget {
   static const String routeName = '/log-profile';
@@ -61,11 +89,11 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
       TextEditingController();
   dynamic showCharity = false;
 
-  List<String> additionalList = [];
-
   bool? hideRecommendOption;
   bool? hideRemoveAccountButton;
-  String? hideRewardsOption;
+  bool _isBiometricsSupported = true;
+  String? _selectedStayLocation;
+  String? _selectedCountryStateLocation;
 
   bool isHidden = true;
   bool isHidden1 = true;
@@ -77,10 +105,6 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
     setState(() {
       hideRecommendOption = piiinkInfoResModel?.data?.hideReferredMerchantInApp;
       hideRemoveAccountButton = piiinkInfoResModel?.data?.hideRemoveAccount;
-      if (hideRecommendOption == true) {
-        additionalList.remove(S.of(context).recommendNewMerchant);
-        // additionalList.insert(3, recommend);
-      }
     });
   }
 
@@ -89,44 +113,180 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
     super.initState();
     fetchShowCharity();
     getPiiinkInfo();
+    _loadStayLocationPrefs();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      buildAdditionalList();
-      // hideRewardsOption = await Pref().readData(key: issuerType);
-
       localAuth.isDeviceSupported().then((bool isSupported) {
-        if (!isSupported) {
-          additionalList.remove(S.of(context).biometrics);
-        }
+        if (!mounted) return;
+        setState(() {
+          _isBiometricsSupported = isSupported;
+        });
       });
-      // log(hideRewardsOption.toString());
-      // if (hideRewardsOption != 'company') {
-      //   if (!mounted) return;
-      //   additionalList.remove(S.of(context).rewards);
-      // }
     });
   }
 
-  buildAdditionalList() {
+  Future<void> _loadStayLocationPrefs() async {
+    final String? stayLocation =
+        await Pref().readData(key: userChosenLocationName);
+    final String? countryStateLocation =
+        await Pref().readData(key: userChosenCountryStateName);
+    if (!mounted) return;
     setState(() {
-      // ✅ CRITICAL: Clear the list so you don't get duplicates
-      additionalList.clear();
-
-      if (showCharity is Map && showCharity['show'] == true) {
-        additionalList.add(S.of(context).charity);
-      }
-
-      additionalList.addAll([
-        S.of(context).changeCountry,
-        S.of(context).changePassword,
-        S.of(context).editProfile,
-        S.of(context).recommendNewMerchant,
-        S.of(context).referAFriend,
-        S.of(context).biometrics,
-        S.of(context).about,
-        S.of(context).termsConditions,
-      ]);
+      _selectedStayLocation = _cleanPrefValue(stayLocation);
+      _selectedCountryStateLocation = _cleanPrefValue(countryStateLocation);
     });
+  }
+
+  String? _cleanPrefValue(String? value) {
+    final String cleanValue = value?.trim() ?? '';
+    if (cleanValue.isEmpty || cleanValue == 'null' || cleanValue == '0') {
+      return null;
+    }
+    return cleanValue;
+  }
+
+  String? _firstNotEmpty(List<String?> values) {
+    for (final String? value in values) {
+      final String cleanValue = value?.trim() ?? '';
+      if (cleanValue.isNotEmpty && cleanValue != 'null') {
+        return cleanValue;
+      }
+    }
+    return null;
+  }
+
+  String _displayValue(String? value) {
+    return _firstNotEmpty([value]) ?? 'Not set';
+  }
+
+  List<_ProfileActionItem> _helpfulActions() {
+    final List<_ProfileActionItem> actions = [
+      _ProfileActionItem(
+        title: S.of(context).changeCountry,
+        subtitle: 'Update your country or stay location',
+        icon: Icons.public_rounded,
+        onTap: () => context.pushNamed('change-country'),
+      ),
+      _ProfileActionItem(
+        title: S.of(context).editProfile,
+        subtitle: 'Name, email and phone details',
+        icon: Icons.edit_outlined,
+        onTap: () => context.pushNamed('edit-profile'),
+      ),
+      _ProfileActionItem(
+        title: S.of(context).changePassword,
+        subtitle: 'Keep your account secure',
+        icon: Icons.lock_outline_rounded,
+        onTap: changePopUpPassword,
+      ),
+    ];
+
+    if (hideRecommendOption != true) {
+      actions.add(
+        _ProfileActionItem(
+          title: S.of(context).recommendNewMerchant,
+          subtitle: 'Suggest a place for TouristSaver',
+          icon: Icons.add_business_outlined,
+          onTap: () => context.pushNamed('recommend'),
+        ),
+      );
+    }
+
+    actions.addAll([
+      _ProfileActionItem(
+        title: S.of(context).referAFriend,
+        subtitle: 'Share TouristSaver with someone',
+        icon: Icons.group_add_outlined,
+        onTap: () => context.pushNamed('memberReferral'),
+      ),
+      if (_isBiometricsSupported)
+        _ProfileActionItem(
+          title: S.of(context).biometrics,
+          subtitle: 'Manage biometric sign-in',
+          icon: Icons.fingerprint_rounded,
+          onTap: () => context.pushNamed('settings-screen'),
+        ),
+      _ProfileActionItem(
+        title: S.of(context).termsConditions,
+        subtitle: 'Membership terms and conditions',
+        icon: Icons.description_outlined,
+        onTap: () => context.pushNamed('terms-condition'),
+      ),
+      _ProfileActionItem(
+        title: S.of(context).about,
+        subtitle: 'About TouristSaver',
+        icon: Icons.info_outline_rounded,
+        onTap: () => context.pushNamed('about-screen'),
+      ),
+    ]);
+
+    if (showCharity is Map && showCharity['show'] == true) {
+      actions.insert(
+        0,
+        _ProfileActionItem(
+          title: S.of(context).charity,
+          subtitle: 'Choose or view supported charities',
+          icon: Icons.volunteer_activism_outlined,
+          onTap: () => context.pushNamed('charity-list'),
+        ),
+      );
+    }
+    return actions;
+  }
+
+  List<_ProfileActionItem> _savingsActions() {
+    return const [
+      _ProfileActionItem(
+        title: 'Favourites',
+        subtitle: 'Coming soon',
+        icon: Icons.favorite_border_rounded,
+      ),
+      _ProfileActionItem(
+        title: 'Saved offers',
+        subtitle: 'Coming soon',
+        icon: Icons.bookmark_border_rounded,
+      ),
+      _ProfileActionItem(
+        title: 'Recently viewed',
+        subtitle: 'Coming soon',
+        icon: Icons.history_rounded,
+      ),
+      _ProfileActionItem(
+        title: 'Claimed savings',
+        subtitle: 'Coming soon',
+        icon: Icons.savings_outlined,
+      ),
+    ];
+  }
+
+  List<_TravelPreferenceItem> _travelPreferences() {
+    return const [
+      _TravelPreferenceItem(
+        title: 'Walking comfort',
+        value: '1 km',
+        icon: Icons.directions_walk_rounded,
+      ),
+      _TravelPreferenceItem(
+        title: 'Breakfast/Cafe walk',
+        value: '500 m',
+        icon: Icons.local_cafe_outlined,
+      ),
+      _TravelPreferenceItem(
+        title: 'Places radius',
+        value: '10 km',
+        icon: Icons.place_outlined,
+      ),
+      _TravelPreferenceItem(
+        title: 'Great Deals radius',
+        value: '5 km',
+        icon: Icons.local_offer_outlined,
+      ),
+      _TravelPreferenceItem(
+        title: 'Transport',
+        value: 'Walk / Public transport / Uber-Taxi / Own car / Bike-Scooter',
+        icon: Icons.route_outlined,
+      ),
+    ];
   }
 
   Future<void> fetchShowCharity() async {
@@ -138,7 +298,6 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
         setState(() {
           showCharity = res['data'];
         });
-        buildAdditionalList();
       }
     } catch (e) {
       debugPrint("Error processing banner: $e");
@@ -160,6 +319,7 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
       onRefresh: () async {
         await Future.delayed(const Duration(seconds: 2));
         getPiiinkInfo();
+        _loadStayLocationPrefs();
       },
       child: Scaffold(
         appBar: PreferredSize(
@@ -203,8 +363,6 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
                                     ? memberShipBox()
                                     : const SizedBox(),
 
-                        profileScreenList(),
-
                         if (hideRemoveAccountButton == false)
                           Column(
                             children: [
@@ -236,209 +394,401 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
 
   //Membership
   memberShipBox() {
-    return Container(
-      width: MediaQuery.of(context).size.width / 1.05,
-      // height: MediaQuery.of(context).size.height / 1.4,
-      padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 10.0),
-      margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
-      decoration: BoxDecoration(
-          color: GlobalColors.appWhiteBackgroundColor,
-          borderRadius: BorderRadius.circular(5.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.2),
-              blurRadius: 4,
-              spreadRadius: 1,
-              offset: const Offset(2, 2),
-            )
-          ]),
-      //User Profile
-      child: Container(
-        width: MediaQuery.of(context).size.width / 1.15,
-        // height: MediaQuery.of(context).size.height / 2.9,
-        // height: MediaQuery.of(context).size.height / 4.0,
-        decoration: const BoxDecoration(
-          color: GlobalColors.paleGray,
-        ),
-        child: OutlineGradientButton(
-          strokeWidth: 3,
-          radius: const Radius.circular(5.0),
-          gradient: const LinearGradient(
-            colors: [GlobalColors.appColor, GlobalColors.appColor1],
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-          ),
-          child: BlocProvider(
-            lazy: false,
-            create: (context) =>
-                UserProfileBloc(_dioMembership)..add(LoadUserProfileEvent()),
-            child: BlocBuilder<UserProfileBloc, UserProfileState>(
-                builder: (context, state) {
-              if (state is UserProfileLoadingState) {
-                return const CustomAllLoader1();
-              } else if (state is UserProfileLoadedState) {
-                UserProfileResModel userProfile = state.userProfile;
-
-                return profileSection(userProfile);
-              } else if (state is UserProfileErrorState) {
-                return memError();
-              } else {
-                return const SizedBox();
-              }
-            }),
-          ),
-        ),
+    return BlocProvider(
+      lazy: false,
+      create: (context) =>
+          UserProfileBloc(_dioMembership)..add(LoadUserProfileEvent()),
+      child: BlocBuilder<UserProfileBloc, UserProfileState>(
+        builder: (context, state) {
+          if (state is UserProfileLoadingState) {
+            return Padding(
+              padding: EdgeInsets.symmetric(vertical: 42.h),
+              child: const Center(child: CustomAllLoader1()),
+            );
+          } else if (state is UserProfileLoadedState) {
+            return profileSection(state.userProfile);
+          } else if (state is UserProfileErrorState) {
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: _ProfileCard(child: memError()),
+            );
+          } else {
+            return const SizedBox();
+          }
+        },
       ),
     );
   }
 
   // Profile Section
   profileSection(UserProfileResModel userProfile) {
+    final results = userProfile.data?.results;
+    final String memberName = _firstNotEmpty([
+          '${results?.firstname ?? ''} ${results?.lastname ?? ''}'.trim(),
+          results?.email,
+        ]) ??
+        'TouristSaver Member';
+    final String profileLocation = _firstNotEmpty([
+          results?.state?.stateName,
+          results?.country?.countryName,
+        ]) ??
+        'Not set';
+    final String stayLocation = _firstNotEmpty([
+          _selectedStayLocation,
+          _selectedCountryStateLocation,
+        ]) ??
+        'Not selected';
+    final bool isEmailVerified = results?.isEmailVerified == true;
+
     return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 5),
-
-        // Country
-        Row(
-          children: [
-            SizedBox(
-              width: 50,
-              child: Image.asset(
-                "assets/images/globe.png",
-                height: 30,
-              ),
-            ),
-            const SizedBox(width: 30),
-            Expanded(
-              child: AutoSizeText(
-                userProfile.data!.results!.country!.countryName!,
-                style: textStyle15.copyWith(fontSize: 18.sp),
-              ),
-            ),
-          ],
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+          child: _memberIdentityCard(
+            name: memberName,
+            stayLocation: stayLocation,
+            profileLocation: profileLocation,
+            memberCode: _displayValue(results?.uniqueMemberCode),
+            issuerCode: _displayValue(userProfile.data?.issuerCode),
+            email: _displayValue(results?.email),
+            isEmailVerified: isEmailVerified,
+          ),
         ),
-
-        const SizedBox(height: 15),
-
-        // Card Number
-        Row(
-          children: [
-            SizedBox(
-              width: 50,
-              child: Image.asset(
-                "assets/images/credit-card.png",
-                height: 23,
-              ),
-            ),
-            const SizedBox(width: 30),
-            Expanded(
-              child: Text(
-                userProfile.data!.results!.uniqueMemberCode ??
-                    S.of(context).noMemberCode,
-                style: textStyle15.copyWith(fontSize: 18.sp),
-              ),
-            ),
-          ],
+        _ProfileSection(
+          title: 'My Travel Preferences',
+          subtitle: 'Phase 1 defaults for nearby discovery',
+          child: Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: _travelPreferences().map(_travelPreferenceTile).toList(),
+          ),
         ),
-
-        const SizedBox(height: 15),
-
-        // User Name
-        Row(
-          children: [
-            SizedBox(
-              width: 50,
-              child: Image.asset(
-                "assets/images/profile.png",
-                height: 30,
-              ),
-            ),
-            const SizedBox(width: 30),
-            Expanded(
-              child: AutoSizeText(
-                '${userProfile.data!.results!.firstname!} ${userProfile.data!.results!.lastname!}',
-                style: textStyle15.copyWith(fontSize: 18.sp),
-              ),
-            ),
-          ],
+        _ProfileSection(
+          title: 'My Savings / Activity',
+          subtitle: 'More personal history will appear here later',
+          child: Column(
+            children: _savingsActions()
+                .map((item) => _actionTile(item, isComingSoon: true))
+                .toList(),
+          ),
         ),
-        const SizedBox(height: 15),
+        _ProfileSection(
+          title: 'Helpful Actions',
+          child: Column(
+            children: _helpfulActions().map(_actionTile).toList(),
+          ),
+        ),
+      ],
+    );
+  }
 
-        // Mobile Number
-        Row(
-          children: [
-            SizedBox(
-              width: 50,
-              child: Image.asset(
-                "assets/images/mobile.png",
-                height: 30,
-              ),
-            ),
-            const SizedBox(width: 30),
-            Expanded(
-              child: AutoSizeText(
-                '${userProfile.data!.results!.phoneNumberPrefix} ${userProfile.data!.results!.phoneNumber!}',
-                style: textStyle15.copyWith(fontSize: 18.sp),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 15),
-
-        // Email
-        Row(
-          children: [
-            SizedBox(
-              width: 50,
-              child: Image.asset("assets/images/mail.png", height: 25),
-            ),
-            const SizedBox(width: 30),
-            Expanded(
-              child: AutoSizeText(
-                userProfile.data!.results!.email!,
-                maxLines: 1,
-                style: textStyle15.copyWith(fontSize: 18.sp),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        // Issuer Code
-        Row(
-          children: [
-            Expanded(
-              child: Center(
-                child: AutoSizeText(
-                  "Issuer Code : ${userProfile.data!.issuerCode}",
-                  maxLines: 1,
-                  style: textStyle15.copyWith(fontSize: 18.sp),
-                ),
-              ),
-            ),
-          ],
-        ),
-        if (userProfile.data?.results?.isEmailVerified == false)
-          Padding(
-            padding: const EdgeInsets.only(left: 80, top: 10),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: InkWell(
-                onTap: () {
-                  showVerifyEmailBottomSheet(context);
-                },
-                child: AutoSizeText(
-                  S.of(context).verifyEmail,
-                  style: notiHeaderTextStyle.copyWith(
-                    fontSize: 16.sp,
-                    decoration: TextDecoration.underline,
+  Widget _memberIdentityCard({
+    required String name,
+    required String stayLocation,
+    required String profileLocation,
+    required String memberCode,
+    required String issuerCode,
+    required String email,
+    required bool isEmailVerified,
+  }) {
+    return _ProfileCard(
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0xFFF146EA),
+                      Color(0xFF0009FE),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
                 ),
+                child: const Icon(
+                  Icons.card_membership_rounded,
+                  color: Colors.white,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: _profileNavy,
+                        fontSize: 22.sp,
+                        fontWeight: FontWeight.w900,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    _statusPill(
+                      isEmailVerified ? 'Email verified' : 'Email not verified',
+                      isEmailVerified
+                          ? Icons.verified_rounded
+                          : Icons.mark_email_unread_outlined,
+                      isEmailVerified
+                          ? const Color(0xFF0F9F6E)
+                          : const Color(0xFFF146EA),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _identityRow(
+            icon: Icons.near_me_outlined,
+            label: 'Stay location',
+            value: stayLocation,
+          ),
+          _identityRow(
+            icon: Icons.public_rounded,
+            label: 'Profile country/state',
+            value: profileLocation,
+          ),
+          _identityRow(
+            icon: Icons.confirmation_number_outlined,
+            label: 'Member code',
+            value: memberCode,
+          ),
+          _identityRow(
+            icon: Icons.badge_outlined,
+            label: 'Issuer code',
+            value: issuerCode,
+          ),
+          _identityRow(
+            icon: Icons.email_outlined,
+            label: 'Email',
+            value: email,
+          ),
+          if (!isEmailVerified) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF0009FE),
+                  padding: EdgeInsets.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                onPressed: () {
+                  showVerifyEmailBottomSheet(context);
+                },
+                icon: const Icon(Icons.email_outlined, size: 18),
+                label: Text(
+                  S.of(context).verifyEmail,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _identityRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: const Color(0xFF0009FE), size: 19),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: _profileMuted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: _profileNavy,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statusPill(String label, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 15),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ),
-        const SizedBox(height: 5),
-      ],
+        ],
+      ),
+    );
+  }
+
+  Widget _travelPreferenceTile(_TravelPreferenceItem item) {
+    final double width = (MediaQuery.of(context).size.width - 58) / 2;
+    return SizedBox(
+      width: item.title == 'Transport' ? double.infinity : width,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF7F9FC),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE5EAF4)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(item.icon, color: const Color(0xFF0009FE), size: 20),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    style: const TextStyle(
+                      color: _profileMuted,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    item.value,
+                    style: const TextStyle(
+                      color: _profileNavy,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      height: 1.25,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _actionTile(
+    _ProfileActionItem item, {
+    bool isComingSoon = false,
+  }) {
+    final bool enabled = item.onTap != null && !isComingSoon;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: enabled ? item.onTap : null,
+        child: Container(
+          padding: const EdgeInsets.all(13),
+          decoration: BoxDecoration(
+            color: enabled ? Colors.white : const Color(0xFFF7F9FC),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE5EAF4)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0009FE).withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  item.icon,
+                  color: enabled ? const Color(0xFF0009FE) : _profileMuted,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title,
+                      style: TextStyle(
+                        color: enabled ? _profileNavy : _profileMuted,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    if (item.subtitle != null) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        item.subtitle!,
+                        style: const TextStyle(
+                          color: _profileMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Icon(
+                enabled ? Icons.chevron_right_rounded : Icons.lock_clock,
+                color: _profileMuted,
+                size: 22,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -464,78 +814,6 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
           style: topicStyle,
         )
       ],
-    );
-  }
-
-  // Profile Screen List
-  profileScreenList() {
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 10.0),
-      separatorBuilder: (context, index) {
-        return const SizedBox(height: 10);
-      },
-      itemCount: additionalList.length,
-      itemBuilder: (context, index) {
-        return InkWell(
-          borderRadius: BorderRadius.circular(5.0),
-          onTap: () {
-            additionalList[index] == S.of(context).charity
-                ? context.pushNamed('charity-list')
-                : additionalList[index] == S.of(context).changeCountry
-                    ? context.pushNamed('change-country')
-                    : additionalList[index] == S.of(context).changePassword
-                        ? changePopUpPassword()
-                        : additionalList[index] == S.of(context).editProfile
-                            ? context.pushNamed('edit-profile')
-                            :
-                            //  additionalList[index] == S.of(context).rewards
-                            //     ? context.pushNamed('rewards-screen')
-                            //     :
-                            additionalList[index] ==
-                                    S.of(context).recommendNewMerchant
-                                ? context.pushNamed('recommend')
-                                : additionalList[index] ==
-                                        S.of(context).referAFriend
-                                    ? context.pushNamed('memberReferral')
-                                    : additionalList[index] ==
-                                            S.of(context).biometrics
-                                        ? context.pushNamed('settings-screen')
-                                        : additionalList[index] ==
-                                                S.of(context).termsConditions
-                                            ? context
-                                                .pushNamed('terms-condition')
-                                            : context.pushNamed('about-screen');
-          },
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width,
-            height: 55,
-            child: ListTile(
-              tileColor: GlobalColors.appWhiteBackgroundColor,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(5.0)),
-              title: Padding(
-                padding: const EdgeInsets.only(top: 1.0),
-                // Text Name
-                child: AutoSizeText(
-                  additionalList[index],
-                  style: profileListStyle,
-                ),
-              ),
-              // Arrow
-              trailing: Padding(
-                padding: const EdgeInsets.only(top: 1.0),
-                child: Icon(
-                  Icons.arrow_forward_ios,
-                  size: 25,
-                  color: GlobalColors.gray.withValues(alpha: 0.5),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -789,10 +1067,11 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
 
 // Logout Button
   logOut() {
-    return Center(
-      child: CustomButton(
-        text: S.of(context).logOut,
-        onPressed: () async {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () async {
           return showDialog(
             context: context,
             builder: (BuildContext dialogContext) {
@@ -824,15 +1103,14 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
                                 // This lets the app continue instantly while the server thinks.
                                 Future.delayed(Duration.zero, () async {
                                   try {
-                                    String? deviceId;
+                                    String deviceId;
                                     if (AppVariables.deviceId.isNotEmpty) {
                                       deviceId = AppVariables.deviceId;
                                     } else {
                                       deviceId = await getDeviceId();
                                     }
 
-                                    if (deviceId != null &&
-                                        deviceId.isNotEmpty) {
+                                    if (deviceId.isNotEmpty) {
                                       await getClient().then(
                                         (dio) => dio.delete(
                                           deleteDeviceIdOnLogOut
@@ -897,6 +1175,48 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
             },
           );
         },
+        child: Container(
+          width: double.infinity,
+          height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [
+                Color(0xFF0009FE),
+                Color(0xFF18C6FF),
+              ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0009FE).withValues(alpha: 0.18),
+                blurRadius: 18,
+                offset: const Offset(0, 9),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.logout_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 9),
+              Text(
+                S.of(context).logOut,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -988,6 +1308,82 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
           );
         });
       },
+    );
+  }
+}
+
+class _ProfileSection extends StatelessWidget {
+  const _ProfileSection({
+    required this.title,
+    required this.child,
+    this.subtitle,
+  });
+
+  final String title;
+  final String? subtitle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: _profileNavy,
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 3),
+            Text(
+              subtitle!,
+              style: const TextStyle(
+                color: _profileMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          _ProfileCard(child: child),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileCard extends StatelessWidget {
+  const _ProfileCard({
+    required this.child,
+    this.padding = const EdgeInsets.all(14),
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: _profileBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: child,
     );
   }
 }
