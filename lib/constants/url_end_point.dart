@@ -85,6 +85,7 @@ const userTransac = '/transaction/friendship/getByMemberApp';
 const deleteUser = '/member/general/deleteAccount';
 const piiinkInfoURL = '/globalSetting/piiinkInformation/getOneByCountry';
 const recommendMerURL = '/merchant/referred/create';
+const merchantReferralCreateURL = '/merchant/referrals/create';
 const addFavouriteURL = '/member/favoriteMerchant/add_to_favorite';
 const removeFavouriteURL = '/member/favoriteMerchant/delete';
 const getAllFavouriteURL = '/member/favoriteMerchant/getAll';

@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:new_piiink/constants/helper.dart';
 import 'package:new_piiink/constants/url_end_point.dart';
 import 'package:new_piiink/models/error_res.dart';
 import 'package:new_piiink/models/request/recommend_mer_req.dart';
+import 'package:new_piiink/models/response/common_res.dart';
 import 'package:new_piiink/models/response/recommend_mer_res.dart';
 
 class DioRecommend {
@@ -18,6 +20,47 @@ class DioRecommend {
       return errorResModelFromJson(e.response?.data);
     } catch (err) {
       // print('Error in creating recommend merchant:$err');
+      return null;
+    }
+  }
+
+  Future<dynamic> createMerchantReferral({
+    required String merchantName,
+    String? reason,
+    String? addressText,
+    XFile? uploadFile,
+  }) async {
+    try {
+      final Dio dio = await getClient();
+      final formData = FormData.fromMap({
+        'merchantName': merchantName,
+        if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+        if (addressText != null && addressText.trim().isNotEmpty)
+          'addressText': addressText.trim(),
+        if (uploadFile != null)
+          'uploadFile': await MultipartFile.fromFile(
+            uploadFile.path,
+            filename: uploadFile.name,
+          ),
+      });
+
+      final Response<String> response = await dio.post(
+        merchantReferralCreateURL,
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      return commonResModelFromJson(response.data!);
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      if (data is String) {
+        return errorResModelFromJson(data);
+      }
+      if (data is Map<String, dynamic>) {
+        return ErrorResModel.fromJson(data);
+      }
+      return ErrorResModel(message: 'Unable to submit recommendation');
+    } catch (err) {
       return null;
     }
   }
