@@ -145,6 +145,7 @@ class _BottomBarState extends State<BottomBar> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
+      top: _page != 0,
       child: WillPopScope(
         onWillPop: () async {
           final timegap = DateTime.now().difference(backpress);
