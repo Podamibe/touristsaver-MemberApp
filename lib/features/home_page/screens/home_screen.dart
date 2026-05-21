@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:new_piiink/common/app_variables.dart';
 import 'package:new_piiink/common/widgets/merchant_distance.dart';
@@ -61,9 +62,6 @@ class _HomeScreenState extends State<HomeScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   static const double _homeHeroAspectRatio = 1.5;
 
-  final GlobalKey<RefreshIndicatorState> refreshIndicatorHome =
-      GlobalKey<RefreshIndicatorState>();
-
   bool isLoading = false;
   bool? hideNotificationIcon;
   final GlobalKey alertKey = GlobalKey();
@@ -77,7 +75,6 @@ class _HomeScreenState extends State<HomeScreen>
   String? _build;
   bool _isUpdateDialogShown = false;
   bool _isShowing = false;
-  int _homeFeedRefreshTick = 0;
   bool _isGreatDealsMode = false;
   Future<List<nearby.Datum>>? _greatDealsNearbyFuture;
 
@@ -462,19 +459,23 @@ class _HomeScreenState extends State<HomeScreen>
             borderRadius: BorderRadius.circular(999),
             onTap: _toggleGreatDealsMode,
             child: Ink(
-              padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 9.h),
+              padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 11.h),
               decoration: BoxDecoration(
-                color:
-                    _isGreatDealsMode ? const Color(0xFFEFF7FF) : Colors.white,
+                color: const Color(0xFF48F100),
                 borderRadius: BorderRadius.circular(999),
                 border: Border.all(
-                  color: const Color(0xFF0009FE).withValues(alpha: 0.22),
+                  color: const Color(0xFF111C44).withValues(alpha: 0.16),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 12,
-                    offset: const Offset(0, 5),
+                    color: const Color(0xFF48F100).withValues(alpha: 0.26),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
@@ -485,18 +486,18 @@ class _HomeScreenState extends State<HomeScreen>
                     _isGreatDealsMode
                         ? Icons.keyboard_arrow_left_rounded
                         : Icons.local_offer_outlined,
-                    color: const Color(0xFF0009FE),
+                    color: const Color(0xFF071126),
                     size: 18.sp,
                   ),
                   SizedBox(width: 7.w),
                   Text(
                     _isGreatDealsMode
                         ? 'Back to featured'
-                        : 'Great Deals Nearby',
+                        : 'Dining Deals Nearby',
                     style: TextStyle(
-                      color: const Color(0xFF111C44),
+                      color: const Color(0xFF071126),
                       fontSize: 13.sp,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w900,
                       fontFamily: 'Sans',
                     ),
                   ),
@@ -504,7 +505,7 @@ class _HomeScreenState extends State<HomeScreen>
                     SizedBox(width: 6.w),
                     Icon(
                       Icons.near_me_outlined,
-                      color: const Color(0xFF18C6FF),
+                      color: const Color(0xFF071126),
                       size: 16.sp,
                     ),
                   ],
@@ -520,29 +521,15 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     // final localeData = context.read<LocaleCubit>().state;
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
-      body: RefreshIndicator(
-        key: refreshIndicatorHome,
-        color: GlobalColors.appColor,
-        onRefresh: () async {
-          context.read<SliderBloc>().add(LoadSliderEvent());
-          context
-              .read<CategoryBloc>()
-              .add(LoadCategoryEvent(AppVariables.selectedLanguageNow));
-          await fetchBanner();
-          if (!mounted) return;
-          setState(() {
-            _homeFeedRefreshTick++;
-            if (_isGreatDealsMode) {
-              _greatDealsNearbyFuture = _loadGreatDealsNearby();
-            }
-            if (AppVariables.locationEnabledStatus.value > 1) {
-              AppVariables.locationEnabledStatus.value++;
-            }
-          });
-        },
-        child: BlocBuilder<ConnectivityCubit, ConnectivityState>(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF7F9FC),
+        body: BlocBuilder<ConnectivityCubit, ConnectivityState>(
           builder: (context, state) {
             if (state == ConnectivityState.loading) {
               return const NoInternetLoader();
@@ -577,10 +564,8 @@ class _HomeScreenState extends State<HomeScreen>
                               isLoading: isLoading,
                             ),
                             const SizedBox(height: 20),
-                            HomeFeedSection(
-                              key: ValueKey(
-                                'home-feed-$_homeFeedRefreshTick',
-                              ),
+                            const HomeFeedSection(
+                              key: ValueKey('home-feed'),
                             ),
                           ],
                         );
@@ -731,21 +716,28 @@ class _HomeScreenState extends State<HomeScreen>
           return _featuredSliderWithNote('No Great Deals nearby yet');
         }
 
-        return CarouselSlider(
-          options: CarouselOptions(
-            height: heroHeight,
-            autoPlay: deals.length > 1,
-            autoPlayCurve: Curves.fastOutSlowIn,
-            enableInfiniteScroll: deals.length > 1,
-            autoPlayAnimationDuration: const Duration(milliseconds: 800),
-            viewportFraction: 1,
+        return SizedBox(
+          height: heroHeight,
+          width: double.infinity,
+          child: CarouselSlider(
+            options: CarouselOptions(
+              height: heroHeight,
+              autoPlay: deals.length > 1,
+              autoPlayCurve: Curves.fastOutSlowIn,
+              enableInfiniteScroll: deals.length > 1,
+              autoPlayAnimationDuration: const Duration(milliseconds: 800),
+              viewportFraction: 1,
+              padEnds: false,
+              disableCenter: true,
+              clipBehavior: Clip.none,
+            ),
+            items: deals
+                .map<Widget>(
+                  (nearby.Datum merchant) =>
+                      _greatDealSlide(merchant, heroHeight),
+                )
+                .toList(),
           ),
-          items: deals
-              .map<Widget>(
-                (nearby.Datum merchant) =>
-                    _greatDealSlide(merchant, heroHeight),
-              )
-              .toList(),
         );
       },
     );
@@ -815,15 +807,12 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _greatDealSlide(nearby.Datum merchant, double heroHeight) {
     final String? imageUrl = _greatDealImageUrl(merchant);
     final String distanceLabel = formatMerchantDistance(merchant.distance);
-    final String? badgeLabel = merchant.maxDiscount == null
-        ? merchant.externalUrlLabel
-        : 'Up to ${merchant.maxDiscount!.toStringAsFixed(0)}% off';
 
     return Builder(
       builder: (BuildContext context) {
         return SizedBox(
           height: heroHeight,
-          width: MediaQuery.of(context).size.width,
+          width: double.infinity,
           child: GestureDetector(
             onTap: () {
               final int? merchantId = merchant.id;
@@ -843,16 +832,18 @@ class _HomeScreenState extends State<HomeScreen>
                 children: [
                   imageUrl == null
                       ? Image.asset('assets/images/no_image.jpg',
-                          fit: BoxFit.cover)
+                          fit: BoxFit.cover, alignment: Alignment.topCenter)
                       : CachedNetworkImage(
                           imageUrl: imageUrl,
                           fit: BoxFit.cover,
+                          alignment: Alignment.topCenter,
                           placeholder: (context, url) => const Center(
                             child: FittedBox(child: CustomAllLoader1()),
                           ),
                           errorWidget: (context, url, error) => Image.asset(
                             'assets/images/no_image.jpg',
                             fit: BoxFit.cover,
+                            alignment: Alignment.topCenter,
                           ),
                         ),
                   DecoratedBox(
@@ -875,32 +866,6 @@ class _HomeScreenState extends State<HomeScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (badgeLabel != null && badgeLabel.trim().isNotEmpty)
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 10.w,
-                              vertical: 5.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.18),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.36),
-                              ),
-                            ),
-                            child: Text(
-                              badgeLabel.trim(),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w800,
-                                fontFamily: 'Sans',
-                              ),
-                            ),
-                          ),
-                        SizedBox(height: 9.h),
                         Text(
                           merchant.merchantName ?? '',
                           maxLines: 2,
@@ -913,11 +878,11 @@ class _HomeScreenState extends State<HomeScreen>
                             letterSpacing: 0,
                           ),
                         ),
-                        if (distanceLabel.isNotEmpty) ...[
-                          SizedBox(height: 6.h),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
+                        SizedBox(height: 8.h),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (distanceLabel.isNotEmpty) ...[
                               Icon(
                                 Icons.near_me_outlined,
                                 color: Colors.white.withValues(alpha: 0.88),
@@ -933,9 +898,11 @@ class _HomeScreenState extends State<HomeScreen>
                                   fontFamily: 'Sans',
                                 ),
                               ),
+                              SizedBox(width: 10.w),
                             ],
-                          ),
-                        ],
+                            _greatDealsBadge(),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -945,6 +912,40 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         );
       },
+    );
+  }
+
+  Widget _greatDealsBadge() {
+    return Container(
+      width: 44.r,
+      height: 44.r,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFD95A),
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.16),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          'Great\nDeals',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 13.5.sp,
+            fontWeight: FontWeight.w900,
+            height: 0.9,
+            fontFamily: 'Sans',
+            letterSpacing: 0,
+          ),
+        ),
+      ),
     );
   }
 
@@ -981,6 +982,9 @@ class _HomeScreenState extends State<HomeScreen>
                   enableInfiniteScroll: true,
                   autoPlayAnimationDuration: const Duration(milliseconds: 800),
                   viewportFraction: 1,
+                  padEnds: false,
+                  disableCenter: true,
+                  clipBehavior: Clip.none,
                 ),
                 items: sliderList.data!.map<Widget>((i) {
                   return Builder(
@@ -1072,11 +1076,14 @@ class _HomeScreenState extends State<HomeScreen>
                             child: CachedNetworkImage(
                               imageUrl: i.url!,
                               fit: BoxFit.cover,
+                              alignment: Alignment.topCenter,
                               placeholder: (context, url) => const Center(
                                   child: FittedBox(child: CustomAllLoader1())),
-                              errorWidget: (context, url, error) => Center(
-                                  child: Image.asset(
-                                      'assets/images/no_image.jpg')),
+                              errorWidget: (context, url, error) => Image.asset(
+                                'assets/images/no_image.jpg',
+                                fit: BoxFit.cover,
+                                alignment: Alignment.topCenter,
+                              ),
                             ),
                           ),
                         ),
@@ -1175,7 +1182,7 @@ class _HomeFloatingHeader extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
             onTap: onSearch,
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 11.h),
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 11.h),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1186,7 +1193,7 @@ class _HomeFloatingHeader extends StatelessWidget {
                   ),
                   SizedBox(width: 6.w),
                   Text(
-                    'Search now',
+                    'Search',
                     style: TextStyle(
                       color: const Color(0xFF111C44),
                       fontFamily: 'Montserrat',
