@@ -12,10 +12,13 @@ class LocaleCubit extends Cubit<LocaleState> {
     getLocaleData();
   }
 
+  static const String _defaultLanguageCode = 'en';
+
   void changeLocale(LocaleModel localeModel) async {
-    await Pref()
-        .writeData(key: 'locale', value: localeModel.locale.languageCode);
-    AppVariables.selectedLanguageNow = await Pref().readData(key: 'locale');
+    final langCode = _normaliseLanguageCode(localeModel.locale.languageCode) ??
+        _defaultLanguageCode;
+    await Pref().writeData(key: 'locale', value: langCode);
+    AppVariables.selectedLanguageNow = langCode;
     if (AppVariables.accessToken != null) {
       await DioLang().postChoosenLang();
       //dynamic patchLangRes =
@@ -28,22 +31,54 @@ class LocaleCubit extends Cubit<LocaleState> {
   }
 
   Future<void> loadLocale() async {
-    final langCode = await Pref().readData(key: 'locale');
-    if (langCode != null) {
-      AppVariables.selectedLanguageNow = langCode;
-      LocaleModel localeModel =
-          L10n.all.firstWhere((e) => e.locale.languageCode == langCode);
-      AppVariables.localeList.add(langCode);
+    final langCode =
+        _normaliseLanguageCode(await Pref().readData(key: 'locale'));
+    final localeModel = _localeModelForCode(langCode);
+
+    if (localeModel != null) {
+      final selectedCode = localeModel.locale.languageCode;
+      AppVariables.selectedLanguageNow = selectedCode;
+      AppVariables.localeList.add(selectedCode);
       emit(LocaleState(localeModel));
+      return;
     }
+
+    AppVariables.selectedLanguageNow = _defaultLanguageCode;
+    AppVariables.localeList.add(_defaultLanguageCode);
+    await Pref().writeData(key: 'locale', value: _defaultLanguageCode);
+    emit(LocaleState(_defaultLocaleModel));
   }
 
   Future<void> getLocaleData() async {
     GetLangResModel? langData = await DioLang().getLangData();
     // log(langData!.data.toString());
-    for (Datum locale in langData!.data ?? []) {
+    AppVariables.localeList.add(_defaultLanguageCode);
+
+    for (Datum locale in langData?.data ?? []) {
       // log(locale.lang!);
-      AppVariables.localeList.add(locale.lang!.toLowerCase());
+      final langCode = _normaliseLanguageCode(locale.lang);
+      if (langCode != null) {
+        AppVariables.localeList.add(langCode);
+      }
     }
+  }
+
+  LocaleModel get _defaultLocaleModel {
+    return _localeModelForCode(_defaultLanguageCode) ?? L10n.all[0];
+  }
+
+  LocaleModel? _localeModelForCode(String? langCode) {
+    if (langCode == null) return null;
+    for (final localeModel in L10n.all) {
+      if (localeModel.locale.languageCode == langCode) {
+        return localeModel;
+      }
+    }
+    return null;
+  }
+
+  String? _normaliseLanguageCode(String? langCode) {
+    final normalised = langCode?.trim().toLowerCase();
+    return normalised == null || normalised.isEmpty ? null : normalised;
   }
 }
