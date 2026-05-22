@@ -1020,7 +1020,12 @@ class _TopUpWidgetState extends State<TopUpWidget> {
             )
           else
             _standardPriceSummary(originalPriceText),
-          SizedBox(height: 22.h),
+          if (!isFreeMembership) ...[
+            SizedBox(height: 16.h),
+            _valueGuaranteePanel(),
+            SizedBox(height: 18.h),
+          ] else
+            SizedBox(height: 22.h),
           _GradientCheckoutButton(
             label: buttonLabel,
             isLoading: isLoading,
@@ -1151,6 +1156,73 @@ class _TopUpWidgetState extends State<TopUpWidget> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _valueGuaranteePanel() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(14.r),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F8FF),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: const Color(0xFFD6EAFB)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 32.w,
+            height: 32.w,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.72),
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: Icon(
+              Icons.verified_outlined,
+              color: _primaryBlue,
+              size: 19.sp,
+            ),
+          ),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "TouristSaver Value Guarantee",
+                  style: GoogleFonts.nunito(
+                    color: _headingColor,
+                    fontSize: 14.5.sp,
+                    fontWeight: FontWeight.w900,
+                    height: 1.2,
+                  ),
+                ),
+                SizedBox(height: 6.h),
+                Text(
+                  "We believe your TouristSaver membership should deliver real value throughout your membership journey.",
+                  style: GoogleFonts.nunito(
+                    color: _bodyColor,
+                    fontSize: 12.5.sp,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+                ),
+                SizedBox(height: 6.h),
+                Text(
+                  "Your membership should pay for itself. If your eligible verified savings over 12 months don’t exceed your membership fee, we’ll refund the difference.*",
+                  style: GoogleFonts.nunito(
+                    color: _bodyColor,
+                    fontSize: 12.5.sp,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1395,13 +1467,29 @@ class _PaymentConfirmationScreen extends StatelessWidget {
                           ),
                           SizedBox(width: 10.w),
                           Expanded(
-                            child: Text(
-                              "Secure payment powered by Stripe",
-                              style: GoogleFonts.nunito(
-                                color: _TopUpWidgetState._headingColor,
-                                fontSize: 13.5.sp,
-                                fontWeight: FontWeight.w800,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Secure payment protected by Stripe",
+                                  style: GoogleFonts.nunito(
+                                    color: _TopUpWidgetState._headingColor,
+                                    fontSize: 13.5.sp,
+                                    fontWeight: FontWeight.w800,
+                                    height: 1.25,
+                                  ),
+                                ),
+                                SizedBox(height: 3.h),
+                                Text(
+                                  "Your membership is backed by the TouristSaver Value Guarantee*",
+                                  style: GoogleFonts.nunito(
+                                    color: _TopUpWidgetState._bodyColor,
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.3,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
