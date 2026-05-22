@@ -1256,15 +1256,19 @@ class _TopUpWidgetState extends State<TopUpWidget> {
 }
 
 class _SoftCard extends StatelessWidget {
-  const _SoftCard({required this.child});
+  const _SoftCard({
+    required this.child,
+    this.padding,
+  });
 
   final Widget child;
+  final EdgeInsetsGeometry? padding;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(18.r),
+      padding: padding ?? EdgeInsets.all(18.r),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24.r),
@@ -1360,7 +1364,7 @@ class _PaymentConfirmationScreen extends StatelessWidget {
       backgroundColor: _TopUpWidgetState._screenBackground,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(20.w, 18.h, 20.w, 28.h),
+          padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 24.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -1371,7 +1375,7 @@ class _PaymentConfirmationScreen extends StatelessWidget {
                   onTap: () => Navigator.of(context).pop(false),
                 ),
               ),
-              SizedBox(height: 20.h),
+              SizedBox(height: 10.h),
               Text(
                 "Activate your membership",
                 textAlign: TextAlign.center,
@@ -1382,7 +1386,7 @@ class _PaymentConfirmationScreen extends StatelessWidget {
                   height: 1.15,
                 ),
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: 4.h),
               Text(
                 "Premium 12-month TouristSaver membership",
                 textAlign: TextAlign.center,
@@ -1393,8 +1397,9 @@ class _PaymentConfirmationScreen extends StatelessWidget {
                   height: 1.35,
                 ),
               ),
-              SizedBox(height: 24.h),
+              SizedBox(height: 16.h),
               _SoftCard(
+                padding: EdgeInsets.all(14.r),
                 child: Column(
                   children: [
                     _ConfirmationBenefit(
@@ -1422,8 +1427,9 @@ class _PaymentConfirmationScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              SizedBox(height: 18.h),
+              SizedBox(height: 12.h),
               _SoftCard(
+                padding: EdgeInsets.all(15.r),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1435,25 +1441,25 @@ class _PaymentConfirmationScreen extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    SizedBox(height: 14.h),
+                    SizedBox(height: 10.h),
                     _SummaryRow(
                       label: "Membership",
                       value: "Premium 12-month",
                     ),
-                    SizedBox(height: 10.h),
+                    SizedBox(height: 8.h),
                     Divider(
                       color: _TopUpWidgetState._borderColor,
                       height: 1,
                     ),
-                    SizedBox(height: 12.h),
+                    SizedBox(height: 8.h),
                     _SummaryRow(
                       label: "Today",
                       value: amountText,
                       isTotal: true,
                     ),
-                    SizedBox(height: 16.h),
+                    SizedBox(height: 12.h),
                     Container(
-                      padding: EdgeInsets.all(12.r),
+                      padding: EdgeInsets.all(10.r),
                       decoration: BoxDecoration(
                         color: const Color(0xFFEFF7FF),
                         borderRadius: BorderRadius.circular(14.r),
@@ -1498,7 +1504,7 @@ class _PaymentConfirmationScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              SizedBox(height: 24.h),
+              SizedBox(height: 16.h),
               _GradientCheckoutButton(
                 label: "Continue to secure payment",
                 isLoading: false,
@@ -1608,12 +1614,12 @@ class _ConfirmationBenefit extends StatelessWidget {
           ],
         ),
         if (showDivider) ...[
-          SizedBox(height: 12.h),
+          SizedBox(height: 8.h),
           Divider(
             color: _TopUpWidgetState._borderColor,
             height: 1,
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 8.h),
         ],
       ],
     );

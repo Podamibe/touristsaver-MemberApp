@@ -74,6 +74,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       TextEditingController();
 
   final TextEditingController otpSearchController = TextEditingController();
+  late final LocationAllBloc _locationAllBloc;
+  bool _locationBlocReady = false;
 
   var reg = RegExp(
       r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
@@ -231,6 +233,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.initState();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_locationBlocReady) return;
+
+    _locationAllBloc =
+        LocationAllBloc(RepositoryProvider.of<DioLocation>(context))
+          ..add(LoadLocationAllEvent());
+    _locationBlocReady = true;
+  }
+
   dialogInfo(String infoText) {
     return showGeneralDialog(
       barrierLabel: 'Label',
@@ -260,7 +273,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
-    ConnectivityCubit().close();
+    _locationAllBloc.close();
+    countrySearchController.dispose();
+    charitySearchController.dispose();
+    stateSearchController.dispose();
+    providerController.dispose();
+    firstNameController.dispose();
+    lastNameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPassowrdController.dispose();
+    postalCodeController.dispose();
+    mobileNumberController.dispose();
+    premiumController.dispose();
+    referralCodeController.dispose();
+    phonePrefixSearchController.dispose();
+    otpSearchController.dispose();
     super.dispose();
   }
 
@@ -1130,12 +1158,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             } else if (state == ConnectivityState.disconnected) {
               return const NoConnectivityScreen();
             } else if (state == ConnectivityState.connected) {
-              return BlocProvider(
-                lazy: false,
-                create: (context) =>
-                    LocationAllBloc(RepositoryProvider.of<DioLocation>(context))
-                      ..add(LoadLocationAllEvent()),
-
+              return BlocProvider.value(
+                value: _locationAllBloc,
                 child: BlocBuilder<LocationAllBloc, LocationAllState>(
                   builder: (context, locationState) {
                     // Loading State
