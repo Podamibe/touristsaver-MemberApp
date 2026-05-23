@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:new_piiink/common/models/merchant_summary.dart';
 import 'package:new_piiink/common/widgets/bottom_navigation_bar.dart';
 import 'package:new_piiink/common/widgets/congrats.dart';
 import 'package:new_piiink/common/widgets/paid_free.dart';
@@ -152,7 +153,18 @@ final GoRouter goRouter = GoRouter(
     GoRoute(
       path: '/map-view-merchant',
       name: 'map-view-merchant',
-      builder: (context, state) => const MapViewMerchants(),
+      builder: (context, state) {
+        final Object? extra = state.extra;
+        final Map<String, dynamic>? args =
+            extra is Map<String, dynamic> ? extra : null;
+        final Object? merchantsArg = args?['merchants'];
+        return MapViewMerchants(
+          title: args?['title'] as String?,
+          merchants: merchantsArg is List
+              ? merchantsArg.whereType<MerchantSummary>().toList()
+              : null,
+        );
+      },
     ),
     //Merchant Reviews Screen
     GoRoute(

@@ -20,6 +20,8 @@ class MerchantSummary {
     this.openStatusLabel,
     this.areaLabel,
     this.categoryLabel,
+    this.latitude,
+    this.longitude,
   });
 
   final int merchantId;
@@ -33,6 +35,10 @@ class MerchantSummary {
   final String? openStatusLabel;
   final String? areaLabel;
   final String? categoryLabel;
+  final double? latitude;
+  final double? longitude;
+
+  bool get hasLocation => latitude != null && longitude != null;
 
   MerchantSummary copyWith({
     String? imageUrl,
@@ -44,6 +50,8 @@ class MerchantSummary {
     String? openStatusLabel,
     String? areaLabel,
     String? categoryLabel,
+    double? latitude,
+    double? longitude,
   }) {
     return MerchantSummary(
       merchantId: merchantId,
@@ -57,6 +65,8 @@ class MerchantSummary {
       openStatusLabel: openStatusLabel ?? this.openStatusLabel,
       areaLabel: areaLabel ?? this.areaLabel,
       categoryLabel: categoryLabel ?? this.categoryLabel,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
     );
   }
 }
@@ -83,6 +93,8 @@ class MerchantSummaryAdapters {
       ]),
       logoUrl: merchant.merchantImageInfo?.logoUrl,
       maxDiscount: merchant.maxDiscount,
+      latitude: _latitudeFromLatLon(merchant.latlon),
+      longitude: _longitudeFromLatLon(merchant.latlon),
       distanceKm: distanceFromLatLon(
         merchant.latlon,
         currentLatitude,
@@ -111,6 +123,8 @@ class MerchantSummaryAdapters {
       ]),
       logoUrl: merchant.merchantImageInfo?.logoUrl,
       maxDiscount: merchant.maxDiscount,
+      latitude: _latitudeFromLatLon(merchant.latlon),
+      longitude: _longitudeFromLatLon(merchant.latlon),
       distanceKm: distanceFromLatLon(
         merchant.latlon,
         currentLatitude,
@@ -138,6 +152,8 @@ class MerchantSummaryAdapters {
       ]),
       logoUrl: merchant.merchantImageInfoLogoUrl,
       maxDiscount: merchant.maxDiscount,
+      latitude: merchant.latitude,
+      longitude: merchant.longitude,
       distanceKm: merchant.distance,
       isFavourite: merchant.favoriteMerchant != null,
       areaLabel: _joinLabels([merchant.statename, merchant.countryname]),
@@ -160,6 +176,8 @@ class MerchantSummaryAdapters {
       ]),
       logoUrl: merchant.merchantImageInfoLogoUrl,
       maxDiscount: double.tryParse(merchant.maxdiscount ?? ''),
+      latitude: merchant.latitude,
+      longitude: merchant.longitude,
       distanceKm: merchant.distance,
       isFavourite: merchant.favoritemerchant != null,
     );
@@ -180,6 +198,16 @@ class MerchantSummaryAdapters {
       latitude,
       longitude,
     );
+  }
+
+  static double? _latitudeFromLatLon(List<double>? latlon) {
+    if (latlon == null || latlon.isEmpty) return null;
+    return latlon[0];
+  }
+
+  static double? _longitudeFromLatLon(List<double>? latlon) {
+    if (latlon == null || latlon.length < 2) return null;
+    return latlon[1];
   }
 
   static double distanceBetween(

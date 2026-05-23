@@ -94,7 +94,7 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
               _summaryCard(),
               SizedBox(height: 16.h),
               _walletChoiceCard(
-                title: 'Use All Merchant TSDCs',
+                title: 'Use Available Discount Credits',
                 subtitle: 'Available for participating merchants generally.',
                 balance: widget.universalPiiinkBalance,
                 remaining: widget.universalPiiinkOnHold,
@@ -104,9 +104,9 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
               if (double.tryParse(widget.merchantPiiinkBalance) != 0) ...[
                 SizedBox(height: 12.h),
                 _walletChoiceCard(
-                  title: 'Use Merchant TSDCs for this merchant',
+                  title: 'Use Merchant Discount Credits for this merchant',
                   subtitle:
-                      'Merchant-specific rewards usable toward future purchases here.',
+                      'Merchant-specific credits usable toward eligible future purchases here.',
                   balance: widget.merchantPiiinkBalance,
                   remaining: widget.merchantPiiinkOnHold,
                   enabled: widget.hasMerchantPiiinks == 'true',
@@ -202,7 +202,8 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
               '${_formatCurrency(_memberSavings)} (${_numberFormat.format(_discountPercent)}%)'),
           _summaryRow('You pay merchant', _formatCurrency(_customerPays),
               emphasized: true),
-          _summaryRow('TSDCs required', _numberFormat.format(_memberSavings)),
+          _summaryRow('Discount Credits required',
+              _numberFormat.format(_memberSavings)),
         ],
       ),
     );
@@ -244,8 +245,9 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
           SizedBox(height: 8.h),
           Text(subtitle, style: _bodyStyle()),
           SizedBox(height: 12.h),
-          _summaryRow('Available TSDCs', _numberFormat.format(availableValue)),
-          _summaryRow('TSDC balance after redeeming',
+          _summaryRow('Available Discount Credits',
+              _numberFormat.format(availableValue)),
+          _summaryRow('Discount Credit balance after redeeming',
               _numberFormat.format(remainingValue)),
           SizedBox(height: 14.h),
           _GradientButton(

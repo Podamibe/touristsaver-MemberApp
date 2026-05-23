@@ -443,17 +443,24 @@ class _TopUpWidgetState extends State<TopUpWidget> {
   bool isLoading = false;
 
   Future<void> _showPaymentConfirmation(String paymentPriceText) async {
-    final shouldContinue = await Navigator.of(context).push<bool>(
+    await Navigator.of(context).push<void>(
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => _PaymentConfirmationScreen(
           amountText: paymentPriceText,
+          onContinue: (paymentContext) => _handleTopUp(
+            paymentContext: paymentContext,
+          ),
         ),
       ),
     );
+  }
 
-    if (shouldContinue == true) {
-      await _handleTopUp();
+  void _dismissPaymentConfirmation(BuildContext? paymentContext) {
+    if (paymentContext == null || !paymentContext.mounted) return;
+    final navigator = Navigator.of(paymentContext);
+    if (navigator.canPop()) {
+      navigator.pop();
     }
   }
 
@@ -501,7 +508,7 @@ class _TopUpWidgetState extends State<TopUpWidget> {
     _navigateToActivationSuccess(creditAmount: creditAmount);
   }
 
-  Future<void> _handleTopUp() async {
+  Future<void> _handleTopUp({BuildContext? paymentContext}) async {
     FocusManager.instance.primaryFocus?.unfocus();
     await Future.delayed(const Duration(milliseconds: 300));
 
@@ -509,6 +516,7 @@ class _TopUpWidgetState extends State<TopUpWidget> {
         AppVariables.accessToken!.isNotEmpty;
 
     if (!isLoggedIn) {
+      _dismissPaymentConfirmation(paymentContext);
       context.pushNamed('login');
       return;
     }
@@ -547,10 +555,12 @@ class _TopUpWidgetState extends State<TopUpWidget> {
         if (!context.mounted) return;
 
         if (canGoHome) {
+          _dismissPaymentConfirmation(paymentContext);
           _navigateToActivationSuccess(
             creditAmount: _selectedPackageCreditAmount(),
           );
         } else {
+          _dismissPaymentConfirmation(paymentContext);
           context.pushReplacementNamed('top-up');
         }
         return;
@@ -593,6 +603,7 @@ class _TopUpWidgetState extends State<TopUpWidget> {
         if (!mounted) return;
 
         // 👉 3. Navigate Home - the loader will disappear as the screen is destroyed
+        _dismissPaymentConfirmation(paymentContext);
         _navigateToActivationSuccess(
           creditAmount: _selectedPackageCreditAmount(),
         );
@@ -1351,182 +1362,216 @@ class _GradientCheckoutButton extends StatelessWidget {
   }
 }
 
-class _PaymentConfirmationScreen extends StatelessWidget {
+class _PaymentConfirmationScreen extends StatefulWidget {
   const _PaymentConfirmationScreen({
     required this.amountText,
+    required this.onContinue,
   });
 
   final String amountText;
+  final Future<void> Function(BuildContext context) onContinue;
+
+  @override
+  State<_PaymentConfirmationScreen> createState() =>
+      _PaymentConfirmationScreenState();
+}
+
+class _PaymentConfirmationScreenState
+    extends State<_PaymentConfirmationScreen> {
+  bool _isProcessing = false;
+
+  Future<void> _handleContinue() async {
+    if (_isProcessing) return;
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      await widget.onContinue(context);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _TopUpWidgetState._screenBackground,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 24.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: _ConfirmationIconButton(
-                  icon: Icons.arrow_back_ios_new_rounded,
-                  onTap: () => Navigator.of(context).pop(false),
-                ),
-              ),
-              SizedBox(height: 10.h),
-              Text(
-                "Activate your membership",
-                textAlign: TextAlign.center,
-                style: GoogleFonts.nunito(
-                  color: _TopUpWidgetState._headingColor,
-                  fontSize: 26.sp,
-                  fontWeight: FontWeight.w900,
-                  height: 1.15,
-                ),
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                "Premium 12-month TouristSaver membership",
-                textAlign: TextAlign.center,
-                style: GoogleFonts.nunito(
-                  color: _TopUpWidgetState._bodyColor,
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w700,
-                  height: 1.35,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              _SoftCard(
-                padding: EdgeInsets.all(14.r),
-                child: Column(
-                  children: [
-                    _ConfirmationBenefit(
-                      icon: Icons.local_offer_outlined,
-                      text: "Access 4,500+ member offers",
-                    ),
-                    _ConfirmationBenefit(
-                      icon: Icons.public_outlined,
-                      text: "Savings across Australia & New Zealand",
-                    ),
-                    _ConfirmationBenefit(
-                      icon: Icons.restaurant_outlined,
-                      text:
-                          "Dining, attractions, travel & lifestyle experiences",
-                    ),
-                    _ConfirmationBenefit(
-                      icon: Icons.location_on_outlined,
-                      text: "Nearby offers using location-based discovery",
-                    ),
-                    _ConfirmationBenefit(
-                      icon: Icons.calendar_month_outlined,
-                      text: "Valid for 12 months",
-                      showDivider: false,
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 12.h),
-              _SoftCard(
-                padding: EdgeInsets.all(15.r),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Payment summary",
-                      style: GoogleFonts.nunito(
-                        color: _TopUpWidgetState._headingColor,
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    SizedBox(height: 10.h),
-                    _SummaryRow(
-                      label: "Membership",
-                      value: "Premium 12-month",
-                    ),
-                    SizedBox(height: 8.h),
-                    Divider(
-                      color: _TopUpWidgetState._borderColor,
-                      height: 1,
-                    ),
-                    SizedBox(height: 8.h),
-                    _SummaryRow(
-                      label: "Today",
-                      value: amountText,
-                      isTotal: true,
-                    ),
-                    SizedBox(height: 12.h),
-                    Container(
-                      padding: EdgeInsets.all(10.r),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF7FF),
-                        borderRadius: BorderRadius.circular(14.r),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.lock_outline,
-                            color: _TopUpWidgetState._primaryBlue,
-                            size: 20.sp,
-                          ),
-                          SizedBox(width: 10.w),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Secure payment protected by Stripe",
-                                  style: GoogleFonts.nunito(
-                                    color: _TopUpWidgetState._headingColor,
-                                    fontSize: 13.5.sp,
-                                    fontWeight: FontWeight.w800,
-                                    height: 1.25,
-                                  ),
-                                ),
-                                SizedBox(height: 3.h),
-                                Text(
-                                  "Your membership is backed by the TouristSaver Value Guarantee*",
-                                  style: GoogleFonts.nunito(
-                                    color: _TopUpWidgetState._bodyColor,
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.w600,
-                                    height: 1.3,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 16.h),
-              _GradientCheckoutButton(
-                label: "Continue to secure payment",
-                isLoading: false,
-                onPressed: () => Navigator.of(context).pop(true),
-              ),
-              SizedBox(height: 12.h),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                style: TextButton.styleFrom(
-                  foregroundColor: _TopUpWidgetState._primaryBlue,
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                ),
-                child: Text(
-                  "Back to membership summary",
-                  style: GoogleFonts.nunito(
-                    color: _TopUpWidgetState._primaryBlue,
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w800,
+    return PopScope(
+      canPop: !_isProcessing,
+      child: Scaffold(
+        backgroundColor: _TopUpWidgetState._screenBackground,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 24.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: _ConfirmationIconButton(
+                    icon: Icons.arrow_back_ios_new_rounded,
+                    onTap: _isProcessing
+                        ? () {}
+                        : () => Navigator.of(context).pop(false),
                   ),
                 ),
-              ),
-            ],
+                SizedBox(height: 10.h),
+                Text(
+                  "Activate your membership",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.nunito(
+                    color: _TopUpWidgetState._headingColor,
+                    fontSize: 26.sp,
+                    fontWeight: FontWeight.w900,
+                    height: 1.15,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  "Premium 12-month TouristSaver membership",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.nunito(
+                    color: _TopUpWidgetState._bodyColor,
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w700,
+                    height: 1.35,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                _SoftCard(
+                  padding: EdgeInsets.all(14.r),
+                  child: Column(
+                    children: [
+                      _ConfirmationBenefit(
+                        icon: Icons.local_offer_outlined,
+                        text: "Access 4,500+ member offers",
+                      ),
+                      _ConfirmationBenefit(
+                        icon: Icons.public_outlined,
+                        text: "Savings across Australia & New Zealand",
+                      ),
+                      _ConfirmationBenefit(
+                        icon: Icons.restaurant_outlined,
+                        text:
+                            "Dining, attractions, travel & lifestyle experiences",
+                      ),
+                      _ConfirmationBenefit(
+                        icon: Icons.location_on_outlined,
+                        text: "Nearby offers using location-based discovery",
+                      ),
+                      _ConfirmationBenefit(
+                        icon: Icons.calendar_month_outlined,
+                        text: "Valid for 12 months",
+                        showDivider: false,
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                _SoftCard(
+                  padding: EdgeInsets.all(15.r),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Payment summary",
+                        style: GoogleFonts.nunito(
+                          color: _TopUpWidgetState._headingColor,
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      SizedBox(height: 10.h),
+                      _SummaryRow(
+                        label: "Membership",
+                        value: "Premium 12-month",
+                      ),
+                      SizedBox(height: 8.h),
+                      Divider(
+                        color: _TopUpWidgetState._borderColor,
+                        height: 1,
+                      ),
+                      SizedBox(height: 8.h),
+                      _SummaryRow(
+                        label: "Today",
+                        value: widget.amountText,
+                        isTotal: true,
+                      ),
+                      SizedBox(height: 12.h),
+                      Container(
+                        padding: EdgeInsets.all(10.r),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF7FF),
+                          borderRadius: BorderRadius.circular(14.r),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.lock_outline,
+                              color: _TopUpWidgetState._primaryBlue,
+                              size: 20.sp,
+                            ),
+                            SizedBox(width: 10.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Secure payment protected by Stripe",
+                                    style: GoogleFonts.nunito(
+                                      color: _TopUpWidgetState._headingColor,
+                                      fontSize: 13.5.sp,
+                                      fontWeight: FontWeight.w800,
+                                      height: 1.25,
+                                    ),
+                                  ),
+                                  SizedBox(height: 3.h),
+                                  Text(
+                                    "Your membership is backed by the TouristSaver Value Guarantee*",
+                                    style: GoogleFonts.nunito(
+                                      color: _TopUpWidgetState._bodyColor,
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w600,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                _GradientCheckoutButton(
+                  label: "Continue to secure payment",
+                  isLoading: _isProcessing,
+                  onPressed: _handleContinue,
+                ),
+                SizedBox(height: 12.h),
+                TextButton(
+                  onPressed:
+                      _isProcessing ? null : () => Navigator.of(context).pop(),
+                  style: TextButton.styleFrom(
+                    foregroundColor: _TopUpWidgetState._primaryBlue,
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                  ),
+                  child: Text(
+                    "Back to membership summary",
+                    style: GoogleFonts.nunito(
+                      color: _TopUpWidgetState._primaryBlue,
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

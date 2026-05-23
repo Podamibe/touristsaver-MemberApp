@@ -154,7 +154,7 @@ class MerchantDiscoveryController extends ChangeNotifier {
           state.copyWith(
             isLoading: false,
             error:
-                'Location is needed to show nearby merchants. Try Map View or update your location.',
+                'Location is needed to show nearby merchants. Update your location and try again.',
             results: const [],
           ),
         );
@@ -229,7 +229,7 @@ class MerchantDiscoveryController extends ChangeNotifier {
           state.copyWith(
             isLoading: false,
             error:
-                'Location is needed to show best offers nearby. Try Map View or update your location.',
+                'Location is needed to show best offers nearby. Update your location and try again.',
             results: const [],
           ),
         );

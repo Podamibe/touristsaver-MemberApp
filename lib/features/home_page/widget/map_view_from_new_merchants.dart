@@ -10,6 +10,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:lottie/lottie.dart' hide Marker;
+import 'package:new_piiink/common/models/merchant_summary.dart';
 import 'package:new_piiink/common/widgets/custom_app_bar.dart';
 import 'package:new_piiink/common/widgets/no_merchant.dart';
 import 'package:new_piiink/constants/style.dart';
@@ -26,7 +27,14 @@ import 'package:new_piiink/generated/l10n.dart';
 
 class MapViewMerchants extends StatefulWidget {
   static const String routeName = '/map-view-merchant';
-  const MapViewMerchants({super.key});
+  const MapViewMerchants({
+    super.key,
+    this.merchants,
+    this.title,
+  });
+
+  final List<MerchantSummary>? merchants;
+  final String? title;
 
   @override
   State<MapViewMerchants> createState() => _MapViewMerchantsState();
@@ -50,6 +58,9 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
   bool zoomedIn = false;
   bool isDataLoading = false;
   bool recallMerchantApi = false;
+  bool _contextualMarkersReady = false;
+
+  bool get _isContextualMap => widget.merchants != null;
 
   // reloadOk() async {
   //   firstLoadAll();
@@ -160,6 +171,33 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
     );
   }
 
+  Marker _summaryMarker(MerchantSummary merchant) {
+    return Marker(
+      markerId: MarkerId('${merchant.merchantId}'),
+      position: LatLng(merchant.latitude!, merchant.longitude!),
+      infoWindow: InfoWindow(
+        title: merchant.merchantName,
+        snippet: S.of(context).upToXdiscount.replaceAll(
+              '&x',
+              removeTrailingZero(
+                merchant.maxDiscount?.toStringAsFixed(2) ?? '0',
+              ),
+            ),
+        onTap: () => onSummaryTapped(merchant),
+      ),
+      icon: BitmapDescriptor.defaultMarkerWithHue(
+        merchant.isFavourite == true
+            ? BitmapDescriptor.hueRose
+            : BitmapDescriptor.hueAzure,
+      ),
+      consumeTapEvents: true,
+      onTap: () {
+        lastTappedMarkerId = MarkerId('${merchant.merchantId}');
+        mapController!.showMarkerInfoWindow(lastTappedMarkerId!);
+      },
+    );
+  }
+
   // Fetch visible merchants on map
   getVisibleMerchants() async {
     zoomedIn = false;
@@ -189,10 +227,87 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
     });
   }
 
+  void onSummaryTapped(MerchantSummary merchant) {
+    context.pushNamed('details-screen', extra: {
+      'merchantID': merchant.merchantId.toString(),
+    }).then((value) async {
+      if (value == true) {
+        recallMerchantApi = true;
+      }
+    });
+  }
+
+  void _prepareContextualCamera() {
+    final List<MerchantSummary> mappableMerchants =
+        widget.merchants?.where((merchant) => merchant.hasLocation).toList() ??
+            [];
+    if (mappableMerchants.isNotEmpty) {
+      final MerchantSummary firstMerchant = mappableMerchants.first;
+      cameraPosition =
+          LatLng(firstMerchant.latitude!, firstMerchant.longitude!);
+      zoomLevel = mappableMerchants.length == 1 ? 14 : 12;
+    } else {
+      cameraPosition =
+          LatLng(AppVariables.latitude ?? 0.0, AppVariables.longitude ?? 0.0);
+    }
+  }
+
+  void _prepareContextualMarkers() {
+    if (_contextualMarkersReady) return;
+    markers = widget.merchants
+            ?.where((merchant) => merchant.hasLocation)
+            .map(_summaryMarker)
+            .toList() ??
+        [];
+    _contextualMarkersReady = true;
+  }
+
+  Future<void> _fitContextualMarkers() async {
+    if (!_isContextualMap || markers.length < 2 || mapController == null) {
+      return;
+    }
+
+    double minLat = markers.first.position.latitude;
+    double maxLat = markers.first.position.latitude;
+    double minLng = markers.first.position.longitude;
+    double maxLng = markers.first.position.longitude;
+
+    for (final Marker marker in markers.skip(1)) {
+      minLat = min(minLat, marker.position.latitude);
+      maxLat = max(maxLat, marker.position.latitude);
+      minLng = min(minLng, marker.position.longitude);
+      maxLng = max(maxLng, marker.position.longitude);
+    }
+
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    if (!mounted || mapController == null) return;
+    await mapController!.animateCamera(
+      CameraUpdate.newLatLngBounds(
+        LatLngBounds(
+          southwest: LatLng(minLat, minLng),
+          northeast: LatLng(maxLat, maxLng),
+        ),
+        52,
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
-    firstLoadAll();
+    if (_isContextualMap) {
+      _prepareContextualCamera();
+    } else {
+      firstLoadAll();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_isContextualMap) {
+      _prepareContextualMarkers();
+    }
   }
 
   @override
@@ -207,7 +322,7 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight),
           child: CustomAppBar(
-              text: S.of(context).merchant,
+              text: widget.title ?? S.of(context).merchant,
               icon: Icons.arrow_back_ios,
               onPressed: () {
                 context.pop(recallMerchantApi);
@@ -221,7 +336,7 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [CustomAllLoader()],
                   )
-                : merAll.isEmpty
+                : (_isContextualMap ? markers.isEmpty : merAll.isEmpty)
                     ? Column(
                         children: [
                           NoMerchantCard(
@@ -260,6 +375,10 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
                                 cameraPosition = position.target;
                               },
                               onCameraIdle: () async {
+                                if (_isContextualMap) {
+                                  isCameraMoving = false;
+                                  return;
+                                }
                                 zoomLevel =
                                     await mapController?.getZoomLevel() ?? 12;
                                 isCameraMoving = false;
@@ -294,6 +413,7 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
                                   controller.showMarkerInfoWindow(
                                       lastTappedMarkerId!);
                                 }
+                                await _fitContextualMarkers();
                               }),
                           Positioned(
                             top: 6,

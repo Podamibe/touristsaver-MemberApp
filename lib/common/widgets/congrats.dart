@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:new_piiink/constants/decimal_remove.dart';
-import 'package:new_piiink/constants/number_formatter.dart';
+import 'package:intl/intl.dart';
 
 import '../app_variables.dart';
 
@@ -29,7 +28,8 @@ class _CongratsScreenState extends State<CongratsScreen> {
       double.tryParse(widget.piiinkCredit.replaceAll(',', '').trim()) ?? 0;
 
   String get _formattedCredits =>
-      removeTrailingZero(numFormatter.format(_creditAmount));
+      NumberFormat.currency(symbol: '\$', decimalDigits: 2)
+          .format(_creditAmount);
 
   @override
   Widget build(BuildContext context) {
@@ -112,7 +112,7 @@ class _CongratsScreenState extends State<CongratsScreen> {
           ),
           SizedBox(height: 12.h),
           Text(
-            'Welcome to TouristSaver. You can now explore thousands of member offers, nearby experiences, dining, attractions and travel savings across Australia & New Zealand.',
+            'Welcome to TouristSaver. You can now explore nearby experiences, dining, attractions and travel savings across Australia & New Zealand.',
             textAlign: TextAlign.center,
             style: GoogleFonts.nunito(
               color: _bodyColor,
@@ -142,7 +142,7 @@ class _CongratsScreenState extends State<CongratsScreen> {
       child: Column(
         children: [
           Text(
-            'You also received $_formattedCredits TouristSaver Credits',
+            'You’ve unlocked $_formattedCredits of TouristSaver Discount Credits',
             textAlign: TextAlign.center,
             style: GoogleFonts.nunito(
               color: _headingColor,
@@ -153,7 +153,7 @@ class _CongratsScreenState extends State<CongratsScreen> {
           ),
           SizedBox(height: 8.h),
           Text(
-            'TouristSaver Credits can help you access additional savings and member offers with participating merchants.',
+            'Use these Discount Credits toward eligible discounts and savings across participating merchants.',
             textAlign: TextAlign.center,
             style: GoogleFonts.nunito(
               color: _bodyColor,
@@ -164,7 +164,7 @@ class _CongratsScreenState extends State<CongratsScreen> {
           ),
           SizedBox(height: 8.h),
           Text(
-            'Some merchants may also reward you with Merchant Credits that can be used toward future merchant purchases.',
+            'Discount Credits are a membership benefit for accessing offers. They are not cash and cannot be withdrawn.',
             textAlign: TextAlign.center,
             style: GoogleFonts.nunito(
               color: _bodyColor,

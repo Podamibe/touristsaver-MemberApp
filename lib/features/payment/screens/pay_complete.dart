@@ -113,11 +113,11 @@ class _PaymentCompletedState extends State<PaymentCompleted> {
                     _summaryRow('Customer pays merchant',
                         _formatCurrency(_customerPays),
                         emphasized: true),
-                    _summaryRow(
-                        'TSDCs redeemed', _numberFormat.format(_memberSavings)),
+                    _summaryRow('Discount Credits redeemed',
+                        _numberFormat.format(_memberSavings)),
                     if (_merchantTsdcsEarned > 0)
                       _summaryRow(
-                        'Merchant TSDCs earned',
+                        'Merchant Discount Credits earned',
                         '+${_numberFormat.format(_merchantTsdcsEarned)}',
                       ),
                   ],

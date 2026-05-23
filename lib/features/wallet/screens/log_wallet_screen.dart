@@ -11,7 +11,6 @@ import 'package:new_piiink/common/widgets/custom_app_bar.dart';
 import 'package:new_piiink/common/widgets/custom_loader.dart';
 import 'package:new_piiink/common/widgets/error.dart';
 import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/constants/number_formatter.dart';
 import 'package:new_piiink/constants/style.dart';
 import 'package:new_piiink/features/connectivity/cubit/internet_cubit.dart';
 import 'package:new_piiink/features/transaction/services/dio_transaction.dart';
@@ -203,9 +202,9 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
             SizedBox(height: 16.h),
             _recentSavingsSection(),
             SizedBox(height: 16.h),
-            _howTsdcsWorkCard(),
+            _howDiscountCreditsWorkCard(),
             SizedBox(height: 16.h),
-            _merchantTsdcsSection(),
+            _merchantDiscountCreditsSection(),
             SizedBox(height: 16.h),
             _moreOptionsSection(),
           ],
@@ -215,8 +214,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
   }
 
   Widget _mainBalanceCard(UniversalGetMyWallet universalWallet) {
-    final String balance =
-        numFormatter.format(universalWallet.data?.balance ?? 0);
+    final String balance = _formatCurrency(universalWallet.data?.balance ?? 0);
 
     return Container(
       width: double.infinity,
@@ -238,43 +236,42 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 44.w,
-                height: 44.w,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE6F3FF),
-                  borderRadius: BorderRadius.circular(14.r),
-                ),
-                child: Icon(
-                  Icons.savings_outlined,
-                  color: _primaryBlue,
-                  size: 25.sp,
-                ),
+          Align(
+            alignment: Alignment.center,
+            child: Container(
+              width: 44.w,
+              height: 44.w,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE6F3FF),
+                borderRadius: BorderRadius.circular(14.r),
               ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Text(
-                  'All Merchant TSDCs',
-                  style: TextStyle(
-                    color: _headingColor,
-                    fontSize: 17.sp,
-                    fontWeight: FontWeight.w900,
-                    fontFamily: 'Sans',
-                  ),
-                ),
+              child: Icon(
+                Icons.savings_outlined,
+                color: _primaryBlue,
+                size: 25.sp,
               ),
-            ],
+            ),
           ),
-          SizedBox(height: 18.h),
+          SizedBox(height: 12.h),
           Text(
-            '$balance TouristSaver Discount Credits',
+            'Available Discount Credits',
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: _headingColor,
-              fontSize: 27.sp,
+              fontSize: 17.sp,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Sans',
+            ),
+          ),
+          SizedBox(height: 14.h),
+          Text(
+            balance,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: _primaryBlue,
+              fontSize: 34.sp,
               fontWeight: FontWeight.w900,
               height: 1.12,
               fontFamily: 'Sans',
@@ -282,7 +279,8 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
           ),
           SizedBox(height: 10.h),
           Text(
-            'Use your TSDCs to unlock member discounts with participating merchants.',
+            'Use your Discount Credits to access participating merchant offers.',
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: _bodyColor,
               fontSize: 14.sp,
@@ -296,18 +294,18 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
     );
   }
 
-  Widget _howTsdcsWorkCard() {
+  Widget _howDiscountCreditsWorkCard() {
     return _SavingsCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _sectionHeader(
             icon: Icons.info_outline,
-            title: 'How TSDCs work',
+            title: 'How Discount Credits work',
           ),
           SizedBox(height: 12.h),
           Text(
-            'TouristSaver Discount Credits are used to unlock merchant discounts. When a merchant applies a discount, only the discount amount is deducted from your available TSDCs.',
+            'TouristSaver Discount Credits are used to access eligible merchant discounts. When a participating merchant applies a discount, only the discount amount is deducted from your available Discount Credits.',
             style: _bodyTextStyle(),
           ),
           SizedBox(height: 14.h),
@@ -316,12 +314,12 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
           _exampleRow('Bill total', '\$100'),
           _exampleRow('Member discount', '10%'),
           _exampleRow('You pay merchant', '\$90'),
-          _exampleRow('TSDCs used', '10'),
+          _exampleRow('Discount Credits used', '10'),
           SizedBox(height: 10.h),
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton(
-              onPressed: _showTsdcExplainer,
+              onPressed: _showDiscountCreditsExplainer,
               style: TextButton.styleFrom(
                 foregroundColor: _primaryBlue,
                 padding: EdgeInsets.zero,
@@ -488,23 +486,23 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
     );
   }
 
-  Widget _merchantTsdcsSection() {
+  Widget _merchantDiscountCreditsSection() {
     return _SavingsCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _sectionHeader(
             icon: Icons.storefront_outlined,
-            title: 'Merchant TSDCs',
+            title: 'Merchant Discount Credits',
           ),
           SizedBox(height: 10.h),
           Text(
-            'Merchant TSDCs are rewards from a specific merchant and can be used toward future purchases with that merchant.',
+            'Merchant Discount Credits are merchant-specific credits that can be used toward eligible future purchases with that merchant.',
             style: _bodyTextStyle(),
           ),
           SizedBox(height: 14.h),
           _outlineLinkButton(
-            label: 'View merchant TSDCs',
+            label: 'View merchant Discount Credits',
             icon: Icons.arrow_forward_rounded,
             onTap: () => context.pushNamed('merchant-wallet'),
           ),
@@ -535,7 +533,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
           children: [
             _moreOptionTile(
               icon: Icons.add_card_outlined,
-              label: 'Add TSDCs',
+              label: 'Add Discount Credits',
               onTap: isTopUpEnabled == false
                   ? null
                   : () {
@@ -555,7 +553,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
             ),
             _moreOptionTile(
               icon: Icons.swap_horiz_rounded,
-              label: 'Transfer Merchant TSDCs',
+              label: 'Transfer Merchant Credits',
               onTap: () {
                 context.pushNamed('transfer-piiinks').then((value) {
                   _refreshSavings();
@@ -564,7 +562,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
             ),
             _moreOptionTile(
               icon: Icons.payments_outlined,
-              label: 'TSDC purchase history',
+              label: 'Discount Credit purchase history',
               onTap: () => context.pushNamed('top_up_history'),
             ),
           ],
@@ -799,7 +797,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
     });
   }
 
-  void _showTsdcExplainer() {
+  void _showDiscountCreditsExplainer() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -823,17 +821,17 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
                 ),
                 SizedBox(height: 14.h),
                 Text(
-                  'TSDCs help unlock discounts with participating merchants. They are not cash, tokens or a currency balance.',
+                  'Discount Credits help access discounts with participating merchants. They are not cash, tokens or a currency balance.',
                   style: _bodyTextStyle(),
                 ),
                 SizedBox(height: 12.h),
                 Text(
-                  'When you use TouristSaver, the merchant discount amount is deducted from your available TSDCs. You then pay the merchant the discounted total.',
+                  'When you use TouristSaver, the merchant discount amount is deducted from your available Discount Credits. You then pay the merchant the discounted total.',
                   style: _bodyTextStyle(),
                 ),
                 SizedBox(height: 12.h),
                 Text(
-                  'Merchant TSDCs are rewards from a specific merchant and can be used toward future purchases with that merchant.',
+                  'Merchant Discount Credits are merchant-specific credits that can be used toward eligible future purchases with that merchant.',
                   style: _bodyTextStyle(),
                 ),
                 SizedBox(height: 18.h),

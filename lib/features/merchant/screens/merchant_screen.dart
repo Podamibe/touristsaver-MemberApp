@@ -40,7 +40,6 @@ class MerchantScreen extends StatefulWidget {
 
 class _MerchantScreenState extends State<MerchantScreen> {
   static const Color _primaryBlue = Color(0xFF0009FE);
-  static const Color _cyan = Color(0xFF18C6FF);
   static const Color _headingColor = Color(0xFF111C44);
   static const Color _bodyColor = Color(0xFF63708A);
   static const Color _borderColor = Color(0xFFE2E8F3);
@@ -296,12 +295,6 @@ class _MerchantScreenState extends State<MerchantScreen> {
         normalizedName != parentLikeAllName;
   }
 
-  Future<void> _loadNearMe() {
-    FocusManager.instance.primaryFocus?.unfocus();
-    searchController.clear();
-    return _discovery.loadNearMe();
-  }
-
   Future<void> _toggleFavourite(MerchantSummary merchant) async {
     final bool success = await _discovery.toggleFavourite(merchant);
     if (!mounted) return;
@@ -323,6 +316,25 @@ class _MerchantScreenState extends State<MerchantScreen> {
 
   void _setBestOfferFirst(bool value) {
     _discovery.setBestOfferFirst(value);
+  }
+
+  void _openResultsMap(List<MerchantSummary> merchants, String title) {
+    final List<MerchantSummary> mappableMerchants =
+        merchants.where((merchant) => merchant.hasLocation).toList();
+    if (mappableMerchants.isEmpty) return;
+
+    FocusManager.instance.primaryFocus?.unfocus();
+    context.pushNamed(
+      'map-view-merchant',
+      extra: {
+        'title': title,
+        'merchants': mappableMerchants,
+      },
+    ).then((value) {
+      if (value == true && mounted) {
+        setState(() {});
+      }
+    });
   }
 
   void _clearDiscovery() {
@@ -397,17 +409,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
                           onClear: _clearDiscovery,
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 18),
-                        child: _DiscoveryActions(
-                          onNearMe: _loadNearMe,
-                          onMapView: () => context.pushNamed(
-                            'map-view-merchant',
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       BlocBuilder<CategoryBloc, CategoryState>(
                         builder: (context, state) {
                           if (state is CategoryLoadingState) {
@@ -494,6 +496,10 @@ class _MerchantScreenState extends State<MerchantScreen> {
                             pendingFavouriteMerchantIds:
                                 discoveryState.pendingFavouriteMerchantIds,
                             onClear: _clearDiscovery,
+                            onMapView: () => _openResultsMap(
+                              discoveryState.results,
+                              discoveryState.title,
+                            ),
                             onMerchantTap: (merchant) {
                               context.pushNamed('details-screen', extra: {
                                 'merchantID': merchant.merchantId.toString(),
@@ -513,7 +519,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
                         child: _HelperCard(
                           title: 'Find savings faster',
                           body:
-                              'Search by merchant name, browse a category, or open the map when you are nearby.',
+                              'Search by merchant name, browse a category, then use distance filters to refine nearby offers.',
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -1061,6 +1067,7 @@ class _MerchantResultsSection extends StatelessWidget {
     required this.merchants,
     required this.pendingFavouriteMerchantIds,
     required this.onClear,
+    required this.onMapView,
     required this.onMerchantTap,
     required this.onFavouriteTap,
   });
@@ -1071,11 +1078,16 @@ class _MerchantResultsSection extends StatelessWidget {
   final List<MerchantSummary> merchants;
   final Set<int> pendingFavouriteMerchantIds;
   final VoidCallback onClear;
+  final VoidCallback onMapView;
   final ValueChanged<MerchantSummary> onMerchantTap;
   final ValueChanged<MerchantSummary> onFavouriteTap;
 
   @override
   Widget build(BuildContext context) {
+    final bool canShowMap = !isLoading &&
+        error == null &&
+        merchants.any((merchant) => merchant.hasLocation);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -1092,14 +1104,39 @@ class _MerchantResultsSection extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: topicStyle.copyWith(
                     color: _MerchantScreenState._headingColor,
                     fontSize: 19,
                   ),
                 ),
               ),
+              if (canShowMap)
+                TextButton.icon(
+                  onPressed: onMapView,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(0, 40),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  icon: const Icon(
+                    Icons.map_outlined,
+                    size: 18,
+                    color: _MerchantScreenState._primaryBlue,
+                  ),
+                  label: const Text(
+                    'Map View',
+                    style: TextStyle(color: _MerchantScreenState._primaryBlue),
+                  ),
+                ),
               TextButton(
                 onPressed: onClear,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: const Size(0, 40),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
                 child: const Text(
                   'Clear',
                   style: TextStyle(color: _MerchantScreenState._primaryBlue),
@@ -1155,117 +1192,6 @@ class _MerchantResultsSection extends StatelessWidget {
               },
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _DiscoveryActions extends StatelessWidget {
-  const _DiscoveryActions({
-    required this.onNearMe,
-    required this.onMapView,
-  });
-
-  final VoidCallback onNearMe;
-  final VoidCallback onMapView;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _DiscoveryActionCard(
-            icon: Icons.my_location_rounded,
-            title: 'Near me',
-            subtitle: 'Use current location',
-            onTap: onNearMe,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _DiscoveryActionCard(
-            icon: Icons.map_rounded,
-            title: S.of(context).mapView,
-            subtitle: 'Explore by area',
-            onTap: onMapView,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _DiscoveryActionCard extends StatelessWidget {
-  const _DiscoveryActionCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: _MerchantScreenState._borderColor),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    _MerchantScreenState._primaryBlue,
-                    _MerchantScreenState._cyan,
-                  ],
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: Colors.white, size: 18),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: textStyle15.copyWith(
-                      color: _MerchantScreenState._headingColor,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: searchStyle.copyWith(
-                      color: _MerchantScreenState._bodyColor,
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

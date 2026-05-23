@@ -107,10 +107,10 @@ class _AcceptScreenState extends State<AcceptScreen> {
                     _summaryRow(
                         'You pay merchant', _formatCurrency(_customerPays),
                         emphasized: true),
-                    _summaryRow('TSDCs to be used',
+                    _summaryRow('Discount Credits to be used',
                         _numberFormat.format(_memberSavings)),
                     _summaryRow(
-                        'TSDC balance after redeeming',
+                        'Discount Credit balance after redeeming',
                         _numberFormat.format(
                             double.tryParse(widget.tsdcsRemaining) ?? 0)),
                   ],
