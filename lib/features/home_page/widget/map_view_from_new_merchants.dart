@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/foundation.dart';
@@ -41,6 +42,15 @@ class MapViewMerchants extends StatefulWidget {
 }
 
 class _MapViewMerchantsState extends State<MapViewMerchants> {
+  static const Color _regularPinColor = Color(0xFFF146EA);
+  static const Color _favouritePinColor = Color(0xFFFF5A3D);
+  static const double _regularPinHue = 302.0;
+  static const double _favouritePinHue = 10.0;
+  static const Color _brandPurple = Color(0xFF6F2DE2);
+  static const Color _brandPink = Color(0xFFE83F91);
+  static const Color _headingColor = Color(0xFF111C44);
+  static const Color _bodyColor = Color(0xFF61708A);
+
   int allPage = 1;
   bool isFirstLoadingAll = false;
   List<Datum> merAll = [];
@@ -48,7 +58,6 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
   List<Marker> markers = [];
   LatLng? cameraPosition;
   LatLng? edgePosition;
-  MarkerId? lastTappedMarkerId;
   GoogleMapController? mapController;
   final GlobalKey _mapKey = GlobalKey();
   Size? _mapSize;
@@ -59,8 +68,121 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
   bool isDataLoading = false;
   bool recallMerchantApi = false;
   bool _contextualMarkersReady = false;
+  bool _favouritePinIconLoading = false;
+  bool _favouritePinIconReady = false;
+  BitmapDescriptor _favouritePinIcon =
+      BitmapDescriptor.defaultMarkerWithHue(_favouritePinHue);
+  _MapMerchantInfo? _selectedMerchant;
 
   bool get _isContextualMap => widget.merchants != null;
+
+  Future<void> _loadFavouritePinIcon(double devicePixelRatio) async {
+    if (_favouritePinIconReady || _favouritePinIconLoading) return;
+    _favouritePinIconLoading = true;
+
+    final BitmapDescriptor icon =
+        await _createFavouritePinIcon(devicePixelRatio);
+    if (!mounted) return;
+
+    setState(() {
+      _favouritePinIcon = icon;
+      _favouritePinIconReady = true;
+      _favouritePinIconLoading = false;
+      if (_isContextualMap) {
+        _contextualMarkersReady = false;
+        _prepareContextualMarkers();
+      }
+    });
+  }
+
+  Future<BitmapDescriptor> _createFavouritePinIcon(
+    double devicePixelRatio,
+  ) async {
+    const double logicalWidth = 34;
+    const double logicalHeight = 48;
+    final int width = (logicalWidth * devicePixelRatio).round();
+    final int height = (logicalHeight * devicePixelRatio).round();
+    final ui.PictureRecorder recorder = ui.PictureRecorder();
+    final Canvas canvas = Canvas(recorder);
+
+    canvas.scale(devicePixelRatio);
+
+    final Paint shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.18)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+    final Path shadowPath = _favouritePinPath().shift(const Offset(0, 2));
+    canvas.drawPath(shadowPath, shadowPaint);
+
+    final Paint pinPaint = Paint()..color = _favouritePinColor;
+    canvas.drawPath(_favouritePinPath(), pinPaint);
+
+    final Paint heartPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(_heartPath(const Offset(17, 19), 10.5), heartPaint);
+
+    final ui.Image image = await recorder.endRecording().toImage(width, height);
+    final ByteData? data =
+        await image.toByteData(format: ui.ImageByteFormat.png);
+    final Uint8List bytes = data!.buffer.asUint8List();
+
+    return BitmapDescriptor.bytes(
+      bytes,
+      width: logicalWidth,
+      height: logicalHeight,
+      imagePixelRatio: devicePixelRatio,
+    );
+  }
+
+  Path _favouritePinPath() {
+    return Path()
+      ..moveTo(17, 47)
+      ..cubicTo(14.5, 42.5, 4, 30.5, 4, 19.5)
+      ..cubicTo(4, 10.5, 9.8, 4, 17, 4)
+      ..cubicTo(24.2, 4, 30, 10.5, 30, 19.5)
+      ..cubicTo(30, 30.5, 19.5, 42.5, 17, 47)
+      ..close();
+  }
+
+  Path _heartPath(Offset center, double size) {
+    final double x = center.dx;
+    final double y = center.dy;
+    return Path()
+      ..moveTo(x, y + size * 0.55)
+      ..cubicTo(
+        x - size * 1.05,
+        y - size * 0.05,
+        x - size * 0.72,
+        y - size * 0.95,
+        x - size * 0.22,
+        y - size * 0.68,
+      )
+      ..cubicTo(
+        x - size * 0.08,
+        y - size * 0.6,
+        x,
+        y - size * 0.45,
+        x,
+        y - size * 0.35,
+      )
+      ..cubicTo(
+        x,
+        y - size * 0.45,
+        x + size * 0.08,
+        y - size * 0.6,
+        x + size * 0.22,
+        y - size * 0.68,
+      )
+      ..cubicTo(
+        x + size * 0.72,
+        y - size * 0.95,
+        x + size * 1.05,
+        y - size * 0.05,
+        x,
+        y + size * 0.55,
+      )
+      ..close();
+  }
 
   // reloadOk() async {
   //   firstLoadAll();
@@ -112,6 +234,7 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
     );
     List<near_by_res.Datum> nearbyMerchants = result?.data ?? [];
     markers.clear();
+    _selectedMerchant = null;
     for (int i = 0; i < nearbyMerchants.length; i++) {
       near_by_res.Datum merchant = nearbyMerchants[i];
       bool isFavorite = merchant.favoriteMerchant != null ? true : false;
@@ -148,54 +271,59 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
   }
 
   Marker _marker(near_by_res.Datum? merchant, bool isFavorite) {
+    final _MapMerchantInfo merchantInfo = _MapMerchantInfo.fromNearby(
+      merchant!,
+      isFavorite: isFavorite,
+    );
     return Marker(
-      markerId: MarkerId('${merchant!.id}'),
+      markerId: MarkerId('${merchant.id}'),
       position: LatLng(merchant.latitude!, merchant.longitude!),
       infoWindow: InfoWindow(
         title: merchant.merchantName,
-        snippet: S.of(context).upToXdiscount.replaceAll(
-            '&x',
-            removeTrailingZero(
-                merchant.maxDiscount?.toStringAsFixed(2) ?? '0')),
+        snippet: _infoWindowSnippet(merchantInfo),
         onTap: () {
           onTapped(merchant, isFavorite);
         },
       ),
-      icon: BitmapDescriptor.defaultMarkerWithHue(
-          (isFavorite) ? BitmapDescriptor.hueRose : BitmapDescriptor.hueAzure),
+      icon: isFavorite
+          ? _favouritePinIcon
+          : BitmapDescriptor.defaultMarkerWithHue(_regularPinHue),
       consumeTapEvents: true,
       onTap: () {
-        lastTappedMarkerId = MarkerId('${merchant.id}');
-        mapController!.showMarkerInfoWindow(lastTappedMarkerId!);
+        setState(() {
+          _selectedMerchant = merchantInfo;
+        });
       },
     );
   }
 
   Marker _summaryMarker(MerchantSummary merchant) {
+    final _MapMerchantInfo merchantInfo =
+        _MapMerchantInfo.fromSummary(merchant);
     return Marker(
       markerId: MarkerId('${merchant.merchantId}'),
       position: LatLng(merchant.latitude!, merchant.longitude!),
       infoWindow: InfoWindow(
         title: merchant.merchantName,
-        snippet: S.of(context).upToXdiscount.replaceAll(
-              '&x',
-              removeTrailingZero(
-                merchant.maxDiscount?.toStringAsFixed(2) ?? '0',
-              ),
-            ),
+        snippet: _infoWindowSnippet(merchantInfo),
         onTap: () => onSummaryTapped(merchant),
       ),
-      icon: BitmapDescriptor.defaultMarkerWithHue(
-        merchant.isFavourite == true
-            ? BitmapDescriptor.hueRose
-            : BitmapDescriptor.hueAzure,
-      ),
+      icon: merchantInfo.isFavourite
+          ? _favouritePinIcon
+          : BitmapDescriptor.defaultMarkerWithHue(_regularPinHue),
       consumeTapEvents: true,
       onTap: () {
-        lastTappedMarkerId = MarkerId('${merchant.merchantId}');
-        mapController!.showMarkerInfoWindow(lastTappedMarkerId!);
+        setState(() {
+          _selectedMerchant = merchantInfo;
+        });
       },
     );
+  }
+
+  String _infoWindowSnippet(_MapMerchantInfo merchant) {
+    return '${merchant.offerText}\n'
+        'Walk: ${merchant.walkingEstimate}  |  '
+        'Drive: ${merchant.drivingEstimate}';
   }
 
   // Fetch visible merchants on map
@@ -259,6 +387,7 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
             .map(_summaryMarker)
             .toList() ??
         [];
+    _selectedMerchant = null;
     _contextualMarkersReady = true;
   }
 
@@ -305,6 +434,7 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _loadFavouritePinIcon(MediaQuery.of(context).devicePixelRatio);
     if (_isContextualMap) {
       _prepareContextualMarkers();
     }
@@ -374,6 +504,11 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
                                 isCameraMoving = true;
                                 cameraPosition = position.target;
                               },
+                              onTap: (_) {
+                                setState(() {
+                                  _selectedMerchant = null;
+                                });
+                              },
                               onCameraIdle: () async {
                                 if (_isContextualMap) {
                                   isCameraMoving = false;
@@ -409,10 +544,6 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
                                   mapRenderBox.size.width * devicePixelRatio,
                                   mapRenderBox.size.height * devicePixelRatio,
                                 );
-                                if (lastTappedMarkerId != null) {
-                                  controller.showMarkerInfoWindow(
-                                      lastTappedMarkerId!);
-                                }
                                 await _fitContextualMarkers();
                               }),
                           Positioned(
@@ -429,13 +560,13 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
                                 children: <Widget>[
                                   IndexWidget(
                                       label: S.of(context).favorite,
-                                      color: const Color.fromARGB(
-                                          255, 234, 53, 144)),
+                                      color: _MapViewMerchantsState
+                                          ._favouritePinColor),
                                   SizedBox(height: 5.h),
                                   IndexWidget(
                                       label: S.of(context).regular,
-                                      color: const Color.fromARGB(
-                                          255, 53, 144, 234)),
+                                      color: _MapViewMerchantsState
+                                          ._regularPinColor),
                                 ],
                               ),
                             ),
@@ -447,6 +578,26 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
                               child: Lottie.asset(
                                 'assets/animations/map_loader.json',
                                 height: 50.sp,
+                              ),
+                            ),
+                          if (_selectedMerchant != null)
+                            Positioned(
+                              left: 16,
+                              right: 16,
+                              bottom: 20,
+                              child: _MerchantMapCard(
+                                merchant: _selectedMerchant!,
+                                onTap: () {
+                                  final _MapMerchantInfo merchant =
+                                      _selectedMerchant!;
+                                  context.pushNamed('details-screen', extra: {
+                                    'merchantID': merchant.id.toString(),
+                                  }).then((value) async {
+                                    if (value == true) {
+                                      recallMerchantApi = true;
+                                    }
+                                  });
+                                },
                               ),
                             ),
                         ],
@@ -464,6 +615,259 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MapMerchantInfo {
+  const _MapMerchantInfo({
+    required this.id,
+    required this.name,
+    required this.latitude,
+    required this.longitude,
+    required this.isFavourite,
+    this.maxDiscount,
+    this.distanceKm,
+  });
+
+  factory _MapMerchantInfo.fromNearby(
+    near_by_res.Datum merchant, {
+    required bool isFavorite,
+  }) {
+    return _MapMerchantInfo(
+      id: merchant.id ?? 0,
+      name: merchant.merchantName ?? 'Merchant',
+      latitude: merchant.latitude ?? 0,
+      longitude: merchant.longitude ?? 0,
+      maxDiscount: merchant.maxDiscount,
+      distanceKm: merchant.distance,
+      isFavourite: isFavorite,
+    );
+  }
+
+  factory _MapMerchantInfo.fromSummary(MerchantSummary merchant) {
+    return _MapMerchantInfo(
+      id: merchant.merchantId,
+      name: merchant.merchantName,
+      latitude: merchant.latitude ?? 0,
+      longitude: merchant.longitude ?? 0,
+      maxDiscount: merchant.maxDiscount,
+      distanceKm: merchant.distanceKm,
+      isFavourite: merchant.isFavourite == true,
+    );
+  }
+
+  final int id;
+  final String name;
+  final double latitude;
+  final double longitude;
+  final double? maxDiscount;
+  final double? distanceKm;
+  final bool isFavourite;
+
+  String get offerText {
+    final String discount =
+        removeTrailingZero(maxDiscount?.toStringAsFixed(2) ?? '0');
+    return 'Up to $discount% off';
+  }
+
+  double? get distanceFromUserKm {
+    final double? userLatitude = AppVariables.latitude;
+    final double? userLongitude = AppVariables.longitude;
+    if (userLatitude != null && userLongitude != null) {
+      return MerchantSummaryAdapters.distanceBetween(
+        userLatitude,
+        userLongitude,
+        latitude,
+        longitude,
+      );
+    }
+    return distanceKm;
+  }
+
+  String get walkingEstimate => _travelEstimate(speedKmh: 4.8, mode: 'walk');
+
+  String get drivingEstimate => _travelEstimate(speedKmh: 35, mode: 'drive');
+
+  String _travelEstimate({
+    required double speedKmh,
+    required String mode,
+  }) {
+    final double? distance = distanceFromUserKm;
+    if (distance == null) return 'Time unavailable';
+
+    final int minutes = max(1, (distance / speedKmh * 60).round());
+    final String time = minutes >= 60
+        ? '${minutes ~/ 60} hr ${minutes % 60 == 0 ? '' : '${minutes % 60} min'}'
+            .trim()
+        : '$minutes min';
+    return '$time $mode';
+  }
+}
+
+class _MerchantMapCard extends StatelessWidget {
+  const _MerchantMapCard({
+    required this.merchant,
+    required this.onTap,
+  });
+
+  final _MapMerchantInfo merchant;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE5E9F4)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          _MapViewMerchantsState._brandPurple,
+                          _MapViewMerchantsState._brandPink,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.place_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          merchant.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: textStyle15.copyWith(
+                            color: _MapViewMerchantsState._headingColor,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 17,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFEFF8),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            merchant.offerText,
+                            style: searchStyle.copyWith(
+                              color: _MapViewMerchantsState._brandPink,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: _TravelTimePill(
+                      icon: Icons.directions_walk_rounded,
+                      label: merchant.walkingEstimate,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _TravelTimePill(
+                      icon: Icons.directions_car_filled_rounded,
+                      label: merchant.drivingEstimate,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TravelTimePill extends StatelessWidget {
+  const _TravelTimePill({
+    required this.icon,
+    required this.label,
+  });
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F8FC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE8ECF5)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: 18,
+            color: _MapViewMerchantsState._brandPurple,
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: searchStyle.copyWith(
+                color: _MapViewMerchantsState._bodyColor,
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
