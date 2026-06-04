@@ -2,7 +2,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:outline_gradient_button/outline_gradient_button.dart';
-import 'package:new_piiink/constants/global_colors.dart';
+import 'package:touristsaver/constants/global_colors.dart';
 
 // KeyPad widget
 // This widget is reusable and its buttons are customizable (color, size)

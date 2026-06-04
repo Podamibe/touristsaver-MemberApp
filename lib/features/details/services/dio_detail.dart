@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
-import 'package:new_piiink/common/app_variables.dart';
-import 'package:new_piiink/constants/helper.dart';
-import 'package:new_piiink/constants/url_end_point.dart';
-import 'package:new_piiink/models/response/detail_res.dart';
+import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/constants/helper.dart';
+import 'package:touristsaver/constants/url_end_point.dart';
+import 'package:touristsaver/models/response/detail_res.dart';
 
 import 'fav_or_not.dart';
 

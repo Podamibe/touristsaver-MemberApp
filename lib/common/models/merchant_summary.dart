@@ -1,11 +1,12 @@
 import 'dart:math' as math;
 
-import 'package:new_piiink/models/response/get_nearby_merchants_res_model.dart'
+import 'package:touristsaver/models/response/get_nearby_merchants_res_model.dart'
     as nearby_view_all;
-import 'package:new_piiink/models/response/merchant_get_all_res.dart'
+import 'package:touristsaver/models/response/merchant_get_all_res.dart'
     as merchant_all;
-import 'package:new_piiink/models/response/nearby_res.dart' as nearby;
-import 'package:new_piiink/models/response/search_merchant_res.dart' as search;
+import 'package:touristsaver/models/response/nearby_res.dart' as nearby;
+import 'package:touristsaver/models/response/search_merchant_res.dart'
+    as search;
 
 class MerchantSummary {
   const MerchantSummary({

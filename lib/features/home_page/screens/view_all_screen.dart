@@ -3,19 +3,19 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:new_piiink/common/widgets/custom_app_bar.dart';
-import 'package:new_piiink/common/widgets/custom_loader.dart';
-import 'package:new_piiink/common/widgets/error.dart';
-import 'package:new_piiink/common/widgets/not_available.dart';
-import 'package:new_piiink/common/widgets/small_tab_container.dart';
-import 'package:new_piiink/constants/app_image_string.dart';
-import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/features/home_page/services/home_dio.dart';
+import 'package:touristsaver/common/widgets/custom_app_bar.dart';
+import 'package:touristsaver/common/widgets/custom_loader.dart';
+import 'package:touristsaver/common/widgets/error.dart';
+import 'package:touristsaver/common/widgets/not_available.dart';
+import 'package:touristsaver/common/widgets/small_tab_container.dart';
+import 'package:touristsaver/constants/app_image_string.dart';
+import 'package:touristsaver/constants/global_colors.dart';
+import 'package:touristsaver/features/home_page/services/home_dio.dart';
 
 import '../../../common/app_variables.dart';
 import '../../../models/request/nearby_req.dart';
 import '../../../models/response/nearby_res.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 class ViewAllScreen extends StatefulWidget {
   static const String routeName = '/home-view-all';

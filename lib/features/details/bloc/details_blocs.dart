@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:new_piiink/features/details/bloc/details_events.dart';
-import 'package:new_piiink/features/details/bloc/details_states.dart';
-import 'package:new_piiink/features/details/services/dio_detail.dart';
+import 'package:touristsaver/features/details/bloc/details_events.dart';
+import 'package:touristsaver/features/details/bloc/details_states.dart';
+import 'package:touristsaver/features/details/services/dio_detail.dart';
 
 class MerchantDetailBloc
     extends Bloc<MerchantDetailEvent, MerchantDetailState> {

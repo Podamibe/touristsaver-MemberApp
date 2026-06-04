@@ -10,16 +10,16 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:lottie/lottie.dart' hide Marker;
-import 'package:new_piiink/common/widgets/custom_app_bar.dart';
-import 'package:new_piiink/common/widgets/custom_loader.dart';
-import 'package:new_piiink/common/widgets/error.dart';
-import 'package:new_piiink/common/widgets/no_merchant.dart';
-import 'package:new_piiink/common/widgets/not_available.dart';
-import 'package:new_piiink/common/widgets/small_tab_container.dart';
-import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/constants/style.dart';
-import 'package:new_piiink/features/home_page/services/home_dio.dart';
-import 'package:new_piiink/models/response/merchant_get_all_res.dart';
+import 'package:touristsaver/common/widgets/custom_app_bar.dart';
+import 'package:touristsaver/common/widgets/custom_loader.dart';
+import 'package:touristsaver/common/widgets/error.dart';
+import 'package:touristsaver/common/widgets/no_merchant.dart';
+import 'package:touristsaver/common/widgets/not_available.dart';
+import 'package:touristsaver/common/widgets/small_tab_container.dart';
+import 'package:touristsaver/constants/global_colors.dart';
+import 'package:touristsaver/constants/style.dart';
+import 'package:touristsaver/features/home_page/services/home_dio.dart';
+import 'package:touristsaver/models/response/merchant_get_all_res.dart';
 
 import '../../../common/app_variables.dart';
 import '../../../common/widgets/custom_snackbar.dart';
@@ -29,7 +29,7 @@ import '../../../models/request/mark_fav_req.dart';
 import '../../../models/response/common_res.dart';
 import '../../../models/response/nearby_res.dart' as near_by_res;
 import '../../merchant/services/dio_merchant.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 class AllMerchantScreen extends StatefulWidget {
   static const String routeName = '/all-merchant';

@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:new_piiink/common/widgets/custom_loader.dart';
-import 'package:new_piiink/common/widgets/custom_snackbar.dart';
-import 'package:new_piiink/common/widgets/error.dart';
-import 'package:new_piiink/features/profile/services/dio_membership.dart';
+import 'package:touristsaver/common/widgets/custom_loader.dart';
+import 'package:touristsaver/common/widgets/custom_snackbar.dart';
+import 'package:touristsaver/common/widgets/error.dart';
+import 'package:touristsaver/features/profile/services/dio_membership.dart';
 
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
@@ -17,7 +17,7 @@ import '../../../models/response/user_detail_res.dart';
 import '../bloc/user_profile_blocs.dart';
 import '../bloc/user_profile_events.dart';
 import '../bloc/user_profile_states.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 const Color _referralNavy = Color(0xFF111C44);
 const Color _referralMuted = Color(0xFF63708A);
@@ -104,7 +104,7 @@ class _MemberReferralScreenState extends State<MemberReferralScreen> {
   Widget _referralContent(UserProfileResModel userProfile) {
     final String memberCode = userProfile.data!.results!.uniqueMemberCode ?? '';
     final String referralLink =
-        'https://app.piiink.org/register?memberReferralCode=$memberCode';
+        'https://app.touristsaver.org/register?memberReferralCode=$memberCode';
 
     return SingleChildScrollView(
       child: Padding(

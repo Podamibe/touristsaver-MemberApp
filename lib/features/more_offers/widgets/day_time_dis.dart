@@ -1,8 +1,8 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:new_piiink/constants/decimal_remove.dart';
-import 'package:new_piiink/models/response/get_all_discount.dart';
+import 'package:touristsaver/constants/decimal_remove.dart';
+import 'package:touristsaver/models/response/get_all_discount.dart';
 
 class DayTimeDis extends StatelessWidget {
   final int itemCount;

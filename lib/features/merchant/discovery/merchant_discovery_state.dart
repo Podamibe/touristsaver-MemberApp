@@ -1,4 +1,4 @@
-import 'package:new_piiink/common/models/merchant_summary.dart';
+import 'package:touristsaver/common/models/merchant_summary.dart';
 
 enum MerchantDiscoverySource {
   none,

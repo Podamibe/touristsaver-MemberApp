@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:new_piiink/features/wallet/bloc/wallet_event.dart';
-import 'package:new_piiink/features/wallet/bloc/wallet_state.dart';
+import 'package:touristsaver/features/wallet/bloc/wallet_event.dart';
+import 'package:touristsaver/features/wallet/bloc/wallet_state.dart';
 
 import '../services/dio_wallet.dart';
 

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:new_piiink/common/widgets/custom_app_bar.dart';
-import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/constants/style.dart';
-import 'package:new_piiink/features/top_up/widgets/premium_topup_history_widget.dart';
-import 'package:new_piiink/features/top_up/widgets/top_up_history_widget.dart';
+import 'package:touristsaver/common/widgets/custom_app_bar.dart';
+import 'package:touristsaver/constants/global_colors.dart';
+import 'package:touristsaver/constants/style.dart';
+import 'package:touristsaver/features/top_up/widgets/premium_topup_history_widget.dart';
+import 'package:touristsaver/features/top_up/widgets/top_up_history_widget.dart';
 
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 class TopUpHistoryScreen extends StatefulWidget {
   static const String routeName = '/top_up_history';

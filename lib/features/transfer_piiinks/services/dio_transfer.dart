@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
-import 'package:new_piiink/constants/helper.dart';
-import 'package:new_piiink/constants/url_end_point.dart';
-import 'package:new_piiink/models/request/tranfer_piiink_req.dart';
-import 'package:new_piiink/models/response/tranfer_piiink_res.dart';
+import 'package:touristsaver/constants/helper.dart';
+import 'package:touristsaver/constants/url_end_point.dart';
+import 'package:touristsaver/models/request/tranfer_piiink_req.dart';
+import 'package:touristsaver/models/response/tranfer_piiink_res.dart';
 
 import '../../../models/request/transfer_piiinks_req_model.dart';
 

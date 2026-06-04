@@ -1,13 +1,13 @@
 import 'package:dio/dio.dart';
-import 'package:new_piiink/constants/helper.dart';
-import 'package:new_piiink/constants/pref.dart';
-import 'package:new_piiink/constants/pref_key.dart';
-import 'package:new_piiink/constants/url_end_point.dart';
-import 'package:new_piiink/models/response/location_get_all.dart';
-import 'package:new_piiink/models/response/postal_code_get_all.dart';
-import 'package:new_piiink/models/response/region_get_all.dart';
-import 'package:new_piiink/models/response/state_get_all.dart';
-import 'package:new_piiink/models/response/state_get_one.dart';
+import 'package:touristsaver/constants/helper.dart';
+import 'package:touristsaver/constants/pref.dart';
+import 'package:touristsaver/constants/pref_key.dart';
+import 'package:touristsaver/constants/url_end_point.dart';
+import 'package:touristsaver/models/response/location_get_all.dart';
+import 'package:touristsaver/models/response/postal_code_get_all.dart';
+import 'package:touristsaver/models/response/region_get_all.dart';
+import 'package:touristsaver/models/response/state_get_all.dart';
+import 'package:touristsaver/models/response/state_get_one.dart';
 
 class DioLocation {
   // Get All Location

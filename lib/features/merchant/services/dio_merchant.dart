@@ -1,11 +1,11 @@
 import 'package:dio/dio.dart';
-import 'package:new_piiink/common/app_variables.dart';
-import 'package:new_piiink/constants/helper.dart';
-import 'package:new_piiink/constants/url_end_point.dart';
-import 'package:new_piiink/models/error_res.dart';
-import 'package:new_piiink/models/request/mark_fav_req.dart';
-import 'package:new_piiink/models/response/common_res.dart';
-import 'package:new_piiink/models/response/merchant_get_all_res.dart';
+import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/constants/helper.dart';
+import 'package:touristsaver/constants/url_end_point.dart';
+import 'package:touristsaver/models/error_res.dart';
+import 'package:touristsaver/models/request/mark_fav_req.dart';
+import 'package:touristsaver/models/response/common_res.dart';
+import 'package:touristsaver/models/response/merchant_get_all_res.dart';
 
 import '../../../constants/pref.dart';
 import '../../../constants/pref_key.dart';

@@ -5,24 +5,24 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:new_piiink/common/widgets/custom_app_bar.dart';
-import 'package:new_piiink/common/widgets/custom_loader.dart';
-import 'package:new_piiink/common/widgets/error.dart';
-import 'package:new_piiink/common/widgets/not_available.dart';
-import 'package:new_piiink/common/widgets/small_tab_container.dart';
-import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/constants/style.dart';
-import 'package:new_piiink/features/home_page/services/home_dio.dart';
-import 'package:new_piiink/models/response/merchant_get_all_res.dart'
+import 'package:touristsaver/common/widgets/custom_app_bar.dart';
+import 'package:touristsaver/common/widgets/custom_loader.dart';
+import 'package:touristsaver/common/widgets/error.dart';
+import 'package:touristsaver/common/widgets/not_available.dart';
+import 'package:touristsaver/common/widgets/small_tab_container.dart';
+import 'package:touristsaver/constants/global_colors.dart';
+import 'package:touristsaver/constants/style.dart';
+import 'package:touristsaver/features/home_page/services/home_dio.dart';
+import 'package:touristsaver/models/response/merchant_get_all_res.dart'
     as merchantlist;
-import 'package:new_piiink/models/response/sub_category_list_res.dart' as sub;
+import 'package:touristsaver/models/response/sub_category_list_res.dart' as sub;
 
 import '../../../common/widgets/custom_snackbar.dart';
 import '../../../constants/app_image_string.dart';
 import '../../../models/request/mark_fav_req.dart';
 import '../../../models/response/common_res.dart';
 import '../../merchant/services/dio_merchant.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 class CategoryScreen extends StatefulWidget {
   // final String categoryName;

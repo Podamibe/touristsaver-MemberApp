@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:equatable/equatable.dart';
-import 'package:new_piiink/models/response/get_all_discount.dart';
+import 'package:touristsaver/models/response/get_all_discount.dart';
 
 @immutable
 abstract class MerchantDiscountState extends Equatable {}

@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:new_piiink/models/response/slider_res.dart';
+import 'package:touristsaver/models/response/slider_res.dart';
 
 @immutable
 abstract class SliderState extends Equatable {}

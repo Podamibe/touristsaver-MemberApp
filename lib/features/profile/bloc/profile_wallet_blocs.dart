@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:new_piiink/features/profile/bloc/profile_wallet_events.dart';
-import 'package:new_piiink/features/profile/bloc/profile_wallet_states.dart';
-import 'package:new_piiink/features/wallet/services/dio_wallet.dart';
+import 'package:touristsaver/features/profile/bloc/profile_wallet_events.dart';
+import 'package:touristsaver/features/profile/bloc/profile_wallet_states.dart';
+import 'package:touristsaver/features/wallet/services/dio_wallet.dart';
 
 class ProfileWalletBloc extends Bloc<ProfileWalletEvent, ProfileWalletState> {
   final DioWallet dioWallet;

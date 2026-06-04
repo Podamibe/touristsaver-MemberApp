@@ -3,12 +3,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:new_piiink/common/widgets/custom_loader.dart';
-import 'package:new_piiink/common/widgets/dropdown_button_widget.dart';
-import 'package:new_piiink/common/widgets/error.dart';
-import 'package:new_piiink/common/widgets/small_tab_container.dart';
-import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/features/home_page/services/home_dio.dart';
+import 'package:touristsaver/common/widgets/custom_loader.dart';
+import 'package:touristsaver/common/widgets/dropdown_button_widget.dart';
+import 'package:touristsaver/common/widgets/error.dart';
+import 'package:touristsaver/common/widgets/small_tab_container.dart';
+import 'package:touristsaver/constants/global_colors.dart';
+import 'package:touristsaver/features/home_page/services/home_dio.dart';
 
 import '../../../common/app_variables.dart';
 import '../../../constants/app_image_string.dart';
@@ -16,7 +16,7 @@ import '../../../constants/style.dart';
 import '../../../models/response/get_nearby_merchants_res_model.dart'
     as near_mer;
 import '../../../models/response/get_range_res.dart' as get_range;
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 class ViewAllNearbyMerchantsScreen extends StatefulWidget {
   static const String routeName = '/view-all-nearby-merchants';

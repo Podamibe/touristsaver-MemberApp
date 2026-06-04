@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:new_piiink/features/terms_conditions/bloc/agreement_events.dart';
-import 'package:new_piiink/features/terms_conditions/bloc/agreement_states.dart';
-import 'package:new_piiink/features/terms_conditions/services/dio_agreement.dart';
+import 'package:touristsaver/features/terms_conditions/bloc/agreement_events.dart';
+import 'package:touristsaver/features/terms_conditions/bloc/agreement_states.dart';
+import 'package:touristsaver/features/terms_conditions/services/dio_agreement.dart';
 
 class AgreementBloc extends Bloc<AgreementEvent, AgreementState> {
   final DioAgreement dioAgreement;

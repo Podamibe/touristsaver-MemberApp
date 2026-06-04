@@ -4,9 +4,9 @@ import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:new_piiink/common/services/device_info.dart';
-import 'package:new_piiink/constants/pref.dart';
-import 'package:new_piiink/constants/url_end_point.dart';
+import 'package:touristsaver/common/services/device_info.dart';
+import 'package:touristsaver/constants/pref.dart';
+import 'package:touristsaver/constants/url_end_point.dart';
 
 import '../../constants/helper.dart';
 import '../app_variables.dart';

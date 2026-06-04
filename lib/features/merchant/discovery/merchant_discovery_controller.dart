@@ -1,15 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:new_piiink/common/app_variables.dart';
-import 'package:new_piiink/common/models/merchant_summary.dart';
-import 'package:new_piiink/common/services/location_service.dart';
-import 'package:new_piiink/features/home_page/services/home_dio.dart';
-import 'package:new_piiink/features/merchant/discovery/merchant_discovery_state.dart';
-import 'package:new_piiink/features/merchant/services/dio_merchant.dart';
-import 'package:new_piiink/models/request/nearby_req.dart';
-import 'package:new_piiink/models/request/mark_fav_req.dart';
-import 'package:new_piiink/models/response/common_res.dart';
+import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/common/models/merchant_summary.dart';
+import 'package:touristsaver/common/services/location_service.dart';
+import 'package:touristsaver/features/home_page/services/home_dio.dart';
+import 'package:touristsaver/features/merchant/discovery/merchant_discovery_state.dart';
+import 'package:touristsaver/features/merchant/services/dio_merchant.dart';
+import 'package:touristsaver/models/request/nearby_req.dart';
+import 'package:touristsaver/models/request/mark_fav_req.dart';
+import 'package:touristsaver/models/response/common_res.dart';
 
 class MerchantDiscoveryController extends ChangeNotifier {
   MerchantDiscoveryState state = const MerchantDiscoveryState();

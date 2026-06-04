@@ -1,11 +1,10 @@
-// import 'package:new_piiink/models/response/get_lang_res_model.dart';
+// import 'package:touristsaver/models/response/get_lang_res_model.dart';
 
 // class L10nState {
 //   final GetLangResModel localeModel;
 
 //   L10nState(this.localeModel);
 // }
-
 
 // // part of 'l10n_bloc.dart';
 

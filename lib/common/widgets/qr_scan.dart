@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:new_piiink/common/widgets/scanner_error_widget.dart';
+import 'package:touristsaver/common/widgets/scanner_error_widget.dart';
 import '../services/image_service.dart';
 import 'custom_app_bar.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 import 'custom_snackbar.dart';
 
 class QRScannerScreen extends StatefulWidget {
@@ -298,10 +298,10 @@ class ScannerOverlay extends CustomPainter {
 // import 'package:go_router/go_router.dart';
 // import 'package:image_picker/image_picker.dart';
 // import 'package:mobile_scanner/mobile_scanner.dart';
-// import 'package:new_piiink/common/widgets/scanner_error_widget.dart';
+// import 'package:touristsaver/common/widgets/scanner_error_widget.dart';
 // import '../services/image_service.dart';
 // import 'custom_app_bar.dart';
-// import 'package:new_piiink/generated/l10n.dart';
+// import 'package:touristsaver/generated/l10n.dart';
 // import 'custom_snackbar.dart';
 // // import '../../../constants/fixed_decimal.dart';
 // // import 'package:intl/intl.dart';

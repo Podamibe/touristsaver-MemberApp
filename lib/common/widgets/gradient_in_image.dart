@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:new_piiink/constants/global_colors.dart';
+import 'package:touristsaver/constants/global_colors.dart';
 
 class GradientInImage extends StatelessWidget {
   final Widget child;
