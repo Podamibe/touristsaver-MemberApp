@@ -92,6 +92,7 @@ class Datum {
     this.charityId,
     this.isMerchantMadeByCp,
     this.isMemberMadeByCp,
+    this.merchantImageInfo,
     this.merchant,
   });
 
@@ -135,6 +136,7 @@ class Datum {
   final int? charityId;
   final bool? isMerchantMadeByCp;
   final bool? isMemberMadeByCp;
+  final MerchantImageInfo? merchantImageInfo;
   final Merchant? merchant;
 
   factory Datum.fromJson(Map<String, dynamic> json) => Datum(
@@ -184,6 +186,9 @@ class Datum {
         charityId: json["charityId"],
         isMerchantMadeByCp: json["isMerchantMadeByCP"],
         isMemberMadeByCp: json["isMemberMadeByCP"],
+        merchantImageInfo: json["__merchantImageInfo__"] == null
+            ? null
+            : MerchantImageInfo.fromJson(json["__merchantImageInfo__"]),
         merchant: json["__merchant__"] == null
             ? null
             : Merchant.fromJson(json["__merchant__"]),
@@ -230,6 +235,7 @@ class Datum {
         "charityId": charityId,
         "isMerchantMadeByCP": isMerchantMadeByCp,
         "isMemberMadeByCP": isMemberMadeByCp,
+        "__merchantImageInfo__": merchantImageInfo?.toJson(),
         "__merchant__": merchant?.toJson(),
       };
 }
@@ -238,6 +244,8 @@ class Merchant {
   Merchant({
     this.id,
     this.merchantName,
+    this.logoUrl,
+    this.merchantImageInfo,
     this.maxDiscount,
     this.contactPersonFirstName,
     this.contactPersonLastName,
@@ -283,6 +291,8 @@ class Merchant {
 
   final int? id;
   final String? merchantName;
+  final String? logoUrl;
+  final MerchantImageInfo? merchantImageInfo;
   final double? maxDiscount;
   final String? contactPersonFirstName;
   final String? contactPersonLastName;
@@ -328,6 +338,10 @@ class Merchant {
   factory Merchant.fromJson(Map<String, dynamic> json) => Merchant(
         id: json["id"],
         merchantName: json["merchantName"],
+        logoUrl: json["logoUrl"],
+        merchantImageInfo: json["__merchantImageInfo__"] == null
+            ? null
+            : MerchantImageInfo.fromJson(json["__merchantImageInfo__"]),
         maxDiscount: json["maxDiscount"]?.toDouble(),
         contactPersonFirstName: json["contactPersonFirstName"],
         contactPersonLastName: json["contactPersonLastName"],
@@ -378,6 +392,8 @@ class Merchant {
   Map<String, dynamic> toJson() => {
         "id": id,
         "merchantName": merchantName,
+        "logoUrl": logoUrl,
+        "__merchantImageInfo__": merchantImageInfo?.toJson(),
         "maxDiscount": maxDiscount,
         "contactPersonFirstName": contactPersonFirstName,
         "contactPersonLastName": contactPersonLastName,
@@ -420,5 +436,42 @@ class Merchant {
         "signerId": signerId,
         "signerType": signerType,
         "charityId": charityId,
+      };
+}
+
+class MerchantImageInfo {
+  MerchantImageInfo({
+    this.logoUrl,
+    this.slider1,
+    this.slider2,
+    this.slider3,
+    this.slider4,
+    this.slider5,
+  });
+
+  final String? logoUrl;
+  final String? slider1;
+  final String? slider2;
+  final String? slider3;
+  final String? slider4;
+  final String? slider5;
+
+  factory MerchantImageInfo.fromJson(Map<String, dynamic> json) =>
+      MerchantImageInfo(
+        logoUrl: json["logoUrl"],
+        slider1: json["slider1"],
+        slider2: json["slider2"],
+        slider3: json["slider3"],
+        slider4: json["slider4"],
+        slider5: json["slider5"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "logoUrl": logoUrl,
+        "slider1": slider1,
+        "slider2": slider2,
+        "slider3": slider3,
+        "slider4": slider4,
+        "slider5": slider5,
       };
 }

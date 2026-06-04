@@ -1,6 +1,7 @@
 // import 'dart:developer';
 // ignore_for_file: prefer_typing_uninitialized_variables
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -435,20 +436,12 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
         : DateFormat('d MMM yyyy')
             .format(transaction.transactionDate!.toLocal());
     final String discount = _formatCurrency(transaction.discountAmount ?? 0);
+    final String? merchantImageUrl = _merchantImageUrl(transaction);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 38.w,
-          height: 38.w,
-          decoration: BoxDecoration(
-            color: const Color(0xFFEFF7FF),
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          child: Icon(Icons.local_offer_outlined,
-              color: _primaryBlue, size: 21.sp),
-        ),
+        _recentSavingMerchantImage(merchantImageUrl),
         SizedBox(width: 12.w),
         Expanded(
           child: Column(
@@ -485,6 +478,70 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
         ),
       ],
     );
+  }
+
+  Widget _recentSavingMerchantImage(String? imageUrl) {
+    final String? url =
+        imageUrl == null || imageUrl.trim().isEmpty ? null : imageUrl.trim();
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12.r),
+      child: Container(
+        width: 38.w,
+        height: 38.w,
+        color: const Color(0xFFF2F6FC),
+        child: url == null
+            ? _recentSavingFallbackImage()
+            : CachedNetworkImage(
+                imageUrl: url,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Center(
+                  child: SizedBox(
+                    width: 14.w,
+                    height: 14.w,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Color(0xFF009FE3),
+                    ),
+                  ),
+                ),
+                errorWidget: (context, url, error) =>
+                    _recentSavingFallbackImage(),
+              ),
+      ),
+    );
+  }
+
+  Widget _recentSavingFallbackImage() {
+    return Image.asset('assets/images/no_image.jpg', fit: BoxFit.cover);
+  }
+
+  String? _merchantImageUrl(transaction.Datum transactionData) {
+    final transaction.Merchant? merchant = transactionData.merchant;
+    return _firstNotEmpty([
+      transactionData.merchantImageInfo?.logoUrl,
+      merchant?.merchantImageInfo?.logoUrl,
+      merchant?.logoUrl,
+      transactionData.merchantImageInfo?.slider1,
+      merchant?.merchantImageInfo?.slider1,
+      transactionData.merchantImageInfo?.slider2,
+      merchant?.merchantImageInfo?.slider2,
+      transactionData.merchantImageInfo?.slider3,
+      merchant?.merchantImageInfo?.slider3,
+      transactionData.merchantImageInfo?.slider4,
+      merchant?.merchantImageInfo?.slider4,
+      transactionData.merchantImageInfo?.slider5,
+      merchant?.merchantImageInfo?.slider5,
+    ]);
+  }
+
+  String? _firstNotEmpty(List<String?> values) {
+    for (final String? value in values) {
+      if (value != null && value.trim().isNotEmpty) {
+        return value.trim();
+      }
+    }
+    return null;
   }
 
   Widget _merchantDiscountCreditsSection() {
