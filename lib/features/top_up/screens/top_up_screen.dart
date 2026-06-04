@@ -628,16 +628,29 @@ class _TopUpWidgetState extends State<TopUpWidget> {
           GlobalSnackBar.showError(context, S.of(context).serverError);
         }
       });
-    } on Exception catch (e) {
-      if (e is StripeException) {
-        if (!mounted) return;
-        GlobalSnackBar.showError(
-            context, S.of(context).thePaymentHasBeenCanceled);
+    } on StripeException catch (e) {
+      debugPrint(
+        'Top-up PaymentSheet StripeException: '
+        'code=${e.error.code}, '
+        'message=${e.error.message}, '
+        'localizedMessage=${e.error.localizedMessage}, '
+        'stripeErrorCode=${e.error.stripeErrorCode}',
+      );
+
+      if (!mounted) return;
+      if (e.error.code == FailureCode.Canceled) {
+        GlobalSnackBar.valid(context, 'Payment cancelled. No charge was made.');
       } else {
-        return;
+        GlobalSnackBar.showError(
+          context,
+          e.error.localizedMessage ?? S.of(context).stripePaymentFail,
+        );
       }
     } catch (e) {
-      return;
+      debugPrint('Top-up PaymentSheet unexpected exception: $e');
+      if (mounted) {
+        GlobalSnackBar.showError(context, S.of(context).stripePaymentFail);
+      }
     }
   }
 
