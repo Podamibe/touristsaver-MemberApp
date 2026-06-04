@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:new_piiink/constants/global_colors.dart';
+import 'package:touristsaver/constants/global_colors.dart';
 
 class OTPTimer extends StatefulWidget {
   const OTPTimer({super.key});

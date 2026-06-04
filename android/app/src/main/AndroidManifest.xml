@@ -68,8 +68,8 @@
             />
             <intent-filter android:autoVerify="true">
                 <data android:scheme="https"
-                      android:host="app.piiink.org" />
-                <data android:scheme="piiink" android:host="open" />
+                      android:host="app.touristsaver.org" />
+                <data android:scheme="touristsaver" android:host="open" />
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />

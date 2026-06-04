@@ -11,17 +11,17 @@ import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import "package:flutter_google_maps_webservices/places.dart";
 import 'package:lottie/lottie.dart' hide Marker;
-import 'package:new_piiink/common/app_variables.dart';
-import 'package:new_piiink/common/widgets/custom_app_bar.dart';
-import 'package:new_piiink/constants/style.dart';
-import 'package:new_piiink/models/response/merchant_get_all_res.dart';
+import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/common/widgets/custom_app_bar.dart';
+import 'package:touristsaver/constants/style.dart';
+import 'package:touristsaver/models/response/merchant_get_all_res.dart';
 
 import '../../../common/widgets/custom_loader.dart';
 import '../../../constants/decimal_remove.dart';
 import '../../../constants/global_colors.dart';
 import '../../../models/response/nearby_res.dart' as near_by_res;
 import '../../merchant/services/dio_merchant.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 class ChooseOnMap extends StatefulWidget {
   static const String routeName = '/choose-on-map';

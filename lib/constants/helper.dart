@@ -4,8 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:new_piiink/constants/pref.dart';
-import 'package:new_piiink/constants/pref_key.dart';
+import 'package:touristsaver/constants/pref.dart';
+import 'package:touristsaver/constants/pref_key.dart';
 
 import '../common/app_variables.dart';
 import '../common/services/device_info.dart';
@@ -13,9 +13,9 @@ import '../common/widgets/custom_snackbar.dart';
 import '../router.dart';
 
 ///URL for Staging and Production
-// const baseUrl = 'http://192.168.1.146:3000/api/';
-// const baseUrl = 'https://staging.dev.piiink.org/api/';
-const baseUrl = 'https://backend.touristsaver.org/api/';
+// const baseUrl = 'http://192.168.10.4:3000/api/';
+const baseUrl = 'https://api-dashboard.touristsaver.org/api/';
+// const baseUrl = 'https://backend.touristsaver.org/api/';
 
 // For user with token or logged in
 Future<Dio> getClient() async {

@@ -4,7 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../constants/global_colors.dart';
 import '../../../constants/style.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 class MyCharityWidget extends StatelessWidget {
   const MyCharityWidget({

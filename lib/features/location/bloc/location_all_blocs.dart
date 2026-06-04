@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:new_piiink/features/location/bloc/location_all_events.dart';
-import 'package:new_piiink/features/location/bloc/location_all_states.dart';
-import 'package:new_piiink/features/location/services/dio_location.dart';
+import 'package:touristsaver/features/location/bloc/location_all_events.dart';
+import 'package:touristsaver/features/location/bloc/location_all_states.dart';
+import 'package:touristsaver/features/location/services/dio_location.dart';
 
 import '../../register/services/dio_register.dart';
 

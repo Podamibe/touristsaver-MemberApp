@@ -1,7 +1,7 @@
 // Text InputDecoration
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:new_piiink/constants/global_colors.dart';
+import 'package:touristsaver/constants/global_colors.dart';
 
 InputDecoration textInputDecoration = InputDecoration(
   contentPadding: const EdgeInsets.fromLTRB(11.0, 0.0, 11.0, 0.0),

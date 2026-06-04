@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:new_piiink/common/app_variables.dart';
-import 'package:new_piiink/constants/pref.dart';
+import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/constants/pref.dart';
 import '../models/response/get_lang_res_model.dart';
 import 'locales.dart';
 import 'services/dio_lang.dart';

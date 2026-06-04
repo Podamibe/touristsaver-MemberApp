@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
-import 'package:new_piiink/models/response/member_package_res.dart';
+import 'package:touristsaver/models/response/member_package_res.dart';
 
 import '../../../models/response/membership_package_get_one_for_tourist.dart';
 import '../../../models/response/membership_package_get_one_by_member_free.dart';

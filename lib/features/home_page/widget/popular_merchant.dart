@@ -1,20 +1,20 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:new_piiink/common/app_variables.dart';
-import 'package:new_piiink/constants/app_image_string.dart';
-import 'package:new_piiink/features/home_page/widget/big_tab_container.dart';
-import 'package:new_piiink/common/widgets/custom_loader.dart';
-import 'package:new_piiink/common/widgets/error.dart';
-import 'package:new_piiink/constants/style.dart';
-import 'package:new_piiink/features/home_page/services/home_dio.dart';
-import 'package:new_piiink/features/home_page/widget/home_section_header.dart';
+import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/constants/app_image_string.dart';
+import 'package:touristsaver/features/home_page/widget/big_tab_container.dart';
+import 'package:touristsaver/common/widgets/custom_loader.dart';
+import 'package:touristsaver/common/widgets/error.dart';
+import 'package:touristsaver/constants/style.dart';
+import 'package:touristsaver/features/home_page/services/home_dio.dart';
+import 'package:touristsaver/features/home_page/widget/home_section_header.dart';
 
 import '../../../common/widgets/no_merchant.dart';
 import '../../../constants/location_not_enable.dart';
 import '../../../models/request/nearby_req.dart';
 import '../../../models/response/nearby_res.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 class PopularMerchant extends StatefulWidget {
   const PopularMerchant({super.key, required this.isLoading});

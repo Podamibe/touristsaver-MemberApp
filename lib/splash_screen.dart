@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:new_piiink/constants/pref.dart';
-import 'package:new_piiink/constants/pref_key.dart';
-import 'package:new_piiink/constants/read_sms_otp.dart';
-import 'package:new_piiink/features/wallet/services/dio_wallet.dart';
-import 'package:new_piiink/models/response/universal_get_my_wallet.dart';
+import 'package:touristsaver/constants/pref.dart';
+import 'package:touristsaver/constants/pref_key.dart';
+import 'package:touristsaver/constants/read_sms_otp.dart';
+import 'package:touristsaver/features/wallet/services/dio_wallet.dart';
+import 'package:touristsaver/models/response/universal_get_my_wallet.dart';
 
 import 'common/app_variables.dart';
 

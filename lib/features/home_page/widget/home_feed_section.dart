@@ -2,10 +2,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:new_piiink/common/utils.dart';
-import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/features/home_page/models/home_feed_post.dart';
-import 'package:new_piiink/features/home_page/services/home_feed_dio.dart';
+import 'package:touristsaver/common/utils.dart';
+import 'package:touristsaver/constants/global_colors.dart';
+import 'package:touristsaver/features/home_page/models/home_feed_post.dart';
+import 'package:touristsaver/features/home_page/services/home_feed_dio.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomeFeedSection extends StatefulWidget {

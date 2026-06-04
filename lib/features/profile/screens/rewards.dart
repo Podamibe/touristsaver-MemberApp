@@ -2,7 +2,7 @@
 // import 'package:flutter_screenutil/flutter_screenutil.dart';
 // import 'package:go_router/go_router.dart';
 // import '../../../common/widgets/custom_app_bar.dart';
-// import 'package:new_piiink/generated/l10n.dart';
+// import 'package:touristsaver/generated/l10n.dart';
 
 // import '../../../constants/global_colors.dart';
 // import '../widget/custom_horizontal_table.dart';

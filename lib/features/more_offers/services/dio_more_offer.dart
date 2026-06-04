@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:new_piiink/constants/helper.dart';
-import 'package:new_piiink/constants/url_end_point.dart';
-import 'package:new_piiink/models/response/get_all_discount.dart';
+import 'package:touristsaver/constants/helper.dart';
+import 'package:touristsaver/constants/url_end_point.dart';
+import 'package:touristsaver/models/response/get_all_discount.dart';
 
 class DioMoreOffer {
   // Get All Discount Info

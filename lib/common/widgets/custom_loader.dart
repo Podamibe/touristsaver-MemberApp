@@ -5,10 +5,10 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/constants/style.dart';
+import 'package:touristsaver/constants/global_colors.dart';
+import 'package:touristsaver/constants/style.dart';
 import 'package:outline_gradient_button/outline_gradient_button.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 class CustomLoader extends StatelessWidget {
   const CustomLoader({super.key, this.itemCount = 4});

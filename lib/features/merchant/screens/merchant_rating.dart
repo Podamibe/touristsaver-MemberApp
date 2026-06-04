@@ -4,9 +4,9 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:new_piiink/common/app_variables.dart';
-import 'package:new_piiink/constants/style.dart';
-import 'package:new_piiink/features/merchant/services/dio_reviews.dart';
+import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/constants/style.dart';
+import 'package:touristsaver/features/merchant/services/dio_reviews.dart';
 
 import '../../../common/widgets/custom_app_bar.dart';
 import '../../../common/widgets/custom_loader.dart';
@@ -15,7 +15,7 @@ import '../../../constants/global_colors.dart';
 import '../../../models/error_res.dart';
 import '../../../models/response/get_all_merchant_reviews.dart';
 import 'package:dartz/dartz.dart' as dartz;
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 class MerchantRating extends StatefulWidget {
   static const String routeName = '/merchant-rating';

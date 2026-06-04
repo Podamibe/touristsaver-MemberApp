@@ -1,17 +1,17 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:new_piiink/common/widgets/custom_loader.dart';
-import 'package:new_piiink/common/widgets/error.dart';
-import 'package:new_piiink/common/widgets/not_available.dart';
-import 'package:new_piiink/constants/decimal_remove.dart';
-import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/constants/number_formatter.dart';
-import 'package:new_piiink/constants/style.dart';
+import 'package:touristsaver/common/widgets/custom_loader.dart';
+import 'package:touristsaver/common/widgets/error.dart';
+import 'package:touristsaver/common/widgets/not_available.dart';
+import 'package:touristsaver/constants/decimal_remove.dart';
+import 'package:touristsaver/constants/global_colors.dart';
+import 'package:touristsaver/constants/number_formatter.dart';
+import 'package:touristsaver/constants/style.dart';
 
 import '../../../constants/date_helper.dart';
 import '../../../models/response/premium_code_top_up_history.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 import '../services/premium_top_up_repository.dart';
 

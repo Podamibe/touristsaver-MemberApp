@@ -4,27 +4,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:new_piiink/common/widgets/custom_app_bar.dart';
-import 'package:new_piiink/common/widgets/custom_loader.dart';
-import 'package:new_piiink/common/widgets/error.dart';
-import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/constants/pref.dart';
-import 'package:new_piiink/constants/pref_key.dart';
-import 'package:new_piiink/constants/style.dart';
-import 'package:new_piiink/features/connectivity/cubit/internet_cubit.dart';
-import 'package:new_piiink/features/location/bloc/location_all_blocs.dart';
-import 'package:new_piiink/features/location/bloc/location_all_events.dart';
-import 'package:new_piiink/features/location/bloc/location_all_states.dart';
-import 'package:new_piiink/features/location/services/dio_location.dart';
-import 'package:new_piiink/features/terms_conditions/widgets/fade_end_text.dart';
-import 'package:new_piiink/models/response/location_get_all.dart';
-import 'package:new_piiink/models/response/region_get_all.dart'
+import 'package:touristsaver/common/widgets/custom_app_bar.dart';
+import 'package:touristsaver/common/widgets/custom_loader.dart';
+import 'package:touristsaver/common/widgets/error.dart';
+import 'package:touristsaver/constants/global_colors.dart';
+import 'package:touristsaver/constants/pref.dart';
+import 'package:touristsaver/constants/pref_key.dart';
+import 'package:touristsaver/constants/style.dart';
+import 'package:touristsaver/features/connectivity/cubit/internet_cubit.dart';
+import 'package:touristsaver/features/location/bloc/location_all_blocs.dart';
+import 'package:touristsaver/features/location/bloc/location_all_events.dart';
+import 'package:touristsaver/features/location/bloc/location_all_states.dart';
+import 'package:touristsaver/features/location/services/dio_location.dart';
+import 'package:touristsaver/features/terms_conditions/widgets/fade_end_text.dart';
+import 'package:touristsaver/models/response/location_get_all.dart';
+import 'package:touristsaver/models/response/region_get_all.dart'
     as region_get_all;
-import 'package:new_piiink/models/response/state_get_all.dart' as state_get_all;
+import 'package:touristsaver/models/response/state_get_all.dart'
+    as state_get_all;
 
 import '../../connectivity/screens/connectivity.dart';
 import '../../connectivity/screens/connectivity_screen.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 class LocationScreen extends StatefulWidget {
   static const String routeName = "/location";

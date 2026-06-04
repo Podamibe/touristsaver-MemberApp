@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:new_piiink/common/app_variables.dart';
-import 'package:new_piiink/constants/helper.dart';
-import 'package:new_piiink/constants/url_end_point.dart';
-import 'package:new_piiink/features/home_page/models/home_feed_post.dart';
+import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/constants/helper.dart';
+import 'package:touristsaver/constants/url_end_point.dart';
+import 'package:touristsaver/features/home_page/models/home_feed_post.dart';
 
 class DioHomeFeed {
   Future<List<HomeFeedPost>> getPosts() async {

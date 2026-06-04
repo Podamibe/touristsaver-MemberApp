@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:new_piiink/common/widgets/custom_button.dart';
-import 'package:new_piiink/common/widgets/custom_container_box.dart';
-import 'package:new_piiink/constants/style.dart';
-import 'package:new_piiink/models/response/get_all_reviews_suggestion.dart';
+import 'package:touristsaver/common/widgets/custom_button.dart';
+import 'package:touristsaver/common/widgets/custom_container_box.dart';
+import 'package:touristsaver/constants/style.dart';
+import 'package:touristsaver/models/response/get_all_reviews_suggestion.dart';
 import '../../../common/widgets/custom_app_bar.dart';
 import '../../../common/widgets/custom_loader.dart';
 import '../../../common/widgets/custom_snackbar.dart';
@@ -15,7 +15,7 @@ import '../../../models/error_res.dart';
 import '../../../models/request/rate_merchant_req.dart';
 import '../services/dio_reviews.dart';
 import 'package:dartz/dartz.dart' as dartz;
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 class FeedbackScreen extends StatefulWidget {
   static const String routeName = '/feedback-screen';

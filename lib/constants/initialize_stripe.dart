@@ -1,8 +1,8 @@
 //Initializing the flutter stripe
 import 'package:flutter_stripe/flutter_stripe.dart';
-import 'package:new_piiink/constants/env.dart';
-import 'package:new_piiink/constants/pref.dart';
-import 'package:new_piiink/constants/pref_key.dart';
+import 'package:touristsaver/constants/env.dart';
+import 'package:touristsaver/constants/pref.dart';
+import 'package:touristsaver/constants/pref_key.dart';
 
 initializeFlutterStripe() async {
   try {

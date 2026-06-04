@@ -1,17 +1,17 @@
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
-import 'package:new_piiink/common/app_variables.dart';
-import 'package:new_piiink/constants/helper.dart';
-import 'package:new_piiink/constants/pref.dart';
-import 'package:new_piiink/constants/pref_key.dart';
-import 'package:new_piiink/constants/url_end_point.dart';
-import 'package:new_piiink/models/error_res.dart';
-import 'package:new_piiink/models/request/confirm_piiink_req.dart';
-import 'package:new_piiink/models/request/sure_apply_piiink_req.dart';
-import 'package:new_piiink/models/response/confirm_piiink_res.dart';
-import 'package:new_piiink/models/response/is_pay_enable_res.dart';
-import 'package:new_piiink/models/response/sure_apply_piiink_res.dart';
+import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/constants/helper.dart';
+import 'package:touristsaver/constants/pref.dart';
+import 'package:touristsaver/constants/pref_key.dart';
+import 'package:touristsaver/constants/url_end_point.dart';
+import 'package:touristsaver/models/error_res.dart';
+import 'package:touristsaver/models/request/confirm_piiink_req.dart';
+import 'package:touristsaver/models/request/sure_apply_piiink_req.dart';
+import 'package:touristsaver/models/response/confirm_piiink_res.dart';
+import 'package:touristsaver/models/response/is_pay_enable_res.dart';
+import 'package:touristsaver/models/response/sure_apply_piiink_res.dart';
 
 class DioPay {
   // Confirm the Payment to apply piiink

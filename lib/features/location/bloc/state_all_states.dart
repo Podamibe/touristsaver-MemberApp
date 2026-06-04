@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:new_piiink/models/response/state_get_all.dart';
+import 'package:touristsaver/models/response/state_get_all.dart';
 
 @immutable
 abstract class StateAllState extends Equatable {}

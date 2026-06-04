@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:new_piiink/constants/style.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/constants/style.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 import '../cubit/internet_cubit.dart';
 

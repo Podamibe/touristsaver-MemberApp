@@ -1,6 +1,6 @@
 // import 'package:equatable/equatable.dart';
 // import 'package:flutter/cupertino.dart';
-// import 'package:new_piiink/models/response/get_range_res.dart';
+// import 'package:touristsaver/models/response/get_range_res.dart';
 
 // @immutable
 // abstract class GetRangeState extends Equatable {}

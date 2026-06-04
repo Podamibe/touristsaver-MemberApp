@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:equatable/equatable.dart';
-import 'package:new_piiink/models/response/get_charity_list_res.dart';
+import 'package:touristsaver/models/response/get_charity_list_res.dart';
 
 @immutable
 abstract class AllCharityState extends Equatable {}

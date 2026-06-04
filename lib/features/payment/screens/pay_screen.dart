@@ -4,23 +4,23 @@ import 'package:flutter/services.dart';
 // import 'package:flutter_barcode_scanner_plus/flutter_barcode_scanner_plus.dart';
 // import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 // import 'package:intl/intl.dart';
-// import 'package:new_piiink/constants/fixed_decimal.dart';
-// import 'package:new_piiink/models/error_res.dart';
-// import 'package:new_piiink/models/request/confirm_piiink_req.dart';
-// import 'package:new_piiink/models/response/confirm_piiink_res.dart';
+// import 'package:touristsaver/constants/fixed_decimal.dart';
+// import 'package:touristsaver/models/error_res.dart';
+// import 'package:touristsaver/models/request/confirm_piiink_req.dart';
+// import 'package:touristsaver/models/response/confirm_piiink_res.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:new_piiink/common/app_variables.dart';
-import 'package:new_piiink/common/widgets/custom_app_bar.dart';
-import 'package:new_piiink/common/widgets/custom_loader.dart';
-import 'package:new_piiink/common/widgets/custom_snackbar.dart';
-import 'package:new_piiink/common/widgets/error.dart';
-import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/features/connectivity/cubit/internet_cubit.dart';
-import 'package:new_piiink/features/payment/services/dio_payment.dart';
-import 'package:new_piiink/models/response/is_pay_enable_res.dart';
+import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/common/widgets/custom_app_bar.dart';
+import 'package:touristsaver/common/widgets/custom_loader.dart';
+import 'package:touristsaver/common/widgets/custom_snackbar.dart';
+import 'package:touristsaver/common/widgets/error.dart';
+import 'package:touristsaver/constants/global_colors.dart';
+import 'package:touristsaver/features/connectivity/cubit/internet_cubit.dart';
+import 'package:touristsaver/features/payment/services/dio_payment.dart';
+import 'package:touristsaver/models/response/is_pay_enable_res.dart';
 
 import '../../../common/services/dio_common.dart';
 import '../../../constants/fixed_decimal.dart';
@@ -30,7 +30,7 @@ import '../../../models/response/confirm_piiink_res.dart';
 import '../../../models/response/piiink_info_res.dart';
 import '../../connectivity/screens/connectivity.dart';
 import '../../connectivity/screens/connectivity_screen.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 class PayScreen extends StatefulWidget {
   static const String routeName = '/pay';
@@ -531,14 +531,21 @@ class _PayScreenState extends State<PayScreen> {
               fontFamily: 'Sans',
             ),
             decoration: InputDecoration(
-              prefixText: '\$ ',
-              prefixStyle: TextStyle(
-                color: _primaryBlue,
-                fontSize: 28.sp,
-                fontWeight: FontWeight.w900,
-                fontFamily: 'Sans',
+              prefixIcon: Padding(
+                padding: EdgeInsets.only(left: 16.w, right: 8.w),
+                child: Text(
+                  '\$ ',
+                  style: TextStyle(
+                    color: _primaryBlue,
+                    fontSize: 28.sp,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'Sans',
+                  ),
+                ),
               ),
-              hintText: '100.00',
+              prefixIconConstraints:
+                  const BoxConstraints(minWidth: 0, minHeight: 0),
+              hintText: '0.00',
               hintStyle: TextStyle(
                 color: GlobalColors.textColor.withValues(alpha: 0.45),
                 fontSize: 28.sp,

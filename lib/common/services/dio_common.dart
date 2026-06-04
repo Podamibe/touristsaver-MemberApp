@@ -1,15 +1,15 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:new_piiink/constants/helper.dart';
-import 'package:new_piiink/constants/pref.dart';
-import 'package:new_piiink/constants/pref_key.dart';
-import 'package:new_piiink/constants/url_end_point.dart';
-import 'package:new_piiink/models/request/ver_num_changed_req.dart';
-import 'package:new_piiink/models/response/piiink_info_res.dart';
-import 'package:new_piiink/models/response/stripe_key_res.dart';
-import 'package:new_piiink/models/response/user_delete_res.dart';
-import 'package:new_piiink/models/response/ver_num_changed_res.dart';
+import 'package:touristsaver/constants/helper.dart';
+import 'package:touristsaver/constants/pref.dart';
+import 'package:touristsaver/constants/pref_key.dart';
+import 'package:touristsaver/constants/url_end_point.dart';
+import 'package:touristsaver/models/request/ver_num_changed_req.dart';
+import 'package:touristsaver/models/response/piiink_info_res.dart';
+import 'package:touristsaver/models/response/stripe_key_res.dart';
+import 'package:touristsaver/models/response/user_delete_res.dart';
+import 'package:touristsaver/models/response/ver_num_changed_res.dart';
 
 import '../../models/response/app_version_log_model.dart';
 

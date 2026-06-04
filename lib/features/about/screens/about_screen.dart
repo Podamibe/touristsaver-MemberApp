@@ -5,7 +5,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../common/widgets/custom_app_bar.dart';
 import '../../../constants/style.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 class AboutScreen extends StatefulWidget {
   static const String routeName = "/about-screen";

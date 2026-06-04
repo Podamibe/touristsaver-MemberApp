@@ -6,13 +6,13 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:new_piiink/common/widgets/custom_snackbar.dart';
-import 'package:new_piiink/models/error_res.dart';
+import 'package:touristsaver/common/widgets/custom_snackbar.dart';
+import 'package:touristsaver/models/error_res.dart';
 
 import '../features/profile/services/dio_profile.dart';
 import '../models/response/common_res.dart';
 import 'widgets/custom_button.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 Future<dynamic> showVerifyEmailBottomSheet(BuildContext context,
     {String? message}) {

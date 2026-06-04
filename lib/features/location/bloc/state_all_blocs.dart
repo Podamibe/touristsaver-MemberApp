@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:new_piiink/features/location/bloc/state_all_events.dart';
-import 'package:new_piiink/features/location/bloc/state_all_states.dart';
-import 'package:new_piiink/features/location/services/dio_location.dart';
+import 'package:touristsaver/features/location/bloc/state_all_events.dart';
+import 'package:touristsaver/features/location/bloc/state_all_states.dart';
+import 'package:touristsaver/features/location/services/dio_location.dart';
 
 class StateAllBloc extends Bloc<StateAllEvent, StateAllState> {
   final DioLocation dioState;

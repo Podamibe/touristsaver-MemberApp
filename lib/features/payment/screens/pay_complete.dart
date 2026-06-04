@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:new_piiink/common/app_variables.dart';
-import 'package:new_piiink/common/widgets/custom_app_bar.dart';
+import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 
 class PaymentCompleted extends StatefulWidget {
   static const String routeName = "/payment-complete";

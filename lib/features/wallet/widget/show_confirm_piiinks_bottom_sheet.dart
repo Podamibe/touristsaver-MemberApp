@@ -4,16 +4,16 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:new_piiink/constants/decimal_remove.dart';
-import 'package:new_piiink/constants/number_formatter.dart';
-import 'package:new_piiink/features/wallet/services/dio_wallet.dart';
+import 'package:touristsaver/constants/decimal_remove.dart';
+import 'package:touristsaver/constants/number_formatter.dart';
+import 'package:touristsaver/features/wallet/services/dio_wallet.dart';
 
 import '../../../common/widgets/custom_button.dart';
 import '../../../common/widgets/custom_snackbar.dart';
 // import '../features/profile/services/dio_profile.dart';
 // import '../models/response/common_res.dart';
 // import 'widgets/custom_button.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 Future<dynamic> showConfirmPiiinksBottomSheet(
     BuildContext context, double? universalFreePiiinks) {

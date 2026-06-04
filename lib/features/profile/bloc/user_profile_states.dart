@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
-import 'package:new_piiink/models/response/user_detail_res.dart';
+import 'package:touristsaver/models/response/user_detail_res.dart';
 
 @immutable
 abstract class UserProfileState extends Equatable {}

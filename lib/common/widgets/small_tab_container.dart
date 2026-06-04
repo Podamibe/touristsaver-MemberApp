@@ -2,11 +2,11 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:new_piiink/common/app_variables.dart';
-import 'package:new_piiink/common/widgets/merchant_distance.dart';
-import 'package:new_piiink/common/widgets/merchant_discount_badge.dart';
-import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/constants/style.dart';
+import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/common/widgets/merchant_distance.dart';
+import 'package:touristsaver/common/widgets/merchant_discount_badge.dart';
+import 'package:touristsaver/constants/global_colors.dart';
+import 'package:touristsaver/constants/style.dart';
 
 import 'custom_loader.dart';
 

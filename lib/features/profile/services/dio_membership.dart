@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
-import 'package:new_piiink/constants/helper.dart';
-import 'package:new_piiink/constants/url_end_point.dart';
-import 'package:new_piiink/models/request/change_password_req.dart';
-import 'package:new_piiink/models/response/change_password_res.dart';
-import 'package:new_piiink/models/response/user_detail_res.dart';
+import 'package:touristsaver/constants/helper.dart';
+import 'package:touristsaver/constants/url_end_point.dart';
+import 'package:touristsaver/models/request/change_password_req.dart';
+import 'package:touristsaver/models/response/change_password_res.dart';
+import 'package:touristsaver/models/response/user_detail_res.dart';
 
 class DioMemberShip {
   // Retrieving the user profile

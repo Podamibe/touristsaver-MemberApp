@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:new_piiink/features/charity/bloc/all_charity_list_events.dart';
-import 'package:new_piiink/features/charity/bloc/all_charity_list_states.dart';
-import 'package:new_piiink/features/charity/services/dio_charity.dart';
+import 'package:touristsaver/features/charity/bloc/all_charity_list_events.dart';
+import 'package:touristsaver/features/charity/bloc/all_charity_list_states.dart';
+import 'package:touristsaver/features/charity/services/dio_charity.dart';
 
 class AllCharityListBloc extends Bloc<AllCharityListEvent, AllCharityState> {
   final DioCharity dioCharity;

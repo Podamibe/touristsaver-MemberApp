@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:new_piiink/models/response/category_list_res.dart';
+import 'package:touristsaver/models/response/category_list_res.dart';
 
 @immutable
 abstract class CategoryState extends Equatable {}

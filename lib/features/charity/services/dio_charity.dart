@@ -1,16 +1,16 @@
 // import 'dart:developer';
 
 import 'package:dio/dio.dart';
-import 'package:new_piiink/common/app_variables.dart';
-import 'package:new_piiink/constants/helper.dart';
-import 'package:new_piiink/constants/pref.dart';
-import 'package:new_piiink/constants/pref_key.dart';
-import 'package:new_piiink/constants/url_end_point.dart';
-import 'package:new_piiink/models/request/nearby_req.dart';
-import 'package:new_piiink/models/request/select_charity_req.dart';
-import 'package:new_piiink/models/response/get_charity_list_res.dart';
-import 'package:new_piiink/models/response/nearby_charity_res.dart';
-import 'package:new_piiink/models/response/select_charity_res.dart';
+import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/constants/helper.dart';
+import 'package:touristsaver/constants/pref.dart';
+import 'package:touristsaver/constants/pref_key.dart';
+import 'package:touristsaver/constants/url_end_point.dart';
+import 'package:touristsaver/models/request/nearby_req.dart';
+import 'package:touristsaver/models/request/select_charity_req.dart';
+import 'package:touristsaver/models/response/get_charity_list_res.dart';
+import 'package:touristsaver/models/response/nearby_charity_res.dart';
+import 'package:touristsaver/models/response/select_charity_res.dart';
 
 import '../../../models/response/get_all_charities.dart';
 import '../../../models/response/get_all_charities_res_model.dart'

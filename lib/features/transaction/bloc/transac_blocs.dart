@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:new_piiink/features/transaction/bloc/transac_events.dart';
-import 'package:new_piiink/features/transaction/bloc/transac_states.dart';
-import 'package:new_piiink/features/transaction/services/dio_transaction.dart';
+import 'package:touristsaver/features/transaction/bloc/transac_events.dart';
+import 'package:touristsaver/features/transaction/bloc/transac_states.dart';
+import 'package:touristsaver/features/transaction/services/dio_transaction.dart';
 
 class TransacBloc extends Bloc<TransacEvent, TransacState> {
   final DioTransaction dioTransaction;

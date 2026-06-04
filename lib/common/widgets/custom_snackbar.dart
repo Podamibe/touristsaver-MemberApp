@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/constants/global_colors.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 class GlobalSnackBar {
   final String message;

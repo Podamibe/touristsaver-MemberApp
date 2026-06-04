@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:new_piiink/models/response/location_get_all.dart';
+import 'package:touristsaver/models/response/location_get_all.dart';
 
 import '../../../models/response/country_wise_prefix_res_model.dart';
 

@@ -1,7 +1,7 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:new_piiink/models/response/common_res.dart';
+import 'package:touristsaver/models/response/common_res.dart';
 
 import '../../common/app_variables.dart';
 import '../../common/utils.dart';
@@ -16,7 +16,7 @@ import '../../constants/style.dart';
 import '../../models/response/notification_model.dart';
 import 'no_notifications_available_widget.dart';
 import 'services/dio_notification.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});

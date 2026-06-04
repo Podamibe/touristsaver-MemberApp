@@ -5,17 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:new_piiink/common/widgets/custom_app_bar.dart';
-import 'package:new_piiink/common/widgets/custom_loader.dart';
-import 'package:new_piiink/common/widgets/error.dart';
-import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/features/more_offers/bloc/discount_bloc.dart';
-import 'package:new_piiink/features/more_offers/bloc/discount_events.dart';
-import 'package:new_piiink/features/more_offers/bloc/discount_states.dart';
-import 'package:new_piiink/features/more_offers/services/dio_more_offer.dart';
-import 'package:new_piiink/features/more_offers/widgets/day_time_dis.dart';
-import 'package:new_piiink/models/response/get_all_discount.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/common/widgets/custom_app_bar.dart';
+import 'package:touristsaver/common/widgets/custom_loader.dart';
+import 'package:touristsaver/common/widgets/error.dart';
+import 'package:touristsaver/constants/global_colors.dart';
+import 'package:touristsaver/features/more_offers/bloc/discount_bloc.dart';
+import 'package:touristsaver/features/more_offers/bloc/discount_events.dart';
+import 'package:touristsaver/features/more_offers/bloc/discount_states.dart';
+import 'package:touristsaver/features/more_offers/services/dio_more_offer.dart';
+import 'package:touristsaver/features/more_offers/widgets/day_time_dis.dart';
+import 'package:touristsaver/models/response/get_all_discount.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 class MoreOffersScreen extends StatefulWidget {
   static const String routeName = '/more-offers';

@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:new_piiink/common/services/dio_common.dart';
-import 'package:new_piiink/common/widgets/custom_app_bar.dart';
-import 'package:new_piiink/common/widgets/custom_button.dart';
-import 'package:new_piiink/common/widgets/reg_log_slider.dart';
-import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/constants/style.dart';
-import 'package:new_piiink/features/connectivity/cubit/internet_cubit.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/common/services/dio_common.dart';
+import 'package:touristsaver/common/widgets/custom_app_bar.dart';
+import 'package:touristsaver/common/widgets/custom_button.dart';
+import 'package:touristsaver/common/widgets/reg_log_slider.dart';
+import 'package:touristsaver/constants/global_colors.dart';
+import 'package:touristsaver/constants/style.dart';
+import 'package:touristsaver/features/connectivity/cubit/internet_cubit.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 import '../../connectivity/screens/connectivity.dart';
 

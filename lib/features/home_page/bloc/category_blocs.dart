@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:new_piiink/features/home_page/bloc/category_events.dart';
-import 'package:new_piiink/features/home_page/bloc/category_states.dart';
-import 'package:new_piiink/features/home_page/services/home_dio.dart';
+import 'package:touristsaver/features/home_page/bloc/category_events.dart';
+import 'package:touristsaver/features/home_page/bloc/category_states.dart';
+import 'package:touristsaver/features/home_page/services/home_dio.dart';
 
 class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   final DioHome dioHome;

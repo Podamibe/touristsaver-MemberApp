@@ -7,16 +7,17 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:new_piiink/common/widgets/custom_app_bar.dart';
-import 'package:new_piiink/common/widgets/custom_loader.dart';
-import 'package:new_piiink/common/widgets/error.dart';
-import 'package:new_piiink/constants/global_colors.dart';
-import 'package:new_piiink/constants/style.dart';
-import 'package:new_piiink/features/connectivity/cubit/internet_cubit.dart';
-import 'package:new_piiink/features/transaction/services/dio_transaction.dart';
-import 'package:new_piiink/features/wallet/services/dio_wallet.dart';
-import 'package:new_piiink/models/response/transaction_res.dart' as transaction;
-import 'package:new_piiink/models/response/universal_get_my_wallet.dart';
+import 'package:touristsaver/common/widgets/custom_app_bar.dart';
+import 'package:touristsaver/common/widgets/custom_loader.dart';
+import 'package:touristsaver/common/widgets/error.dart';
+import 'package:touristsaver/constants/global_colors.dart';
+import 'package:touristsaver/constants/style.dart';
+import 'package:touristsaver/features/connectivity/cubit/internet_cubit.dart';
+import 'package:touristsaver/features/transaction/services/dio_transaction.dart';
+import 'package:touristsaver/features/wallet/services/dio_wallet.dart';
+import 'package:touristsaver/models/response/transaction_res.dart'
+    as transaction;
+import 'package:touristsaver/models/response/universal_get_my_wallet.dart';
 import '../../../common/widgets/custom_button.dart';
 import '../../../common/widgets/custom_snackbar.dart';
 import '../../../constants/pref.dart';
@@ -29,7 +30,7 @@ import '../../../models/response/is_pay_enable_res.dart';
 import '../../connectivity/screens/connectivity.dart';
 import '../../merchant/services/dio_reviews.dart';
 import '../../payment/services/dio_payment.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 import 'package:dartz/dartz.dart' as dartz;
 

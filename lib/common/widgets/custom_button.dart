@@ -1,8 +1,8 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:new_piiink/constants/style.dart';
-import 'package:new_piiink/constants/global_colors.dart';
+import 'package:touristsaver/constants/style.dart';
+import 'package:touristsaver/constants/global_colors.dart';
 
 class CustomButton extends StatelessWidget {
   final VoidCallback? onPressed;

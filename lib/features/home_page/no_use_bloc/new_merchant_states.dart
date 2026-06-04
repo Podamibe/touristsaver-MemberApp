@@ -1,6 +1,6 @@
 // import 'package:equatable/equatable.dart';
 // import 'package:flutter/cupertino.dart';
-// import 'package:new_piiink/models/response/merchant_get_all_res.dart';
+// import 'package:touristsaver/models/response/merchant_get_all_res.dart';
 
 // @immutable
 // abstract class NewMerchantState extends Equatable {}

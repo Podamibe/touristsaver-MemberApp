@@ -10,7 +10,7 @@ import '../../../common/widgets/custom_snackbar.dart';
 import '../../../constants/global_colors.dart';
 import '../../../constants/pref.dart';
 import '../../../constants/style.dart';
-import 'package:new_piiink/generated/l10n.dart';
+import 'package:touristsaver/generated/l10n.dart';
 
 class SettingScreen extends StatefulWidget {
   static const String routeName = '/settings-screen';

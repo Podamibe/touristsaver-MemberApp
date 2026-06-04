@@ -1,12 +1,12 @@
 import 'package:dio/dio.dart';
-import 'package:new_piiink/constants/helper.dart';
-import 'package:new_piiink/constants/url_end_point.dart';
-import 'package:new_piiink/models/error_res.dart';
-import 'package:new_piiink/models/request/change_country_req.dart';
-import 'package:new_piiink/models/request/edit_profile_req.dart';
-import 'package:new_piiink/models/response/change_country_res.dart';
-import 'package:new_piiink/models/response/common_res.dart';
-import 'package:new_piiink/models/response/edit_profile_res.dart';
+import 'package:touristsaver/constants/helper.dart';
+import 'package:touristsaver/constants/url_end_point.dart';
+import 'package:touristsaver/models/error_res.dart';
+import 'package:touristsaver/models/request/change_country_req.dart';
+import 'package:touristsaver/models/request/edit_profile_req.dart';
+import 'package:touristsaver/models/response/change_country_res.dart';
+import 'package:touristsaver/models/response/common_res.dart';
+import 'package:touristsaver/models/response/edit_profile_res.dart';
 
 class DioProfile {
   // Edit Profile if number is not edited

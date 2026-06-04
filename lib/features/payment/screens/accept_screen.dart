@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:new_piiink/common/app_variables.dart';
-import 'package:new_piiink/common/widgets/custom_app_bar.dart';
-import 'package:new_piiink/common/widgets/custom_loader.dart';
-import 'package:new_piiink/common/widgets/custom_snackbar.dart';
-import 'package:new_piiink/features/payment/services/dio_payment.dart';
-import 'package:new_piiink/models/request/sure_apply_piiink_req.dart';
-import 'package:new_piiink/models/response/sure_apply_piiink_res.dart';
+import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/common/widgets/custom_app_bar.dart';
+import 'package:touristsaver/common/widgets/custom_loader.dart';
+import 'package:touristsaver/common/widgets/custom_snackbar.dart';
+import 'package:touristsaver/features/payment/services/dio_payment.dart';
+import 'package:touristsaver/models/request/sure_apply_piiink_req.dart';
+import 'package:touristsaver/models/response/sure_apply_piiink_res.dart';
 
 class AcceptScreen extends StatefulWidget {
   static const String routeName = '/accept-screen';

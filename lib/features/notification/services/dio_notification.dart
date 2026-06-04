@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:new_piiink/common/utils.dart';
-import 'package:new_piiink/constants/url_end_point.dart';
+import 'package:touristsaver/common/utils.dart';
+import 'package:touristsaver/constants/url_end_point.dart';
 
 import '../../../constants/helper.dart';
 import '../../../models/error_res.dart';

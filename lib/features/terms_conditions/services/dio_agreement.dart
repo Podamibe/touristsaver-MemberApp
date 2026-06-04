@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:new_piiink/constants/helper.dart';
-import 'package:new_piiink/constants/url_end_point.dart';
-import 'package:new_piiink/models/response/agreement_res.dart';
+import 'package:touristsaver/constants/helper.dart';
+import 'package:touristsaver/constants/url_end_point.dart';
+import 'package:touristsaver/models/response/agreement_res.dart';
 
 import '../../../constants/pref.dart';
 import '../../../constants/pref_key.dart';
