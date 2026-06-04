@@ -1,11 +1,9 @@
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:go_router/go_router.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
-import 'package:touristsaver/common/widgets/custom_button.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
 import 'package:touristsaver/common/widgets/error.dart';
@@ -42,6 +40,10 @@ class TopUpScreen extends StatefulWidget {
 }
 
 class _TopUpScreenState extends State<TopUpScreen> {
+  static const Color _screenBackground = Color(0xFFF8FAFE);
+  static const Color _headingColor = Color(0xFF111C44);
+  static const Color _bodyColor = Color(0xFF61708A);
+
   TextEditingController premiumController = TextEditingController();
 
   // To get saved Country ID
@@ -55,26 +57,27 @@ class _TopUpScreenState extends State<TopUpScreen> {
 
   @override
   void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      countryId = await Pref().readData(key: saveCountryID);
-      // AppVariables.currency = await Pref().readData(key: saveCurrency);
-    });
     super.initState();
+    _loadCountryId();
+  }
+
+  Future<void> _loadCountryId() async {
+    final String? savedCountryId = await Pref().readData(key: saveCountryID);
+    if (!mounted) return;
+    setState(() {
+      countryId = savedCountryId;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _screenBackground,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: CustomAppBar(
-          // 👉 Always shows "Top Up" title
-          text: S.of(context).topUp,
-
-          // 👉 Changed to back icon as requested
+          text: 'Add Discount Credits',
           icon: Icons.arrow_back_ios,
-
-          // 👉 Always pops the screen when pressed
           onPressed: () => context.pop(),
         ),
       ),
@@ -98,127 +101,43 @@ class _TopUpScreenState extends State<TopUpScreen> {
                 MemberShipPackageResModel memPackAll = state.memPackAll;
                 return memPackAll.data!.isEmpty
                     ? Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 10.0, horizontal: 10.0),
+                        padding: EdgeInsets.symmetric(
+                            vertical: 18.h, horizontal: 16.w),
                         child: NoDataFound(
-                          titleText: S.of(context).noTopUpAvailable,
-                          //  'No Top-up Pacakge Available',
-                          bodyText: S.of(context).noTopupPacakgeAvailableForNow,
-                          // 'No Top-up Pacakge Available For Now',
+                          titleText: 'No Discount Credit packages available',
+                          bodyText:
+                              'Please check again soon for available Add Credits packages.',
                           image: "assets/images/oops.png",
                         ),
                       )
                     : Padding(
-                        padding: const EdgeInsets.all(10.0),
+                        padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 28.h),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Center(
-                              child: AutoSizeText(
-                                S.of(context).topUpUniversalTouristSaverCredits,
-                                style: topicStyle,
+                            Text(
+                              'Add Discount Credits',
+                              style: TextStyle(
+                                color: _headingColor,
+                                fontSize: 28.sp,
+                                fontWeight: FontWeight.w900,
+                                height: 1.12,
+                                fontFamily: 'Sans',
                               ),
                             ),
-
-                            const SizedBox(height: 20),
-
-                            Center(
-                              child: AutoSizeText(
-                                S
-                                    .of(context)
-                                    .topUpYourUniversalTouristSaversToGainExtraCreditAndEnjoyMoreOffersFromYourFavouriteMerchants,
-                                textAlign: TextAlign.center,
-                                style: textStyle15,
+                            SizedBox(height: 8.h),
+                            Text(
+                              'Add TouristSaver Discount Credits to unlock more member savings at participating merchants.',
+                              style: TextStyle(
+                                color: _bodyColor,
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w600,
+                                height: 1.42,
+                                fontFamily: 'Sans',
                               ),
                             ),
-
-                            const SizedBox(height: 30),
-                            // Piiinks Loaded Quantity
+                            SizedBox(height: 20.h),
                             piiinkLoaded(memPackAll, countryId),
-                            const SizedBox(height: 40),
-
-                            //THE LOGIC FOR THIS IS NOT RIGHT!!!!!!!!!!!!!!
-                            // OR
-                            // Center(
-                            //   child: Text(
-                            //     S.of(context).or,
-                            //     textAlign: TextAlign.center,
-                            //     style: topicStyle,
-                            //   ),
-                            // ),
-                            // const SizedBox(height: 30),
-                            // // Apply Premium Code
-                            // Center(
-                            //   child: Text(
-                            //     S.of(context).applyPremiumCode,
-                            //     textAlign: TextAlign.center,
-                            //     style: textStyle15,
-                            //   ),
-                            // ),
-                            // const SizedBox(height: 20),
-                            // // Premium Code
-                            // Row(
-                            //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            //   children: [
-                            //     SizedBox(
-                            //       width:
-                            //           MediaQuery.of(context).size.width / 1.4,
-                            //       height: 45.h,
-                            //       child: TextFormField(
-                            //         controller: premiumController,
-                            //         cursorColor: GlobalColors.appColor,
-                            //         decoration: textInputDecoration1.copyWith(
-                            //           hintText: S.of(context).enterPremiumCode,
-                            //           fillColor:
-                            //               GlobalColors.appWhiteBackgroundColor,
-                            //           border: OutlineInputBorder(
-                            //             borderRadius:
-                            //                 BorderRadius.circular(5.0),
-                            //             borderSide: const BorderSide(
-                            //               width: 1,
-                            //               style: BorderStyle.solid,
-                            //             ),
-                            //           ),
-                            //           focusedBorder: OutlineInputBorder(
-                            //               borderSide: const BorderSide(
-                            //                   color: GlobalColors.appColor),
-                            //               borderRadius:
-                            //                   BorderRadius.circular(5.0)),
-                            //         ),
-                            //       ),
-                            //     ),
-                            //     SizedBox(
-                            //       width: 5.w,
-                            //     ),
-                            //     isAppliedLoading == true
-                            //         ? applyButton(
-                            //             onPressed: () {},
-                            //             widget: Container(
-                            //                 width: 24.w,
-                            //                 height: 24.h,
-                            //                 padding: const EdgeInsets.all(2.0),
-                            //                 child:
-                            //                     const CircularProgressIndicator(
-                            //                   color: Colors.white,
-                            //                   strokeWidth: 3,
-                            //                 )))
-                            //         : applyButton(
-                            //             onPressed: () {
-                            //               // setState(() {
-                            //               //   piiinkCre = memPackAll
-                            //               //       .data![0].universalPiiinks;
-                            //               // });
-                            //               applyPremium();
-                            //             },
-                            //             widget: FittedBox(
-                            //               child: Text(
-                            //                 S.of(context).apply,
-                            //                 style: buttonText,
-                            //               ),
-                            //             ),
-                            //           ),
-                            //   ],
-                            // ),
-                            const SizedBox(height: 20),
                           ],
                         ),
                       );
@@ -238,9 +157,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
   piiinkLoaded(MemberShipPackageResModel memPackAll, String? countryId) {
     return ListView.separated(
       separatorBuilder: (context, index) {
-        return const SizedBox(
-          height: 20,
-        );
+        return SizedBox(height: 14.h);
       },
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -457,241 +374,221 @@ class TopUpWidget extends StatefulWidget {
 }
 
 class _TopUpWidgetState extends State<TopUpWidget> {
+  static const Color _primaryBlue = Color(0xFF0009FE);
+  static const Color _ctaCyan = Color(0xFF18C6FF);
+  static const Color _headingColor = Color(0xFF111C44);
+  static const Color _bodyColor = Color(0xFF61708A);
+  static const Color _borderColor = Color(0xFFE2E8F3);
+
   bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0),
-          decoration:
-              widget.memPackAll!.data![widget.index!].boxBackgroundImageUrl ==
-                          null ||
-                      widget.memPackAll!.data![widget.index!]
-                              .boxBackgroundImageUrl ==
-                          "null" ||
-                      widget.memPackAll!.data![widget.index!]
-                              .boxBackgroundImageUrl ==
-                          ""
-                  ? BoxDecoration(
-                      borderRadius: BorderRadius.circular(7),
-                      border: Border.all(
-                          width: 3,
-                          color: Color(int.parse(
-                              '${widget.memPackAll!.data![widget.index!].boxBorderColor}'))),
-                      color: Color(int.parse(
-                          '${widget.memPackAll!.data![widget.index!].boxBackgroundColor}')),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.shade600,
-                          offset: const Offset(
-                            5,
-                            5,
-                          ),
-                          blurRadius: 5.0,
-                          spreadRadius: 1.0,
-                        ),
-                      ],
-                    )
-                  : BoxDecoration(
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.shade600,
-                          offset: const Offset(
-                            5,
-                            5,
-                          ),
-                          blurRadius: 5,
-                          spreadRadius: 1.0,
-                        ),
-                      ],
-                      borderRadius: BorderRadius.circular(7),
-                      border: Border.all(
-                          width: 3,
-                          color: Color(int.parse(
-                              '${widget.memPackAll!.data![widget.index!].boxBorderColor}'))),
-                      image: DecorationImage(
-                          image: NetworkImage(
-                              '${widget.memPackAll!.data![widget.index!].boxBackgroundImageUrl}'),
-                          fit: BoxFit.cover),
-                    ),
-          child: Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AutoSizeText(
-                    widget.memPackAll!.data![widget.index!].packageName
-                        .toString(),
-                    overflow: TextOverflow.ellipsis,
-                    style: topicStyle.copyWith(
-                        color: Color(int.parse(widget
-                            .memPackAll!.data![widget.index!].boxTextColor!)))),
-                const SizedBox(
-                  height: 10.0,
+    final Datum? package = _package;
+    if (package == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(20.r),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22.r),
+        border: Border.all(color: _borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0A236B).withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 46.w,
+                height: 46.w,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF7FF),
+                  borderRadius: BorderRadius.circular(14.r),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                child: Icon(
+                  Icons.savings_outlined,
+                  color: _primaryBlue,
+                  size: 25.sp,
+                ),
+              ),
+              SizedBox(width: 13.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      flex: 8,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AutoSizeText(
-                              S.of(context).loadXTouristSavers.replaceAll(
-                                  '&L',
-                                  removeTrailingZero(numFormatter.format(widget
-                                      .memPackAll!
-                                      .data![widget.index!]
-                                      .universalPiiinks))),
-                              //  'Load ${widget.memPackAll!.data![widget.index!].universalPiiinks.toString()} Piiinks',
-                              style: topicStyle.copyWith(
-                                  color: Color(int.parse(widget.memPackAll!
-                                      .data![widget.index!].amountTextColor!)),
-                                  fontWeight: FontWeight.w400)),
-                          const SizedBox(
-                            height: 2.0,
-                          ),
-                          AutoSizeText(
-                            _packagePriceWithGst(),
-                            style: topicStyle.copyWith(
-                              color: Color(int.parse(widget.memPackAll!
-                                  .data![widget.index!].amountTextColor!)),
-                            ),
-                          ),
-                        ],
+                    Text(
+                      _packageName(package),
+                      style: TextStyle(
+                        color: _headingColor,
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w900,
+                        fontFamily: 'Sans',
                       ),
                     ),
-                    Expanded(
-                      flex: 3,
-                      child: isLoading == true
-                          ? TopUpWithCircular(
-                              buttonBackGroundColor: Color(int.parse(widget
-                                  .memPackAll!
-                                  .data![widget.index!]
-                                  .buttonColor!)),
-                              buttonSideColor: Color(
-                                int.parse(
-                                    '${widget.memPackAll!.data![widget.index!].boxBorderColor}'),
-                              ),
-                              circleColor: Color(int.parse(widget.memPackAll!
-                                  .data![widget.index!].buttonTextColor!)),
-                            )
-                          : TopUpButton(
-                              buttonBackGroundColor: Color(int.parse(widget
-                                  .memPackAll!
-                                  .data![widget.index!]
-                                  .buttonColor!)),
-                              buttonSideColor: Color(
-                                int.parse(
-                                    '${widget.memPackAll!.data![widget.index!].boxBorderColor}'),
-                              ),
-                              buttonTextColor: Color(int.parse(widget
-                                  .memPackAll!
-                                  .data![widget.index!]
-                                  .buttonTextColor!)),
-                              text: S.of(context).topUp,
-                              onPressed: () async {
-                                setState(() {
-                                  isLoading = true;
-                                });
-                                final originalFee = widget.memPackAll!
-                                    .data![widget.index!].packageFee!;
-                                final discountStr =
-                                    widget.premiumData?['discount'];
-                                final isDiscountedPackage =
-                                    discountStr != null &&
-                                        discountStr.toString() != "0" &&
-                                        originalFee > 0;
-                                // 3. Extract the code string (or set to null if not applicable)
-                                final String? codeToSend = isDiscountedPackage
-                                    ? widget.premiumData['memberPremiumCode']
-                                    : null;
-
-                                print("---- PAYMENT DEBUG ----");
-                                print(
-                                    "Is Discount Applied to Payment?: $isDiscountedPackage");
-                                print(
-                                    "Code being sent to backend: $codeToSend");
-
-                                var res = await DioTopUpStripe().topUpStripe(
-                                  topUpStripeReqModel: TopUpStripeReqModel(
-                                    paymentGateway: 'stripe',
-                                    memberPremiumCode: codeToSend,
-                                    membershipPackageId: widget
-                                        .memPackAll!.data![widget.index!].id
-                                        .toString(),
-                                    countryId: widget.countryID,
-                                  ),
-                                );
-                                print(
-                                    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@${res?.toJson()}");
-
-                                if (!mounted) return;
-
-                                if (res is TopUpStripeResModel) {
-                                  if (res.clientSecret == null ||
-                                      res.clientSecret!.isEmpty) {
-                                    setState(() {
-                                      isLoading = false;
-                                    });
-                                    bool hasBalance =
-                                        await checkWalletBalance();
-                                    if (!context.mounted) return;
-                                    if (hasBalance) {
-                                      GlobalSnackBar.showSuccess(context,
-                                          S.of(context).paymentSuccessful);
-                                      if (context.canPop()) {
-                                        context.pop();
-                                      } else {
-                                        context.pushReplacementNamed(
-                                            'bottom-bar',
-                                            pathParameters: {'page': '0'});
-                                      }
-                                    }
-                                    return;
-                                  }
-
-                                  await Stripe.instance.initPaymentSheet(
-                                    paymentSheetParameters:
-                                        SetupPaymentSheetParameters(
-                                      paymentIntentClientSecret:
-                                          res.clientSecret,
-                                      merchantDisplayName: 'Prospects',
-                                      style: ThemeMode.dark,
-                                    ),
-                                  );
-
-                                  setState(() {
-                                    isLoading = false;
-                                  });
-
-                                  await displayPaymentSheet(res.clientSecret);
-                                } else {
-                                  setState(() {
-                                    isLoading = false;
-                                  });
-
-                                  if (!context.mounted) return;
-                                  // GlobalSnackBar.showError(context,
-                                  //     "You are not eligible for this free package.");
-                                  setState(() {
-                                    isLoading = false;
-                                  });
-                                }
-                              },
-                            ),
-                    )
+                    SizedBox(height: 5.h),
+                    Text(
+                      '${_creditsText(package)} Discount Credits',
+                      style: TextStyle(
+                        color: _bodyColor,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Sans',
+                      ),
+                    ),
                   ],
                 ),
-              ],
+              ),
+            ],
+          ),
+          SizedBox(height: 18.h),
+          Text(
+            _packagePriceWithGst(package),
+            style: TextStyle(
+              color: _headingColor,
+              fontSize: 26.sp,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Sans',
             ),
           ),
-        ),
-      ],
+          SizedBox(height: 6.h),
+          Text(
+            'Add credits to your TouristSaver wallet and keep saving with participating merchants.',
+            style: TextStyle(
+              color: _bodyColor,
+              fontSize: 13.5.sp,
+              fontWeight: FontWeight.w600,
+              height: 1.38,
+              fontFamily: 'Sans',
+            ),
+          ),
+          SizedBox(height: 18.h),
+          isLoading
+              ? const Center(child: CustomAllLoader())
+              : _GradientButton(
+                  label: 'Pay now',
+                  onTap: () => _startTopUp(package),
+                ),
+        ],
+      ),
     );
+  }
+
+  Datum? get _package {
+    final data = widget.memPackAll?.data;
+    final index = widget.index;
+    if (data == null || index == null || index < 0 || index >= data.length) {
+      return null;
+    }
+    return data[index];
+  }
+
+  String _packageName(Datum package) {
+    final String? name = package.packageName?.trim();
+    if (name == null || name.isEmpty) {
+      return 'Premium Package';
+    }
+    return name.replaceAll(RegExp('top-up', caseSensitive: false), 'Credits');
+  }
+
+  String _creditsText(Datum package) {
+    return removeTrailingZero(
+        numFormatter.format(package.universalPiiinks ?? 0));
+  }
+
+  Future<void> _startTopUp(Datum package) async {
+    if (isLoading) return;
+
+    final int? packageId = package.id;
+    final String? countryId = widget.countryID ?? package.countryId?.toString();
+    if (packageId == null || countryId == null || countryId.isEmpty) {
+      GlobalSnackBar.showError(
+          context, 'This Add Credits package is not available right now.');
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final double originalFee = package.packageFee ?? 0;
+      final Map? premiumData =
+          widget.premiumData is Map ? widget.premiumData as Map : null;
+      final discountStr = premiumData == null ? null : premiumData['discount'];
+      final isDiscountedPackage = discountStr != null &&
+          discountStr.toString() != "0" &&
+          originalFee > 0;
+      final String? codeToSend = isDiscountedPackage
+          ? premiumData!['memberPremiumCode']?.toString()
+          : null;
+
+      final res = await DioTopUpStripe().topUpStripe(
+        topUpStripeReqModel: TopUpStripeReqModel(
+          paymentGateway: 'stripe',
+          memberPremiumCode: codeToSend,
+          membershipPackageId: packageId.toString(),
+          countryId: countryId,
+        ),
+      );
+
+      if (!mounted) return;
+
+      if (res is! TopUpStripeResModel) {
+        GlobalSnackBar.showError(context, S.of(context).serverError);
+        return;
+      }
+
+      if (res.clientSecret == null || res.clientSecret!.isEmpty) {
+        final bool hasBalance = await checkWalletBalance();
+        if (!context.mounted) return;
+        if (hasBalance) {
+          GlobalSnackBar.showSuccess(context, S.of(context).paymentSuccessful);
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.pushReplacementNamed('bottom-bar',
+                pathParameters: {'page': '0'});
+          }
+        }
+        return;
+      }
+
+      await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          paymentIntentClientSecret: res.clientSecret,
+          merchantDisplayName: 'TouristSaver',
+          style: ThemeMode.light,
+        ),
+      );
+
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+      });
+
+      await displayPaymentSheet(res.clientSecret);
+    } catch (e) {
+      if (!mounted) return;
+      GlobalSnackBar.showError(context, S.of(context).somethingWentWrong);
+    } finally {
+      if (mounted && isLoading) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> displayPaymentSheet(String? clientSecret) async {
@@ -746,12 +643,64 @@ class _TopUpWidgetState extends State<TopUpWidget> {
     }
   }
 
-  String _packagePriceWithGst() {
-    final package = widget.memPackAll!.data![widget.index!];
+  String _packagePriceWithGst(Datum package) {
     final priceText =
-        '${package.packageCurrencySymbol.toString()} ${removeTrailingZero(numFormatter.format(package.packageFee!))}';
+        '${package.packageCurrencySymbol ?? ''}${removeTrailingZero(numFormatter.format(package.packageFee ?? 0))}';
     return priceText.toLowerCase().contains('gst')
         ? priceText
         : '$priceText inc GST';
+  }
+}
+
+class _GradientButton extends StatelessWidget {
+  const _GradientButton({
+    required this.label,
+    required this.onTap,
+  });
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18.r),
+        onTap: onTap,
+        child: Ink(
+          height: 54.h,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [
+                _TopUpWidgetState._primaryBlue,
+                _TopUpWidgetState._ctaCyan,
+              ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(18.r),
+            boxShadow: [
+              BoxShadow(
+                color: _TopUpWidgetState._primaryBlue.withValues(alpha: 0.20),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w900,
+                fontFamily: 'Sans',
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
