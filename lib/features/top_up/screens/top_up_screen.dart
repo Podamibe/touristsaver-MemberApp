@@ -3,12 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:go_router/go_router.dart';
+import 'package:touristsaver/common/services/dio_common.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
 import 'package:touristsaver/common/widgets/error.dart';
 import 'package:touristsaver/common/widgets/not_available.dart';
 import 'package:touristsaver/constants/decimal_remove.dart';
+import 'package:touristsaver/constants/initialize_stripe.dart';
 import 'package:touristsaver/constants/number_formatter.dart';
 import 'package:touristsaver/constants/pref.dart';
 import 'package:touristsaver/constants/pref_key.dart';
@@ -26,6 +28,7 @@ import 'package:touristsaver/models/response/member_package_res.dart';
 import 'package:touristsaver/models/response/pre_topup_free_res.dart';
 import 'package:touristsaver/models/response/pre_topup_paid_res.dart';
 import 'package:touristsaver/models/response/premium_validity_res.dart';
+import 'package:touristsaver/models/response/stripe_key_res.dart';
 import 'package:touristsaver/models/response/top_up_stripe_res.dart';
 
 import 'package:touristsaver/generated/l10n.dart';
@@ -523,6 +526,16 @@ class _TopUpWidgetState extends State<TopUpWidget> {
     });
 
     try {
+      final bool stripeKeyReady = await _refreshStripePublishableKey();
+      if (!mounted) return;
+      if (!stripeKeyReady) {
+        GlobalSnackBar.showError(
+          context,
+          'Payment is not available right now. Please try again shortly.',
+        );
+        return;
+      }
+
       final double originalFee = package.packageFee ?? 0;
       final Map? premiumData =
           widget.premiumData is Map ? widget.premiumData as Map : null;
@@ -589,6 +602,20 @@ class _TopUpWidgetState extends State<TopUpWidget> {
         });
       }
     }
+  }
+
+  Future<bool> _refreshStripePublishableKey() async {
+    final StripeKeyResModel? stripeKey = await DioCommon().getStripe();
+    final String? publishableKey = stripeKey?.data?.stripePublishableKey;
+    if (publishableKey == null ||
+        publishableKey.isEmpty ||
+        publishableKey == 'null') {
+      return false;
+    }
+
+    await Pref().writeData(key: savePublishableKey, value: publishableKey);
+    await initializeFlutterStripe();
+    return true;
   }
 
   Future<void> displayPaymentSheet(String? clientSecret) async {
