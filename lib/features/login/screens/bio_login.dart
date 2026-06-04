@@ -157,7 +157,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   Switch(
                     onChanged: toggleSwitch,
                     value: isFingerPrintLogin,
-                    activeColor: GlobalColors.appColor1,
+                    activeThumbColor: GlobalColors.appColor1,
                     activeTrackColor: Colors.grey.withValues(alpha: 0.6),
                     inactiveThumbColor: GlobalColors.gray,
                     inactiveTrackColor: Colors.grey.withValues(alpha: 0.6),
