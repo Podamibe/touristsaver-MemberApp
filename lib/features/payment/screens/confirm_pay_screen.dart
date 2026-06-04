@@ -5,7 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:touristsaver/common/app_variables.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
+import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
+import 'package:touristsaver/features/payment/services/dio_payment.dart';
+import 'package:touristsaver/models/request/sure_apply_piiink_req.dart';
+import 'package:touristsaver/models/response/sure_apply_piiink_res.dart';
 
 class ConfimrPaymentScreen extends StatefulWidget {
   static const String routeName = "/confirm-pay";
@@ -64,6 +68,8 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
       symbol: AppVariables.currency ?? '\$', decimalDigits: 2);
   final NumberFormat _numberFormat = NumberFormat('#,##0.##');
 
+  bool isLoading = false;
+
   double get _billAmount => double.tryParse(widget.totalAmount) ?? 0;
   double get _memberSavings => double.tryParse(widget.totalPiiinkDiscount) ?? 0;
   double get _customerPays =>
@@ -78,7 +84,7 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: CustomAppBar(
-          text: 'Discount Available',
+          text: 'Redeem Discount',
           icon: Icons.arrow_back_ios,
           onPressed: () => context.pop(),
         ),
@@ -250,43 +256,70 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
           _summaryRow('Discount Credit balance after redeeming',
               _numberFormat.format(remainingValue)),
           SizedBox(height: 14.h),
-          _GradientButton(
-            label: 'Redeem Discount',
-            enabled: enabled,
-            onTap: () {
-              if (!enabled) {
-                GlobalSnackBar.showError(
-                  context,
-                  'Not enough TouristSaver Discount Credits.',
-                );
-                return;
-              }
+          isLoading
+              ? const Center(child: CustomAllLoader())
+              : _GradientButton(
+                  label: 'Redeem Discount',
+                  enabled: enabled,
+                  onTap: () {
+                    if (!enabled) {
+                      GlobalSnackBar.showError(
+                        context,
+                        'Not enough TouristSaver Discount Credits.',
+                      );
+                      return;
+                    }
 
-              context.pushNamed(
-                'accept-screen',
-                extra: {
-                  'merchantId': widget.merchantId,
-                  'merchantName': widget.merchantName,
-                  'logo': widget.logo,
-                  'totalAmount': widget.totalAmount,
-                  'qrCode': widget.qrCode,
-                  'discountedTransactionAmount':
-                      widget.discountedTransactionAmount,
-                  'totalPiiinkDiscount': widget.totalPiiinkDiscount,
-                  'merchantRebateToMember': widget.merchantRebateToMember,
-                  'merchantDiscountPercentage':
-                      widget.merchantDiscountPercentage,
-                  'tsdcsRemaining': remainingValue.toString(),
-                  'walletType': walletType,
-                  'terminalUserId': widget.terminalUserId,
-                  'terminalId': widget.terminalId,
-                },
-              );
-            },
-          ),
+                    _redeemDiscount(walletType: walletType);
+                  },
+                ),
         ],
       ),
     );
+  }
+
+  Future<void> _redeemDiscount({required String walletType}) async {
+    if (isLoading) return;
+
+    setState(() {
+      isLoading = true;
+    });
+
+    final res = await DioPay().sureApplyPiiink(
+      payToMainMerchant: widget.terminalUserId == null,
+      sureApplyPiiinkReqModel: SureApplyPiiinkReqModel(
+        totalAmount: double.parse(widget.totalAmount),
+        piiinkWalletType: walletType,
+        transactionQrCode: widget.qrCode,
+        hour: int.parse(DateFormat('HH ').format(DateTime.now())),
+        week: DateTime.now().weekday % 7,
+        terminalUserId: widget.terminalUserId,
+        terminalId: widget.terminalId,
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (res is SureApplyPiiinkResModel && res.status == "Success") {
+      setState(() {
+        isLoading = false;
+      });
+      context.pushReplacementNamed('payment-complete', extra: {
+        'merchantId': widget.merchantId,
+        'merchantName': widget.merchantName,
+        'totalAmount': widget.totalAmount,
+        'discountedTransactionAmount': widget.discountedTransactionAmount,
+        'totalPiiinkDiscount': widget.totalPiiinkDiscount,
+        'merchantRebateToMember': widget.merchantRebateToMember,
+        'merchantDiscountPercentage': widget.merchantDiscountPercentage,
+        'walletType': walletType,
+      });
+    } else {
+      GlobalSnackBar.showError(context, 'The discount could not be redeemed.');
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   Widget _sectionHeader(IconData icon, String text) {

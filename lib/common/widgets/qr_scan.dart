@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -33,6 +35,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
 
   String _scanResult = '';
   bool isLoading = false;
+  bool _debugQrShortcutUsed = false;
 
   @override
   void initState() {
@@ -141,6 +144,21 @@ class _QRScannerScreenState extends State<QRScannerScreen>
     });
   }
 
+  KeyEventResult _handleDebugQrShortcut(FocusNode node, KeyEvent event) {
+    if (!kDebugMode || event is! KeyDownEvent) {
+      return KeyEventResult.ignored;
+    }
+
+    if (_debugQrShortcutUsed || event.logicalKey != LogicalKeyboardKey.keyQ) {
+      return KeyEventResult.ignored;
+    }
+
+    // Debug-only emulator shortcut for testing QR redemption without camera scan.
+    _debugQrShortcutUsed = true;
+    context.pop('6660000000058');
+    return KeyEventResult.handled;
+  }
+
   @override
   void dispose() async {
     _animationController.dispose();
@@ -157,54 +175,58 @@ class _QRScannerScreenState extends State<QRScannerScreen>
       height: 225,
     );
 
-    return Scaffold(
-      backgroundColor: Colors.black.withValues(alpha: 0.1),
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: CustomAppBar(
-          text: widget.title,
-          icon: Icons.arrow_back_ios,
-          onPressed: () => context.pop(_scanResult),
-          icon2: Icons.flash_on,
-          onPressed2: () => cameraController.toggleTorch(),
+    return Focus(
+      autofocus: true,
+      onKeyEvent: _handleDebugQrShortcut,
+      child: Scaffold(
+        backgroundColor: Colors.black.withValues(alpha: 0.1),
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: CustomAppBar(
+            text: widget.title,
+            icon: Icons.arrow_back_ios,
+            onPressed: () => context.pop(_scanResult),
+            icon2: Icons.flash_on,
+            onPressed2: () => cameraController.toggleTorch(),
+          ),
         ),
-      ),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (isLoading)
-            const Center(child: CircularProgressIndicator(strokeWidth: 2))
-          else
-            MobileScanner(
-              key: UniqueKey(),
-              fit: BoxFit.cover,
-              controller: cameraController,
-              scanWindow: scanWindow,
-              onDetect: _onDetect,
-              errorBuilder: (context, error, child) =>
-                  ScannerErrorWidget(error: error),
-            ),
-          if (!isLoading)
-            AnimatedBuilder(
-              animation: _animation,
-              builder: (context, child) => CustomPaint(
-                painter: ScannerOverlay(
-                  scanWindow: scanWindow,
-                  animationValue: _animation.value,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (isLoading)
+              const Center(child: CircularProgressIndicator(strokeWidth: 2))
+            else
+              MobileScanner(
+                key: UniqueKey(),
+                fit: BoxFit.cover,
+                controller: cameraController,
+                scanWindow: scanWindow,
+                onDetect: _onDetect,
+                errorBuilder: (context, error, child) =>
+                    ScannerErrorWidget(error: error),
+              ),
+            if (!isLoading)
+              AnimatedBuilder(
+                animation: _animation,
+                builder: (context, child) => CustomPaint(
+                  painter: ScannerOverlay(
+                    scanWindow: scanWindow,
+                    animationValue: _animation.value,
+                  ),
+                ),
+              ),
+            Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: IconButton(
+                  icon: const Icon(Icons.image, size: 35, color: Colors.white),
+                  onPressed: _scanFromGallery,
                 ),
               ),
             ),
-          Align(
-            alignment: Alignment.topRight,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: IconButton(
-                icon: const Icon(Icons.image, size: 35, color: Colors.white),
-                onPressed: _scanFromGallery,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
