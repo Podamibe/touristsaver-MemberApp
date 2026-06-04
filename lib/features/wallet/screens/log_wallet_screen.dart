@@ -14,8 +14,10 @@ import 'package:touristsaver/common/widgets/error.dart';
 import 'package:touristsaver/constants/global_colors.dart';
 import 'package:touristsaver/constants/style.dart';
 import 'package:touristsaver/features/connectivity/cubit/internet_cubit.dart';
+import 'package:touristsaver/features/details/services/dio_detail.dart';
 import 'package:touristsaver/features/transaction/services/dio_transaction.dart';
 import 'package:touristsaver/features/wallet/services/dio_wallet.dart';
+import 'package:touristsaver/models/response/detail_res.dart' as detail;
 import 'package:touristsaver/models/response/transaction_res.dart'
     as transaction;
 import 'package:touristsaver/models/response/universal_get_my_wallet.dart';
@@ -111,6 +113,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
   String? selectedString;
   bool reviewLoading = false;
   bool isSelected = false;
+  final Map<int, Future<String?>> _merchantImageLoads = {};
 
 // For filling the edit form
   Future<dartz.Either<ErrorResModel, GetAllReviewSuggestionResModel>?>?
@@ -441,7 +444,10 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _recentSavingMerchantImage(merchantImageUrl),
+        _recentSavingMerchantImage(
+          merchantImageUrl,
+          merchantId: transaction.merchantId,
+        ),
         SizedBox(width: 12.w),
         Expanded(
           child: Column(
@@ -480,36 +486,90 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
     );
   }
 
-  Widget _recentSavingMerchantImage(String? imageUrl) {
+  Widget _recentSavingMerchantImage(String? imageUrl, {int? merchantId}) {
     final String? url =
         imageUrl == null || imageUrl.trim().isEmpty ? null : imageUrl.trim();
+    if (url == null && merchantId != null) {
+      return FutureBuilder<String?>(
+        future: _merchantImageFuture(merchantId),
+        builder: (context, snapshot) {
+          return _recentSavingMerchantImageFrame(
+            snapshot.data,
+            isLoading: snapshot.connectionState != ConnectionState.done,
+          );
+        },
+      );
+    }
 
+    return _recentSavingMerchantImageFrame(url);
+  }
+
+  Widget _recentSavingMerchantImageFrame(
+    String? imageUrl, {
+    bool isLoading = false,
+  }) {
+    final String? url =
+        imageUrl == null || imageUrl.trim().isEmpty ? null : imageUrl.trim();
     return ClipRRect(
       borderRadius: BorderRadius.circular(12.r),
       child: Container(
         width: 38.w,
         height: 38.w,
         color: const Color(0xFFF2F6FC),
-        child: url == null
-            ? _recentSavingFallbackImage()
-            : CachedNetworkImage(
-                imageUrl: url,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Center(
-                  child: SizedBox(
-                    width: 14.w,
-                    height: 14.w,
-                    child: const CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Color(0xFF009FE3),
-                    ),
+        child: isLoading
+            ? _recentSavingImageLoader()
+            : url == null
+                ? _recentSavingFallbackImage()
+                : CachedNetworkImage(
+                    imageUrl: url,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => _recentSavingImageLoader(),
+                    errorWidget: (context, url, error) =>
+                        _recentSavingFallbackImage(),
                   ),
-                ),
-                errorWidget: (context, url, error) =>
-                    _recentSavingFallbackImage(),
-              ),
       ),
     );
+  }
+
+  Widget _recentSavingImageLoader() {
+    return Center(
+      child: SizedBox(
+        width: 14.w,
+        height: 14.w,
+        child: const CircularProgressIndicator(
+          strokeWidth: 2,
+          color: Color(0xFF009FE3),
+        ),
+      ),
+    );
+  }
+
+  Future<String?> _merchantImageFuture(int merchantId) {
+    return _merchantImageLoads.putIfAbsent(
+      merchantId,
+      () => _loadMerchantImage(merchantId),
+    );
+  }
+
+  Future<String?> _loadMerchantImage(int merchantId) async {
+    final DateTime now = DateTime.now();
+    final detail.MerchantDetailResModel? merchantDetail =
+        await DioDetail().getMerchantDetail(
+      id: merchantId,
+      day: DateFormat('EEEE').format(now),
+      hour: now.hour,
+    );
+    final detail.MerchantImageInfo? imageInfo =
+        merchantDetail?.data?.merchantImageInfo;
+    return _firstNotEmpty([
+      imageInfo?.logoUrl,
+      imageInfo?.slider1,
+      imageInfo?.slider2,
+      imageInfo?.slider3,
+      imageInfo?.slider4,
+      imageInfo?.slider5,
+      imageInfo?.slider6,
+    ]);
   }
 
   Widget _recentSavingFallbackImage() {
