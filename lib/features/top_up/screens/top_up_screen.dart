@@ -592,55 +592,61 @@ class _TopUpWidgetState extends State<TopUpWidget> {
   }
 
   Future<void> displayPaymentSheet(String? clientSecret) async {
+    if (clientSecret == null || clientSecret.isEmpty) {
+      GlobalSnackBar.showError(context, S.of(context).serverError);
+      return;
+    }
+
     try {
       //this shows the stripe pay form
       await Stripe.instance.presentPaymentSheet().then((value) async {
-        //Retreiving the response after stripe sheet pay button is clicked
-        var res = await Stripe.instance.retrievePaymentIntent(clientSecret!);
-        if (res.status == PaymentIntentsStatus.Succeeded) {
-          // Confirming the stripe payment in backend
-          var confirm = await DioTopUpStripe().confirmTopUp(
-              confirmTopUpReqModel: ConfirmTopUpReqModel(
-                  paymentIntent: res.id,
-                  paymentIntentClientSecret: res.clientSecret));
+        final String? paymentIntentId =
+            _paymentIntentIdFromClientSecret(clientSecret);
+        if (paymentIntentId == null) {
           if (!mounted) return;
-          if (confirm is ConfirmTopUpResModel) {
-            if (confirm.status == 'success') {
-              context.pop();
-              GlobalSnackBar.showSuccess(
-                  context, S.of(context).paymentSuccessful);
-            } else {
-              GlobalSnackBar.showError(context, S.of(context).paymentFailed);
-            }
+          GlobalSnackBar.showError(context, S.of(context).serverError);
+          return;
+        }
+
+        // PaymentSheet only returns normally after completion; avoid
+        // retrievePaymentIntent here because Stripe can throw a native fatal
+        // when the PaymentIntent belongs to a different key/account.
+        var confirm = await DioTopUpStripe().confirmTopUp(
+            confirmTopUpReqModel: ConfirmTopUpReqModel(
+                paymentIntent: paymentIntentId,
+                paymentIntentClientSecret: clientSecret));
+        if (!mounted) return;
+        if (confirm is ConfirmTopUpResModel) {
+          if (confirm.status == 'success') {
+            context.pop();
+            GlobalSnackBar.showSuccess(
+                context, S.of(context).paymentSuccessful);
           } else {
-            GlobalSnackBar.showError(context, S.of(context).serverError);
+            GlobalSnackBar.showError(context, S.of(context).paymentFailed);
           }
         } else {
-          if (!mounted) return;
-          GlobalSnackBar.showError(context, S.of(context).stripePaymentFail);
+          GlobalSnackBar.showError(context, S.of(context).serverError);
         }
       });
     } on Exception catch (e) {
       if (e is StripeException) {
-        var res = await Stripe.instance.retrievePaymentIntent(clientSecret!);
-        // Confirming the stripe payment in backend
-        var confirm = await DioTopUpStripe().confirmTopUp(
-            confirmTopUpReqModel: ConfirmTopUpReqModel(
-                paymentIntent: res.id,
-                paymentIntentClientSecret: res.clientSecret));
         if (!mounted) return;
-        if (confirm is ConfirmTopUpResModel) {
-          return;
-        } else {
-          GlobalSnackBar.showError(
-              context, S.of(context).thePaymentHasBeenCanceled);
-        }
+        GlobalSnackBar.showError(
+            context, S.of(context).thePaymentHasBeenCanceled);
       } else {
         return;
       }
     } catch (e) {
       return;
     }
+  }
+
+  String? _paymentIntentIdFromClientSecret(String clientSecret) {
+    final int secretIndex = clientSecret.indexOf('_secret_');
+    if (secretIndex <= 0) {
+      return null;
+    }
+    return clientSecret.substring(0, secretIndex);
   }
 
   String _packagePriceWithGst(Datum package) {
