@@ -32,10 +32,12 @@ class MapViewMerchants extends StatefulWidget {
     super.key,
     this.merchants,
     this.title,
+    this.returnToSearch = false,
   });
 
   final List<MerchantSummary>? merchants;
   final String? title;
+  final bool returnToSearch;
 
   @override
   State<MapViewMerchants> createState() => _MapViewMerchantsState();
@@ -358,6 +360,7 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
   void onSummaryTapped(MerchantSummary merchant) {
     context.pushNamed('details-screen', extra: {
       'merchantID': merchant.merchantId.toString(),
+      'returnToSearch': widget.returnToSearch,
     }).then((value) async {
       if (value == true) {
         recallMerchantApi = true;
@@ -592,6 +595,7 @@ class _MapViewMerchantsState extends State<MapViewMerchants> {
                                       _selectedMerchant!;
                                   context.pushNamed('details-screen', extra: {
                                     'merchantID': merchant.id.toString(),
+                                    'returnToSearch': widget.returnToSearch,
                                   }).then((value) async {
                                     if (value == true) {
                                       recallMerchantApi = true;

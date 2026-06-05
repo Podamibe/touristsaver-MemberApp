@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:go_router/go_router.dart';
+import 'package:touristsaver/common/navigation/safe_primary_navigation.dart';
 import 'package:touristsaver/common/services/dio_common.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
@@ -81,7 +82,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
         child: CustomAppBar(
           text: 'Add Discount Credits',
           icon: Icons.arrow_back_ios,
-          onPressed: () => context.pop(),
+          onPressed: () => navigateToSafePrimaryScreen(context),
         ),
       ),
       body: ScrollConfiguration(

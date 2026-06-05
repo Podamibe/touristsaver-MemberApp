@@ -329,6 +329,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
       extra: {
         'title': title,
         'merchants': mappableMerchants,
+        'returnToSearch': true,
       },
     ).then((value) {
       if (value == true && mounted) {
@@ -503,6 +504,7 @@ class _MerchantScreenState extends State<MerchantScreen> {
                             onMerchantTap: (merchant) {
                               context.pushNamed('details-screen', extra: {
                                 'merchantID': merchant.merchantId.toString(),
+                                'returnToSearch': true,
                               }).then((value) {
                                 if (value == true && mounted) {
                                   setState(() {});

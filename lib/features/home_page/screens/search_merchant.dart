@@ -345,6 +345,7 @@ class _SearchMerchantState extends State<SearchMerchant> {
                                           .pushNamed('details-screen', extra: {
                                         'merchantID':
                                             merchant.merchantId.toString(),
+                                        'returnToSearch': true,
                                       }).then((value) {
                                         if (value == true) {
                                           if (recallMerchantApi == false) {

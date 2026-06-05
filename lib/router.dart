@@ -163,6 +163,7 @@ final GoRouter goRouter = GoRouter(
           merchants: merchantsArg is List
               ? merchantsArg.whereType<MerchantSummary>().toList()
               : null,
+          returnToSearch: args?['returnToSearch'] == true,
         );
       },
     ),
@@ -241,6 +242,7 @@ final GoRouter goRouter = GoRouter(
           Map<String, dynamic> args = state.extra as Map<String, dynamic>;
           return DetailsScreen(
             merchantID: args['merchantID']!,
+            returnToSearch: args['returnToSearch'] == true,
             // isFavorite: args['isFavorite'] ?? false,
           );
         }),
@@ -365,9 +367,16 @@ final GoRouter goRouter = GoRouter(
     GoRoute(
       path: '/pay',
       name: 'pay',
-      builder: (context, state) => PayScreen(
-        merchantName: state.extra as String?,
-      ),
+      builder: (context, state) {
+        final Object? extra = state.extra;
+        final Map<String, dynamic>? args =
+            extra is Map<String, dynamic> ? extra : null;
+        return PayScreen(
+          merchantName:
+              args == null ? extra as String? : args['merchantName'] as String?,
+          returnToSearch: args?['returnToSearch'] == true,
+        );
+      },
     ),
     //Top Up Screen
     GoRoute(
@@ -464,6 +473,7 @@ final GoRouter goRouter = GoRouter(
             merchantPiiinkOnHold: args['merchantPiiinkOnHold'],
             terminalUserId: args['terminalUserId'],
             terminalId: args['terminalId'],
+            returnToSearch: args['returnToSearch'] == true,
           );
         }),
     //Accept Screen

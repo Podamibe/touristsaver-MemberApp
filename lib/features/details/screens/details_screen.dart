@@ -41,11 +41,13 @@ import 'google_map.dart';
 class DetailsScreen extends StatefulWidget {
   static const String routeName = '/details-screen';
   final String? merchantID;
+  final bool returnToSearch;
   // final bool? isFavorite;
 
   const DetailsScreen({
     super.key,
     this.merchantID,
+    this.returnToSearch = false,
     // this.isFavorite,
   });
 
@@ -738,7 +740,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 onTap: () {
                   context.pushNamed(
                     'pay',
-                    extra: merchantDetail.data?.merchantName,
+                    extra: {
+                      'merchantName': merchantDetail.data?.merchantName,
+                      'returnToSearch': widget.returnToSearch,
+                    },
                   );
                 },
               ),

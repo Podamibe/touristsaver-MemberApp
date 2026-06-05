@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/common/navigation/safe_primary_navigation.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
@@ -30,6 +31,7 @@ class ConfimrPaymentScreen extends StatefulWidget {
   final int? terminalUserId;
   final int? terminalId;
   final int? merchantId;
+  final bool returnToSearch;
 
   const ConfimrPaymentScreen({
     super.key,
@@ -50,6 +52,7 @@ class ConfimrPaymentScreen extends StatefulWidget {
     this.terminalUserId,
     this.terminalId,
     this.merchantId,
+    this.returnToSearch = false,
   });
 
   @override
@@ -86,7 +89,10 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
         child: CustomAppBar(
           text: 'Redeem Discount',
           icon: Icons.arrow_back_ios,
-          onPressed: () => context.pop(),
+          onPressed: () => navigateToSafePrimaryScreen(
+            context,
+            returnToSearch: widget.returnToSearch,
+          ),
         ),
       ),
       body: SafeArea(

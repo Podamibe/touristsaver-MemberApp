@@ -13,6 +13,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/common/navigation/safe_primary_navigation.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
@@ -34,9 +35,10 @@ import 'package:touristsaver/generated/l10n.dart';
 
 class PayScreen extends StatefulWidget {
   static const String routeName = '/pay';
-  const PayScreen({super.key, this.merchantName});
+  const PayScreen({super.key, this.merchantName, this.returnToSearch = false});
 
   final String? merchantName;
+  final bool returnToSearch;
 
   @override
   State<PayScreen> createState() => _PayScreenState();
@@ -282,6 +284,7 @@ class _PayScreenState extends State<PayScreen> {
                   'null',
           'universalPiiinkOnHold': data.universalPiiinkBalanceOnHold.toString(),
           'merchantPiiinkOnHold': data.merchantPiiinkBalanceOnHold.toString(),
+          'returnToSearch': widget.returnToSearch,
         });
       } else {
         setState(() {
@@ -349,6 +352,7 @@ class _PayScreenState extends State<PayScreen> {
           'merchantPiiinkOnHold': data.merchantPiiinkBalanceOnHold.toString(),
           'terminalUserId': data.terminalUserId,
           'terminalId': data.terminalId,
+          'returnToSearch': widget.returnToSearch,
         });
       } else {
         setState(() {
@@ -400,12 +404,11 @@ class _PayScreenState extends State<PayScreen> {
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: CustomAppBar(
             text: widget.merchantName ?? 'Redeem discount',
-            icon: widget.merchantName == null ? null : Icons.arrow_back_ios,
-            onPressed: widget.merchantName == null
-                ? null
-                : () {
-                    context.pop();
-                  }),
+            icon: Icons.arrow_back_ios,
+            onPressed: () => navigateToSafePrimaryScreen(
+                  context,
+                  returnToSearch: widget.returnToSearch,
+                )),
       ),
       body: Focus(
         autofocus: true,

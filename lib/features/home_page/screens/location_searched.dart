@@ -572,6 +572,7 @@ class _LocationSearchMerchantState extends State<LocationSearchMerchant> {
                 onTap: () {
                   context.pushNamed('details-screen', extra: {
                     'merchantID': allSearchedMer[index].xId.toString(),
+                    'returnToSearch': true,
                     // 'isFavorite':
                     //     searchResultMer[index].favoriteMerchant != null
                     //         ? true
