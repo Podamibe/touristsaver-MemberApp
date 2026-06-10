@@ -1,5 +1,6 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/error.dart';
@@ -418,9 +419,9 @@ class _TopUpHistoryWidgetState extends State<TopUpHistoryWidget> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
       child: _DiscountCreditsEmptyState(
-        title: 'No Discount Credits added yet',
+        title: 'No added Discount Credits yet',
         body:
-            'Added Discount Credits from memberships or purchases will appear here.',
+            'Discount Credits added after your membership purchase will appear here.',
       ),
     );
   }
@@ -508,7 +509,7 @@ class _DiscountCreditsEmptyState extends StatelessWidget {
               child: InkWell(
                 borderRadius: BorderRadius.circular(18),
                 onTap: () {
-                  Navigator.maybePop(context);
+                  context.pushNamed('top-up');
                 },
                 child: Ink(
                   decoration: BoxDecoration(
@@ -528,7 +529,7 @@ class _DiscountCreditsEmptyState extends StatelessWidget {
                   ),
                   child: const Center(
                     child: Text(
-                      'Ok',
+                      'Add Discount Credits',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,
