@@ -44,6 +44,10 @@ import '../../../models/response/common_res.dart';
 import '../../../models/response/country_wise_prefix_res_model.dart';
 import 'package:touristsaver/generated/l10n.dart';
 
+const Color _changeCountryNavy = Color(0xFF111C44);
+const Color _changeCountryBrandBlue = Color(0xFF0009FE);
+const Color _changeCountryBrandPurple = Color(0xFFF146EA);
+
 class ChangeCountry extends StatefulWidget {
   static const String routeName = '/change-country';
   const ChangeCountry({super.key});
@@ -182,8 +186,16 @@ class _ChangeCountryState extends State<ChangeCountry> {
                             width: 72,
                             height: 72,
                             decoration: BoxDecoration(
-                              color:
-                                  GlobalColors.appColor1.withValues(alpha: 0.1),
+                              gradient: LinearGradient(
+                                colors: [
+                                  _changeCountryBrandBlue.withValues(
+                                      alpha: 0.12),
+                                  _changeCountryBrandPurple.withValues(
+                                      alpha: 0.12),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                               shape: BoxShape.circle,
                             ),
                             child: Center(
@@ -200,7 +212,7 @@ class _ChangeCountryState extends State<ChangeCountry> {
                             'Verify Email',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Colors.black.withValues(alpha: 0.82),
+                              color: _changeCountryNavy,
                               fontSize: 22.sp,
                               fontWeight: FontWeight.w900,
                               height: 1.15,
@@ -227,54 +239,51 @@ class _ChangeCountryState extends State<ChangeCountry> {
                             ),
                           ),
                           const SizedBox(height: 22),
-                          isLoading
-                              ? const CustomButtonWithCircular()
-                              : CustomButton(
-                                  text: 'Verify Now',
-                                  height: 48.h,
-                                  width: double.infinity,
-                                  onPressed: () async {
-                                    setState(() {
-                                      isLoading = true;
-                                    });
-                                    var result =
-                                        await DioProfile().verifyEmail();
-                                    if (!mounted) return;
-                                    if (result is CommonResModel) {
+                          _VerifyEmailPrimaryButton(
+                            text: 'Verify Now',
+                            isLoading: isLoading,
+                            onPressed: () async {
+                              if (isLoading) return;
+                              setState(() {
+                                isLoading = true;
+                              });
+                              var result = await DioProfile().verifyEmail();
+                              if (!mounted) return;
+                              if (result is CommonResModel) {
+                                // ignore: use_build_context_synchronously
+                                context.pop();
+                                if (result.status == 'Success') {
+                                  GlobalSnackBar.showSuccess(
                                       // ignore: use_build_context_synchronously
-                                      context.pop();
-                                      if (result.status == 'Success') {
-                                        GlobalSnackBar.showSuccess(
-                                            // ignore: use_build_context_synchronously
-                                            context,
-                                            result.message ??
-                                                S
-                                                    // ignore: use_build_context_synchronously
-                                                    .of(context)
-                                                    .verificationLinkSentSuccessfully);
-                                      }
-                                    } else if (result is ErrorResModel) {
-                                      setState(() {
-                                        isLoading = false;
-                                      });
-                                      GlobalSnackBar.showError(
-                                          // ignore: use_build_context_synchronously
-                                          context,
-                                          result.message ??
+                                      context,
+                                      result.message ??
+                                          S
                                               // ignore: use_build_context_synchronously
-                                              S.of(context).someErrorOccurred);
-                                    } else {
-                                      setState(() {
-                                        isLoading = false;
-                                      });
-                                      // ignore: use_build_context_synchronously
-                                      GlobalSnackBar.showError(
-                                          context,
-                                          // ignore: use_build_context_synchronously
-                                          S.of(context).someErrorOccurred);
-                                    }
-                                  },
-                                ),
+                                              .of(context)
+                                              .verificationLinkSentSuccessfully);
+                                }
+                              } else if (result is ErrorResModel) {
+                                setState(() {
+                                  isLoading = false;
+                                });
+                                GlobalSnackBar.showError(
+                                    // ignore: use_build_context_synchronously
+                                    context,
+                                    result.message ??
+                                        // ignore: use_build_context_synchronously
+                                        S.of(context).someErrorOccurred);
+                              } else {
+                                setState(() {
+                                  isLoading = false;
+                                });
+                                // ignore: use_build_context_synchronously
+                                GlobalSnackBar.showError(
+                                    context,
+                                    // ignore: use_build_context_synchronously
+                                    S.of(context).someErrorOccurred);
+                              }
+                            },
+                          ),
                         ],
                       ),
                     ),
@@ -1014,5 +1023,70 @@ class _ChangeCountryState extends State<ChangeCountry> {
       // print("exception:$e");
       return;
     }
+  }
+}
+
+class _VerifyEmailPrimaryButton extends StatelessWidget {
+  const _VerifyEmailPrimaryButton({
+    required this.text,
+    required this.onPressed,
+    required this.isLoading,
+  });
+
+  final String text;
+  final VoidCallback onPressed;
+  final bool isLoading;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: isLoading ? null : onPressed,
+        child: Ink(
+          height: 50.h,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [
+                _changeCountryBrandBlue,
+                _changeCountryBrandPurple,
+              ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: _changeCountryBrandBlue.withValues(alpha: 0.18),
+                blurRadius: 18,
+                offset: const Offset(0, 9),
+              ),
+            ],
+          ),
+          child: Center(
+            child: isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.2,
+                      color: Colors.white,
+                    ),
+                  )
+                : AutoSizeText(
+                    text,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
   }
 }

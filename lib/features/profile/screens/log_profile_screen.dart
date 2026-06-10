@@ -41,6 +41,8 @@ import 'package:touristsaver/generated/l10n.dart';
 const Color _profileNavy = Color(0xFF111C44);
 const Color _profileMuted = Color(0xFF63708A);
 const Color _profileBorder = Color(0xFFE5EAF4);
+const Color _profileBrandBlue = Color(0xFF0009FE);
+const Color _profileBrandPurple = Color(0xFFF146EA);
 const bool _showLaunchDeferredProfileSections = false;
 
 class _ProfileActionItem {
@@ -979,58 +981,53 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
                             const SizedBox(height: 18),
 
                             // Save Button
-                            isLoading == true
-                                ? const CustomButtonWithCircular()
-                                : _profileDialogPrimaryButton(
-                                    text: S.of(context).save,
-                                    onPressed: () async {
+                            _profileDialogPrimaryButton(
+                              text: S.of(context).save,
+                              isLoading: isLoading,
+                              onPressed: () async {
+                                if (isLoading) return;
+                                stateMode(() {
+                                  isLoading = true;
+                                });
+                                if (changeKey.currentState!.validate()) {
+                                  var res = await DioMemberShip().changePass(
+                                    changePasswordReqModel:
+                                        ChangePasswordReqModel(
+                                      currentPassword:
+                                          currentPasswordController.text.trim(),
+                                      newPassword:
+                                          newPasswordController.text.trim(),
+                                      newConfirmPassword:
+                                          confirmNewPasswordController.text
+                                              .trim(),
+                                    ),
+                                  );
+                                  if (!mounted) return;
+                                  if (res is ChangePasswordResModel) {
+                                    if (res.status == 'Success') {
                                       stateMode(() {
-                                        isLoading = true;
+                                        Pref().writeData(
+                                            key: 'savePassword',
+                                            value: newPasswordController.text
+                                                .trim());
+                                        isLoading = false;
+                                        trackDialog = true;
                                       });
-                                      if (changeKey.currentState!.validate()) {
-                                        var res =
-                                            await DioMemberShip().changePass(
-                                          changePasswordReqModel:
-                                              ChangePasswordReqModel(
-                                            currentPassword:
-                                                currentPasswordController.text
-                                                    .trim(),
-                                            newPassword: newPasswordController
-                                                .text
-                                                .trim(),
-                                            newConfirmPassword:
-                                                confirmNewPasswordController
-                                                    .text
-                                                    .trim(),
-                                          ),
-                                        );
-                                        if (!mounted) return;
-                                        if (res is ChangePasswordResModel) {
-                                          if (res.status == 'Success') {
-                                            stateMode(() {
-                                              Pref().writeData(
-                                                  key: 'savePassword',
-                                                  value: newPasswordController
-                                                      .text
-                                                      .trim());
-                                              isLoading = false;
-                                              trackDialog = true;
-                                            });
-                                            context.pop();
-                                          }
-                                        } else {
-                                          GlobalSnackBar.showError(
-                                              context,
-                                              S
-                                                  .of(context)
-                                                  .currentPasswordDoesNotMatch);
-                                          stateMode(() {
-                                            isLoading = false;
-                                          });
-                                        }
-                                      }
-                                    },
-                                  ),
+                                      context.pop();
+                                    }
+                                  } else {
+                                    GlobalSnackBar.showError(
+                                        context,
+                                        S
+                                            .of(context)
+                                            .currentPasswordDoesNotMatch);
+                                    stateMode(() {
+                                      isLoading = false;
+                                    });
+                                  }
+                                }
+                              },
+                            ),
                             const SizedBox(height: 10),
                             _profileDialogSecondaryButton(
                               text: S.of(context).cancel,
@@ -1076,7 +1073,7 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: GlobalColors.appColor1, width: 1.4),
+        borderSide: const BorderSide(color: _profileBrandBlue, width: 1.4),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -1101,26 +1098,54 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
   Widget _profileDialogPrimaryButton({
     required String text,
     required VoidCallback onPressed,
+    required bool isLoading,
   }) {
     return SizedBox(
       height: 48,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          elevation: 0,
-          backgroundColor: GlobalColors.appColor1,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-        child: AutoSizeText(
-          text,
-          maxLines: 1,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w900,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: isLoading ? null : onPressed,
+          child: Ink(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [
+                  _profileBrandBlue,
+                  _profileBrandPurple,
+                ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: _profileBrandBlue.withValues(alpha: 0.18),
+                  blurRadius: 18,
+                  offset: const Offset(0, 9),
+                ),
+              ],
+            ),
+            child: Center(
+              child: isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : AutoSizeText(
+                      text,
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+            ),
           ),
         ),
       ),
