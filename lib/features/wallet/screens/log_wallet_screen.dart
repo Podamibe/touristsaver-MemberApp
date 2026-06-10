@@ -319,7 +319,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
           _exampleRow('Bill total', '\$100'),
           _exampleRow('Member discount', '10%'),
           _exampleRow('You pay merchant', '\$90'),
-          _exampleRow('Discount Credits used', '10'),
+          _exampleRow('Discount Credits used', '\$10.00'),
           SizedBox(height: 10.h),
           Align(
             alignment: Alignment.centerLeft,
