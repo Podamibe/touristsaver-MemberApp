@@ -547,8 +547,7 @@ class _RecommendScreenState extends State<RecommendScreen> {
       setState(() {
         selectedImage = null;
       });
-      GlobalSnackBar.showSuccess(
-        context,
+      _showRecommendationSuccessSnackBar(
         'Thanks! Your recommendation has been submitted for review.',
       );
     } else if (result is ErrorResModel) {
@@ -572,6 +571,76 @@ class _RecommendScreenState extends State<RecommendScreen> {
         bodyText: S.of(context).weAreCurrentlyWorkingOnThisWeWillKeepYouUpdated,
       ),
     );
+  }
+
+  void _showRecommendationSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          elevation: 0,
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.transparent,
+          margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 18.h),
+          padding: EdgeInsets.zero,
+          duration: const Duration(seconds: 3),
+          content: Container(
+            padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 14.h),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [_recommendBlue, _recommendCyan],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(18.r),
+              boxShadow: [
+                BoxShadow(
+                  color: _recommendBlue.withValues(alpha: 0.18),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    message,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'Sans',
+                      height: 1.25,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                TextButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 10.w),
+                    minimumSize: Size(40.w, 34.h),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    S.of(context).ok,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w900,
+                      fontFamily: 'Sans',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
   }
 
   @override
