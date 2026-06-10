@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/error.dart';
-import 'package:touristsaver/constants/global_colors.dart';
 import 'package:touristsaver/features/terms_conditions/bloc/agreement_blocs.dart';
 import 'package:touristsaver/features/terms_conditions/bloc/agreement_events.dart';
 import 'package:touristsaver/features/terms_conditions/bloc/agreement_states.dart';
@@ -16,6 +15,9 @@ import 'package:touristsaver/features/terms_conditions/services/dio_agreement.da
 import 'package:touristsaver/models/response/agreement_res.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:touristsaver/generated/l10n.dart';
+
+const Color _termsPrimaryBlue = Color(0xFF0009FE);
+const Color _termsCtaCyan = Color(0xFF18C6FF);
 
 class TermsConditionScreen extends StatefulWidget {
   static const String routeName = "/terms-condition";
@@ -169,13 +171,39 @@ class _TermsConditionScreenState extends State<TermsConditionScreen> {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           //Back To Top floating action button
-          FloatingActionButton(
-            backgroundColor: GlobalColors.appColor,
-            onPressed: backToTop == false ? scrollTobutton : scrollToTop,
-            heroTag: const Text('btn3'),
-            child: backToTop == false
-                ? const Icon(Icons.arrow_downward)
-                : const Icon(Icons.arrow_upward),
+          Material(
+            color: Colors.transparent,
+            shape: const CircleBorder(),
+            elevation: 0,
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: backToTop == false ? scrollTobutton : scrollToTop,
+              child: Ink(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [_termsPrimaryBlue, _termsCtaCyan],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _termsPrimaryBlue.withValues(alpha: 0.18),
+                      blurRadius: 18,
+                      offset: const Offset(0, 9),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  backToTop == false
+                      ? Icons.arrow_downward
+                      : Icons.arrow_upward,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
         ],
       ),
