@@ -14,9 +14,12 @@ import 'package:touristsaver/features/location/services/dio_location.dart';
 import 'package:touristsaver/features/profile/bloc/profile_wallet_blocs.dart';
 import 'package:touristsaver/features/profile/bloc/profile_wallet_events.dart';
 import 'package:touristsaver/features/profile/bloc/profile_wallet_states.dart';
+import 'package:touristsaver/features/register/services/dio_register.dart';
 import 'package:touristsaver/features/transfer_piiinks/services/dio_transfer.dart';
 import 'package:touristsaver/features/wallet/services/dio_wallet.dart';
 import 'package:touristsaver/models/request/tranfer_piiink_req.dart';
+import 'package:touristsaver/models/response/country_wise_prefix_res_model.dart'
+    as country_prefix;
 import 'package:touristsaver/models/response/location_get_all.dart';
 import 'package:touristsaver/models/response/merchant_get_my_wallet.dart';
 import 'package:touristsaver/models/response/tranfer_piiink_res.dart';
@@ -45,6 +48,7 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
   TextEditingController receiverNumberController = TextEditingController();
   TextEditingController transferredPiiinksController = TextEditingController();
   TextEditingController searchController = TextEditingController();
+  TextEditingController phonePrefixSearchController = TextEditingController();
   bool walletLoaded = false;
 
   // For dropDown of selecting country
@@ -52,12 +56,22 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
   int? selectedMerchantID;
   double? selectedMerchantBalance;
   String? phPrefix;
-  Future<LocationGetAllResModel?>? phonePrefix;
+  Future<country_prefix.CountryWisePrefixResModel?>? phonePrefixList;
+  String? selectedPhonePrefixKey;
+
   Future<LocationGetAllResModel?> getPhonePrefix() async {
     LocationGetAllResModel? locationGetAllResModel =
         await DioLocation().getCurrency();
-    phPrefix = locationGetAllResModel!.data![0].phonePrefix;
+    final String? defaultPrefix = locationGetAllResModel?.data?[0].phonePrefix;
+    if (!mounted) return locationGetAllResModel;
+    setState(() {
+      phPrefix = defaultPrefix;
+    });
     return locationGetAllResModel;
+  }
+
+  Future<country_prefix.CountryWisePrefixResModel?> getPhonePrefixList() async {
+    return DioRegister().countryPhonePrefix();
   }
 
   dynamic memberQrCode;
@@ -139,8 +153,18 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
 
   @override
   void initState() {
-    phonePrefix = getPhonePrefix();
+    getPhonePrefix();
+    phonePrefixList = getPhonePrefixList();
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    receiverNumberController.dispose();
+    transferredPiiinksController.dispose();
+    searchController.dispose();
+    phonePrefixSearchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -502,8 +526,8 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        FutureBuilder<LocationGetAllResModel?>(
-            future: phonePrefix,
+        FutureBuilder<country_prefix.CountryWisePrefixResModel?>(
+            future: phonePrefixList,
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return Container(
@@ -516,24 +540,87 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
                   ),
                 );
               } else {
-                return Container(
+                final prefixItems = [...?snapshot.data?.data]..sort((a, b) =>
+                    (a.countryName ?? '')
+                        .toLowerCase()
+                        .compareTo((b.countryName ?? '').toLowerCase()));
+                final prefixItemsByKey = <String, country_prefix.Datum>{
+                  for (var index = 0; index < prefixItems.length; index++)
+                    _prefixDropdownKey(prefixItems[index], index):
+                        prefixItems[index],
+                };
+
+                return SizedBox(
+                  width: 118.w,
                   height: 52.h,
-                  width: 82.w,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF7F9FC),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: _shareBorder),
-                  ),
-                  child: Center(
-                    child: AutoSizeText(
-                      phPrefix!,
-                      style: TextStyle(
-                        color: _shareNavy,
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w800,
-                        fontFamily: 'Sans',
-                      ),
+                  child: DropdownButtonWidget(
+                    label: 'Prefix',
+                    bWidth: 118.w,
+                    dropWidth: 230.w,
+                    lPadding: 3,
+                    fillColor: const Color(0xFFF7F9FC),
+                    borderColor: _shareBorder,
+                    borderRadius: 16,
+                    iconColor: _sharePrimaryBlue,
+                    hintStyle: TextStyle(
+                      color: _shareMuted,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Sans',
                     ),
+                    height: 52.h,
+                    buttonHeight: 52.h,
+                    buttonPadding: EdgeInsets.only(left: 10.w, right: 0),
+                    searchController: phonePrefixSearchController,
+                    items: prefixItems.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final item = entry.value;
+                      return DropdownMenuItem<Object>(
+                        value: _prefixDropdownKey(item, index),
+                        child: Row(
+                          children: [
+                            _prefixFlag(item.logoUrl, item.countryName),
+                            SizedBox(width: 6.w),
+                            Expanded(
+                              child: AutoSizeText(
+                                '${item.countryName ?? ''} ${item.phonePrefix ?? ''}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: _dropdownTextStyle(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    selectedItemBuilder: (context) {
+                      return prefixItems.map((item) {
+                        return Row(
+                          children: [
+                            _prefixFlag(item.logoUrl, item.countryName),
+                            SizedBox(width: 6.w),
+                            Flexible(
+                              child: AutoSizeText(
+                                item.phonePrefix ?? '',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: _dropdownTextStyle(),
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList();
+                    },
+                    onChanged: (newValue) {
+                      final key = newValue as String;
+                      final selectedPrefixItem = prefixItemsByKey[key];
+                      setState(() {
+                        phPrefix = selectedPrefixItem?.phonePrefix;
+                        selectedPhonePrefixKey = key;
+                        phonePrefixSearchController.clear();
+                      });
+                    },
+                    value: _selectedPrefixKey(prefixItems),
                   ),
                 );
               }
@@ -551,6 +638,75 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
           ),
         ),
       ],
+    );
+  }
+
+  String _prefixDropdownKey(country_prefix.Datum item, int index) {
+    return '${item.countryName ?? ''}-${item.phonePrefix ?? ''}-${item.id ?? index}-$index';
+  }
+
+  String? _selectedPrefixKey(List<country_prefix.Datum> prefixItems) {
+    if (selectedPhonePrefixKey != null &&
+        prefixItems.asMap().entries.any((entry) =>
+            _prefixDropdownKey(entry.value, entry.key) ==
+            selectedPhonePrefixKey)) {
+      return selectedPhonePrefixKey;
+    }
+
+    if (phPrefix == null) return null;
+
+    final int prefixMatchIndex = prefixItems.indexWhere(
+      (item) => item.phonePrefix?.toString() == phPrefix,
+    );
+    if (prefixMatchIndex >= 0) {
+      return _prefixDropdownKey(
+        prefixItems[prefixMatchIndex],
+        prefixMatchIndex,
+      );
+    }
+
+    return null;
+  }
+
+  Widget _prefixFlag(Object? logoUrl, Object? countryName) {
+    final String url = logoUrl?.toString() ?? '';
+    final String name = countryName?.toString() ?? '';
+
+    return Container(
+      height: 20,
+      width: 25,
+      decoration: BoxDecoration(
+        border: Border.all(color: _shareBorder),
+        borderRadius: BorderRadius.circular(3),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: url.isEmpty
+          ? Center(
+              child: Text(
+                name.isEmpty ? '' : name.substring(0, 1).toUpperCase(),
+                style: const TextStyle(
+                  color: _sharePrimaryBlue,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            )
+          : Image.network(
+              url,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Center(
+                  child: Text(
+                    name.isEmpty ? '' : name.substring(0, 1).toUpperCase(),
+                    style: const TextStyle(
+                      color: _sharePrimaryBlue,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                );
+              },
+            ),
     );
   }
 
