@@ -41,6 +41,7 @@ import 'package:touristsaver/generated/l10n.dart';
 const Color _profileNavy = Color(0xFF111C44);
 const Color _profileMuted = Color(0xFF63708A);
 const Color _profileBorder = Color(0xFFE5EAF4);
+const bool _showLaunchDeferredProfileSections = false;
 
 class _ProfileActionItem {
   const _ProfileActionItem({
@@ -455,24 +456,27 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
             isEmailVerified: isEmailVerified,
           ),
         ),
-        _ProfileSection(
-          title: 'My Travel Preferences',
-          subtitle: 'Phase 1 defaults for nearby discovery',
-          child: Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: _travelPreferences().map(_travelPreferenceTile).toList(),
+        if (_showLaunchDeferredProfileSections) ...[
+          _ProfileSection(
+            title: 'My Travel Preferences',
+            subtitle: 'Phase 1 defaults for nearby discovery',
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children:
+                  _travelPreferences().map(_travelPreferenceTile).toList(),
+            ),
           ),
-        ),
-        _ProfileSection(
-          title: 'My Savings / Activity',
-          subtitle: 'More personal history will appear here later',
-          child: Column(
-            children: _savingsActions()
-                .map((item) => _actionTile(item, isComingSoon: true))
-                .toList(),
+          _ProfileSection(
+            title: 'My Savings / Activity',
+            subtitle: 'More personal history will appear here later',
+            child: Column(
+              children: _savingsActions()
+                  .map((item) => _actionTile(item, isComingSoon: true))
+                  .toList(),
+            ),
           ),
-        ),
+        ],
         _ProfileSection(
           title: 'Helpful Actions',
           child: Column(
@@ -832,237 +836,322 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
     bool trackDialog = false;
     return showDialog(
         context: context,
+        barrierColor: Colors.black.withValues(alpha: 0.36),
         barrierDismissible: false,
-        builder: (BuildContext context) => Center(
+        builder: (BuildContext context) => Dialog(
+              elevation: 0,
+              insetPadding:
+                  const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+              backgroundColor: Colors.transparent,
               child: SingleChildScrollView(
-                child: AlertDialog(
-                  content: Text(
-                    S.of(context).changePassword,
-                    textAlign: TextAlign.center,
-                    style: topicStyle,
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                child: Container(
+                  width: double.infinity,
+                  constraints: const BoxConstraints(maxWidth: 430),
+                  padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.14),
+                        blurRadius: 28,
+                        offset: const Offset(0, 14),
+                      ),
+                    ],
                   ),
-                  actions: [
-                    StatefulBuilder(
-                      builder: (context, stateMode) {
-                        return Form(
-                          key: changeKey,
-                          child: Column(
-                            children: [
-                              // Recent Password
-                              SizedBox(
-                                width: MediaQuery.of(context).size.width / 1.2,
-                                child: TextFormField(
-                                  controller: currentPasswordController,
-                                  cursorColor: GlobalColors.appColor,
-                                  decoration: textInputDecoration1.copyWith(
-                                    hintText: S.of(context).currentPassword,
-                                    suffix: GestureDetector(
-                                      onTap: () {
-                                        stateMode(() {
-                                          isHidden = !isHidden;
-                                        });
-                                      },
-                                      child: isHidden
-                                          ? const Icon(
-                                              Icons.visibility_off,
-                                              size: 20,
-                                            )
-                                          : const Icon(
-                                              Icons.visibility,
-                                              size: 20,
-                                            ),
-                                    ),
-                                  ),
-                                  obscureText: isHidden,
-                                  validator: (currentPassword) {
-                                    if (currentPassword == null ||
-                                        currentPassword.isEmpty) {
-                                      stateMode(() {
-                                        isLoading = false;
-                                      });
-                                      return S
-                                          .of(context)
-                                          .pleaseEnterCurrentPassword;
-                                    }
-                                    return null;
-                                  },
-                                ),
+                  child: StatefulBuilder(
+                    builder: (context, stateMode) {
+                      return Form(
+                        key: changeKey,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              S.of(context).changePassword,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: _profileNavy,
+                                fontSize: 22.sp,
+                                fontWeight: FontWeight.w900,
+                                height: 1.15,
                               ),
+                            ),
+                            const SizedBox(height: 18),
 
-                              const SizedBox(height: 15),
-
-                              // New Password
-                              SizedBox(
-                                width: MediaQuery.of(context).size.width / 1.2,
-                                child: TextFormField(
-                                  controller: newPasswordController,
-                                  cursorColor: GlobalColors.appColor,
-                                  decoration: textInputDecoration1.copyWith(
-                                    hintText: S.of(context).newPassword,
-                                    suffix: GestureDetector(
-                                      onTap: () {
-                                        stateMode(() {
-                                          isHidden1 = !isHidden1;
-                                        });
-                                      },
-                                      child: isHidden1
-                                          ? const Icon(
-                                              Icons.visibility_off,
-                                              size: 20,
-                                            )
-                                          : const Icon(
-                                              Icons.visibility,
-                                              size: 20,
-                                            ),
-                                    ),
-                                  ),
-                                  obscureText: isHidden1,
-                                  validator: (newPassword) {
-                                    if (newPassword == null ||
-                                        newPassword.isEmpty ||
-                                        newPassword ==
-                                            currentPasswordController.text
-                                                .trim()) {
-                                      stateMode(() {
-                                        isLoading = false;
-                                      });
-                                      return newPassword ==
-                                              currentPasswordController.text
-                                                  .trim()
-                                          ? S.of(context).passwordsAreSame
-                                          : S.of(context).enterNewPassword;
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-
-                              const SizedBox(height: 15),
-
-                              // Confirm New Password
-                              SizedBox(
-                                width: MediaQuery.of(context).size.width / 1.2,
-                                child: TextFormField(
-                                  controller: confirmNewPasswordController,
-                                  cursorColor: GlobalColors.appColor,
-                                  decoration: textInputDecoration1.copyWith(
-                                    hintText: S.of(context).confirmPassword,
-                                    suffix: GestureDetector(
-                                      onTap: () {
-                                        stateMode(() {
-                                          isHidden2 = !isHidden2;
-                                        });
-                                      },
-                                      child: isHidden2
-                                          ? const Icon(
-                                              Icons.visibility_off,
-                                              size: 20,
-                                            )
-                                          : const Icon(
-                                              Icons.visibility,
-                                              size: 20,
-                                            ),
-                                    ),
-                                  ),
-                                  obscureText: isHidden2,
-                                  validator: (confirmPassword) {
-                                    if (confirmPassword == null ||
-                                        confirmPassword.isEmpty ||
-                                        confirmPassword !=
-                                            newPasswordController.text.trim() ||
-                                        confirmPassword ==
-                                            currentPasswordController.text
-                                                .trim()) {
-                                      stateMode(() {
-                                        isLoading = false;
-                                      });
-                                      return confirmPassword ==
-                                              currentPasswordController.text
-                                                  .trim()
-                                          ? S.of(context).passwordsAreSame
-                                          : S.of(context).passwordNoMatch;
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                              const SizedBox(height: 15),
-
-                              // Yes Button
-                              isLoading == true
-                                  ? const CustomButtonWithCircular()
-                                  : CustomButton(
-                                      onPressed: () async {
-                                        stateMode(() {
-                                          isLoading = true;
-                                        });
-                                        if (changeKey.currentState!
-                                            .validate()) {
-                                          var res =
-                                              await DioMemberShip().changePass(
-                                            changePasswordReqModel:
-                                                ChangePasswordReqModel(
-                                              currentPassword:
-                                                  currentPasswordController.text
-                                                      .trim(),
-                                              newPassword: newPasswordController
-                                                  .text
-                                                  .trim(),
-                                              newConfirmPassword:
-                                                  confirmNewPasswordController
-                                                      .text
-                                                      .trim(),
-                                            ),
-                                          );
-                                          if (!mounted) return;
-                                          if (res is ChangePasswordResModel) {
-                                            if (res.status == 'Success') {
-                                              stateMode(() {
-                                                Pref().writeData(
-                                                    key: 'savePassword',
-                                                    value: newPasswordController
-                                                        .text
-                                                        .trim());
-                                                isLoading = false;
-                                                trackDialog = true;
-                                              });
-                                              context.pop();
-                                            }
-                                          } else {
-                                            GlobalSnackBar.showError(
-                                                context,
-                                                S
-                                                    .of(context)
-                                                    .currentPasswordDoesNotMatch);
-                                            stateMode(() {
-                                              isLoading = false;
-                                            });
-                                          }
-                                        }
-                                      },
-                                      text: S.of(context).save,
-                                    ),
-                              const SizedBox(height: 15),
-                              // No Button
-                              CustomButton1(
-                                onPressed: () {
-                                  context.pop();
+                            // Recent Password
+                            TextFormField(
+                              controller: currentPasswordController,
+                              cursorColor: GlobalColors.appColor,
+                              decoration: _passwordInputDecoration(
+                                hintText: S.of(context).currentPassword,
+                                isHidden: isHidden,
+                                onVisibilityTap: () {
+                                  stateMode(() {
+                                    isHidden = !isHidden;
+                                  });
                                 },
-                                text: S.of(context).cancel,
                               ),
-                              const SizedBox(height: 15),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ],
+                              obscureText: isHidden,
+                              validator: (currentPassword) {
+                                if (currentPassword == null ||
+                                    currentPassword.isEmpty) {
+                                  stateMode(() {
+                                    isLoading = false;
+                                  });
+                                  return S
+                                      .of(context)
+                                      .pleaseEnterCurrentPassword;
+                                }
+                                return null;
+                              },
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            // New Password
+                            TextFormField(
+                              controller: newPasswordController,
+                              cursorColor: GlobalColors.appColor,
+                              decoration: _passwordInputDecoration(
+                                hintText: S.of(context).newPassword,
+                                isHidden: isHidden1,
+                                onVisibilityTap: () {
+                                  stateMode(() {
+                                    isHidden1 = !isHidden1;
+                                  });
+                                },
+                              ),
+                              obscureText: isHidden1,
+                              validator: (newPassword) {
+                                if (newPassword == null ||
+                                    newPassword.isEmpty ||
+                                    newPassword ==
+                                        currentPasswordController.text.trim()) {
+                                  stateMode(() {
+                                    isLoading = false;
+                                  });
+                                  return newPassword ==
+                                          currentPasswordController.text.trim()
+                                      ? S.of(context).passwordsAreSame
+                                      : S.of(context).enterNewPassword;
+                                }
+                                return null;
+                              },
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            // Confirm New Password
+                            TextFormField(
+                              controller: confirmNewPasswordController,
+                              cursorColor: GlobalColors.appColor,
+                              decoration: _passwordInputDecoration(
+                                hintText: S.of(context).confirmPassword,
+                                isHidden: isHidden2,
+                                onVisibilityTap: () {
+                                  stateMode(() {
+                                    isHidden2 = !isHidden2;
+                                  });
+                                },
+                              ),
+                              obscureText: isHidden2,
+                              validator: (confirmPassword) {
+                                if (confirmPassword == null ||
+                                    confirmPassword.isEmpty ||
+                                    confirmPassword !=
+                                        newPasswordController.text.trim() ||
+                                    confirmPassword ==
+                                        currentPasswordController.text.trim()) {
+                                  stateMode(() {
+                                    isLoading = false;
+                                  });
+                                  return confirmPassword ==
+                                          currentPasswordController.text.trim()
+                                      ? S.of(context).passwordsAreSame
+                                      : S.of(context).passwordNoMatch;
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 18),
+
+                            // Save Button
+                            isLoading == true
+                                ? const CustomButtonWithCircular()
+                                : _profileDialogPrimaryButton(
+                                    text: S.of(context).save,
+                                    onPressed: () async {
+                                      stateMode(() {
+                                        isLoading = true;
+                                      });
+                                      if (changeKey.currentState!.validate()) {
+                                        var res =
+                                            await DioMemberShip().changePass(
+                                          changePasswordReqModel:
+                                              ChangePasswordReqModel(
+                                            currentPassword:
+                                                currentPasswordController.text
+                                                    .trim(),
+                                            newPassword: newPasswordController
+                                                .text
+                                                .trim(),
+                                            newConfirmPassword:
+                                                confirmNewPasswordController
+                                                    .text
+                                                    .trim(),
+                                          ),
+                                        );
+                                        if (!mounted) return;
+                                        if (res is ChangePasswordResModel) {
+                                          if (res.status == 'Success') {
+                                            stateMode(() {
+                                              Pref().writeData(
+                                                  key: 'savePassword',
+                                                  value: newPasswordController
+                                                      .text
+                                                      .trim());
+                                              isLoading = false;
+                                              trackDialog = true;
+                                            });
+                                            context.pop();
+                                          }
+                                        } else {
+                                          GlobalSnackBar.showError(
+                                              context,
+                                              S
+                                                  .of(context)
+                                                  .currentPasswordDoesNotMatch);
+                                          stateMode(() {
+                                            isLoading = false;
+                                          });
+                                        }
+                                      }
+                                    },
+                                  ),
+                            const SizedBox(height: 10),
+                            _profileDialogSecondaryButton(
+                              text: S.of(context).cancel,
+                              onPressed: () {
+                                context.pop();
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             )).then((value) => trackDialog == true
         ? GlobalSnackBar.showSuccess(
             context, S.of(context).passwordChangedSuccessfully)
         : null);
+  }
+
+  InputDecoration _passwordInputDecoration({
+    required String hintText,
+    required bool isHidden,
+    required VoidCallback onVisibilityTap,
+  }) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: const TextStyle(
+        color: _profileMuted,
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+      ),
+      filled: true,
+      fillColor: const Color(0xFFF7F9FC),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: _profileBorder),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: GlobalColors.appColor1, width: 1.4),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: GlobalColors.appColor),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: GlobalColors.appColor, width: 1.4),
+      ),
+      suffixIcon: IconButton(
+        onPressed: onVisibilityTap,
+        splashRadius: 20,
+        icon: Icon(
+          isHidden ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+          size: 20,
+          color: _profileMuted,
+        ),
+      ),
+    );
+  }
+
+  Widget _profileDialogPrimaryButton({
+    required String text,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      height: 48,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          backgroundColor: GlobalColors.appColor1,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        child: AutoSizeText(
+          text,
+          maxLines: 1,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _profileDialogSecondaryButton({
+    required String text,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      height: 46,
+      child: TextButton(
+        onPressed: onPressed,
+        style: TextButton.styleFrom(
+          foregroundColor: _profileNavy,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        child: AutoSizeText(
+          text,
+          maxLines: 1,
+          style: TextStyle(
+            color: _profileMuted,
+            fontSize: 15.sp,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
   }
 
 // Logout Button

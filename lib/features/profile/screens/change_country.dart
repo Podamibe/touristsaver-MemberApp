@@ -160,97 +160,123 @@ class _ChangeCountryState extends State<ChangeCountry> {
               future: fillUserEditForm,
               builder: (context, snapshot) {
                 if (snapshot.data?.data?.results?.isEmailVerified == false) {
-                  return Container(
-                    width: MediaQuery.of(context).size.width,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10.0, vertical: 20.0),
-                    margin: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                        color: GlobalColors.appWhiteBackgroundColor,
-                        borderRadius: BorderRadius.circular(5.0),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withValues(alpha: 0.2),
-                            blurRadius: 4,
-                            spreadRadius: 1,
-                            offset: const Offset(2, 2),
-                          )
-                        ]),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        AutoSizeText(
-                          S.of(context).verifyEmail,
-                          style: topicStyle,
-                        ),
-                        const SizedBox(height: 15),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 50.0),
-                          child: AutoSizeText(
-                            S
-                                .of(context)
-                                .yourEmailIsNotActivatedYetNPleaseVerifyYourEmailBeforeChangingCountry,
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 22, 16, 18),
+                    child: Container(
+                      width: MediaQuery.of(context).size.width,
+                      padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
+                      decoration: BoxDecoration(
+                          color: GlobalColors.appWhiteBackgroundColor,
+                          borderRadius: BorderRadius.circular(22.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 22,
+                              offset: const Offset(0, 10),
+                            )
+                          ]),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              color:
+                                  GlobalColors.appColor1.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Image.asset(
+                                "assets/images/mail.png",
+                                height: 78.h,
+                                width: 78.h,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          AutoSizeText(
+                            'Verify Email',
                             textAlign: TextAlign.center,
-                            style: textStyle15.copyWith(fontSize: 18.sp),
+                            style: TextStyle(
+                              color: Colors.black.withValues(alpha: 0.82),
+                              fontSize: 22.sp,
+                              fontWeight: FontWeight.w900,
+                              height: 1.15,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 50),
-                        SizedBox(
-                          child: Image.asset(
-                            "assets/images/mail.png",
-                            height: 130.h,
-                            width: MediaQuery.of(context).size.width / 2,
-                            fit: BoxFit.contain,
+                          const SizedBox(height: 10),
+                          AutoSizeText(
+                            'Please verify your email before changing your country settings.',
+                            textAlign: TextAlign.center,
+                            style: textStyle15h.copyWith(
+                              color: Colors.black.withValues(alpha: 0.62),
+                              fontSize: 15.sp,
+                              height: 1.35,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 40),
-                        isLoading
-                            ? const CustomButtonWithCircular()
-                            : CustomButton(
-                                text: S.of(context).verifyNow,
-                                onPressed: () async {
-                                  setState(() {
-                                    isLoading = true;
-                                  });
-                                  var result = await DioProfile().verifyEmail();
-                                  if (!mounted) return;
-                                  if (result is CommonResModel) {
-                                    // ignore: use_build_context_synchronously
-                                    context.pop();
-                                    if (result.status == 'Success') {
-                                      GlobalSnackBar.showSuccess(
+                          const SizedBox(height: 8),
+                          AutoSizeText(
+                            'Verification helps protect your account and access across regions.',
+                            textAlign: TextAlign.center,
+                            style: textStyle15h.copyWith(
+                              color: GlobalColors.gray.withValues(alpha: 0.72),
+                              fontSize: 13.sp,
+                              height: 1.35,
+                            ),
+                          ),
+                          const SizedBox(height: 22),
+                          isLoading
+                              ? const CustomButtonWithCircular()
+                              : CustomButton(
+                                  text: 'Verify Now',
+                                  height: 48.h,
+                                  width: double.infinity,
+                                  onPressed: () async {
+                                    setState(() {
+                                      isLoading = true;
+                                    });
+                                    var result =
+                                        await DioProfile().verifyEmail();
+                                    if (!mounted) return;
+                                    if (result is CommonResModel) {
+                                      // ignore: use_build_context_synchronously
+                                      context.pop();
+                                      if (result.status == 'Success') {
+                                        GlobalSnackBar.showSuccess(
+                                            // ignore: use_build_context_synchronously
+                                            context,
+                                            result.message ??
+                                                S
+                                                    // ignore: use_build_context_synchronously
+                                                    .of(context)
+                                                    .verificationLinkSentSuccessfully);
+                                      }
+                                    } else if (result is ErrorResModel) {
+                                      setState(() {
+                                        isLoading = false;
+                                      });
+                                      GlobalSnackBar.showError(
                                           // ignore: use_build_context_synchronously
                                           context,
                                           result.message ??
-                                              S
-                                                  // ignore: use_build_context_synchronously
-                                                  .of(context)
-                                                  .verificationLinkSentSuccessfully);
+                                              // ignore: use_build_context_synchronously
+                                              S.of(context).someErrorOccurred);
+                                    } else {
+                                      setState(() {
+                                        isLoading = false;
+                                      });
+                                      // ignore: use_build_context_synchronously
+                                      GlobalSnackBar.showError(
+                                          context,
+                                          // ignore: use_build_context_synchronously
+                                          S.of(context).someErrorOccurred);
                                     }
-                                  } else if (result is ErrorResModel) {
-                                    setState(() {
-                                      isLoading = false;
-                                    });
-                                    GlobalSnackBar.showError(
-                                        // ignore: use_build_context_synchronously
-                                        context,
-                                        result.message ??
-                                            // ignore: use_build_context_synchronously
-                                            S.of(context).someErrorOccurred);
-                                  } else {
-                                    setState(() {
-                                      isLoading = false;
-                                    });
-                                    // ignore: use_build_context_synchronously
-                                    GlobalSnackBar.showError(
-                                        context,
-                                        // ignore: use_build_context_synchronously
-                                        S.of(context).someErrorOccurred);
-                                  }
-                                },
-                              ),
-                        const SizedBox(height: 15),
-                      ],
+                                  },
+                                ),
+                        ],
+                      ),
                     ),
                   );
                 }
