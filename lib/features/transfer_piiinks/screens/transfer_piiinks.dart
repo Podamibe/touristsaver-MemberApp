@@ -18,6 +18,7 @@ import 'package:touristsaver/features/register/services/dio_register.dart';
 import 'package:touristsaver/features/transfer_piiinks/services/dio_transfer.dart';
 import 'package:touristsaver/features/wallet/services/dio_wallet.dart';
 import 'package:touristsaver/models/request/tranfer_piiink_req.dart';
+import 'package:touristsaver/models/request/transfer_piiinks_req_model.dart';
 import 'package:touristsaver/models/response/country_wise_prefix_res_model.dart'
     as country_prefix;
 import 'package:touristsaver/models/response/location_get_all.dart';
@@ -102,53 +103,48 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
           context, S.of(context).insufficientTouristSaverCredits);
       return;
     }
-    // await FlutterBarcodeScanner.scanBarcode(
-    //         '#EC4785', 'Cancel', true, ScanMode.QR)
-    //     .then((value) => setState(() {
-    //           if (value != '-1') {
-    //             memberQrCode = value.split('=').last;
-    //           }
-    //         }))
-    //     .then((value) async {
-    //   setState(() {
-    //     qrScanLoading = true;
-    //   });
-    //   var res = await DioTransfer().tansferPiiinksQR(
-    //     transferPiiinksReqModel: TransferPiiinksReqModel(
-    //         merchantId: selectedMerchantID,
-    //         balance: double.parse(transferredPiiinksController.text.trim()),
-    //         uniqueMemberCode: memberQrCode),
-    //   );
-    //   if (!mounted) return;
-    //   if (res is TransferPiiinkResModel) {
-    //     if (res.status == "Success") {
-    //       GlobalSnackBar.showSuccess(
-    //           context, S.of(context).piiinkTransferredSuccessfully);
-    //       setState(() {
-    //         isLoading = false;
-    //         qrScanLoading = false;
-    //         memberQrCode = null;
-    //       });
-    //       context.pop();
-    //       return;
-    //     }
-    //   } else if (res == 400) {
-    //     GlobalSnackBar.showError(context, S.of(context).invalidQrCode);
-    //     setState(() {
-    //       isLoading = false;
-    //       qrScanLoading = false;
-    //     });
-    //     return;
-    //   } else {
-    //     GlobalSnackBar.showError(context, S.of(context).pleaseTryAgain);
-    //     setState(() {
-    //       isLoading = false;
-    //       qrScanLoading = false;
-    //       memberQrCode = null;
-    //     });
-    //     return;
-    //   }
-    // });
+
+    context.pushNamed('qr_screen', extra: {
+      'title': 'Share Merchant Discount Credits'
+    }).then((result) async {
+      if (result == null || result.toString().isEmpty) return;
+      memberQrCode = result.toString().split('=').last;
+      setState(() {
+        qrScanLoading = true;
+      });
+      var res = await DioTransfer().tansferPiiinksQR(
+        transferPiiinksReqModel: TransferPiiinksReqModel(
+            merchantId: selectedMerchantID,
+            balance: double.parse(transferredPiiinksController.text.trim()),
+            uniqueMemberCode: memberQrCode),
+      );
+      if (!mounted) return;
+      if (res is TransferPiiinkResModel) {
+        if (res.status == "Success") {
+          GlobalSnackBar.showSuccess(
+              context, S.of(context).touristSaverTransferredSuccessfully);
+          setState(() {
+            qrScanLoading = false;
+            memberQrCode = null;
+          });
+          context.pop();
+          return;
+        }
+      } else if (res == 400) {
+        GlobalSnackBar.showError(context, S.of(context).invalidQrCode);
+        setState(() {
+          qrScanLoading = false;
+        });
+        return;
+      } else {
+        GlobalSnackBar.showError(context, S.of(context).pleaseTryAgain);
+        setState(() {
+          qrScanLoading = false;
+          memberQrCode = null;
+        });
+        return;
+      }
+    });
   }
 
   @override
@@ -450,19 +446,49 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
         ),
         SizedBox(width: 12.w),
         SizedBox(
-          width: 112.w,
-          height: 52.h,
+          width: 138.w,
+          height: 64.h,
           child: TextFormField(
             controller: transferredPiiinksController,
             cursorColor: _sharePrimaryBlue,
             textAlign: TextAlign.right,
-            keyboardType: TextInputType.number,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textInputAction: TextInputAction.done,
             inputFormatters: <TextInputFormatter>[
               FilteringTextInputFormatter.allow(RegExp(r'(^\d*\.?\d{0,2})'))
             ],
-            decoration: _shareInputDecoration(
+            style: TextStyle(
+              color: _shareNavy,
+              fontSize: 27.sp,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Sans',
+            ),
+            decoration: InputDecoration(
               hintText: '0.00',
-              alignHintRight: true,
+              hintTextDirection: TextDirection.rtl,
+              hintStyle: TextStyle(
+                color: _shareMuted.withValues(alpha: 0.48),
+                fontSize: 27.sp,
+                fontWeight: FontWeight.w800,
+                fontFamily: 'Sans',
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 16.w, vertical: 15.h),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: _shareBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: _shareBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide:
+                    const BorderSide(color: _sharePrimaryBlue, width: 1.4),
+              ),
             ),
           ),
         ),
