@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/error.dart';
-import 'package:touristsaver/common/widgets/not_available.dart';
 import 'package:touristsaver/constants/decimal_remove.dart';
-import 'package:touristsaver/constants/global_colors.dart';
 import 'package:touristsaver/constants/number_formatter.dart';
 import 'package:touristsaver/constants/style.dart';
 
@@ -14,6 +12,12 @@ import '../../../models/response/premium_code_top_up_history.dart';
 import 'package:touristsaver/generated/l10n.dart';
 
 import '../services/premium_top_up_repository.dart';
+
+const Color _promoPrimaryBlue = Color(0xFF0009FE);
+const Color _promoCtaCyan = Color(0xFF18C6FF);
+const Color _promoNavy = Color(0xFF111C44);
+const Color _promoMuted = Color(0xFF61708A);
+const Color _promoBorder = Color(0xFFE2E8F3);
 
 class PremiumTopUpHistory extends StatefulWidget {
   static const String routeName = '/premium_top_up_history';
@@ -112,275 +116,308 @@ class _PremiumTopUpHistoryState extends State<PremiumTopUpHistory> {
                                 child: SizedBox(
                                   width: MediaQuery.of(context).size.width,
                                   child: SingleChildScrollView(
-                                    child: ListView.separated(
-                                        physics:
-                                            const NeverScrollableScrollPhysics(),
-                                        shrinkWrap: true,
-                                        padding: const EdgeInsets.only(
-                                            top: 5.0, bottom: 90.0),
-                                        separatorBuilder: (context, index) {
-                                          return const SizedBox(height: 20);
-                                        },
-                                        itemCount: availableDate!.length,
-                                        itemBuilder: (context, index) {
-                                          return Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              const SizedBox(
-                                                height: 20,
-                                              ),
-                                              // Today, Yesterday and Date
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.fromLTRB(
+                                              14, 12, 14, 0),
+                                          child: AutoSizeText(
+                                            'Promo or voucher codes used to add Discount Credits to your account.',
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: _promoMuted,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              fontFamily: 'Sans',
+                                              height: 1.35,
+                                            ),
+                                          ),
+                                        ),
+                                        ListView.separated(
+                                            physics:
+                                                const NeverScrollableScrollPhysics(),
+                                            shrinkWrap: true,
+                                            padding: const EdgeInsets.only(
+                                                top: 5.0, bottom: 90.0),
+                                            separatorBuilder: (context, index) {
+                                              return const SizedBox(height: 20);
+                                            },
+                                            itemCount: availableDate!.length,
+                                            itemBuilder: (context, index) {
+                                              return Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
                                                 children: [
-                                                  // Date
-                                                  Flexible(
-                                                    child: Container(
+                                                  const SizedBox(
+                                                    height: 20,
+                                                  ),
+                                                  // Today, Yesterday and Date
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      // Date
+                                                      Flexible(
+                                                        child: Container(
+                                                          margin:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  horizontal:
+                                                                      10.0),
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  horizontal:
+                                                                      30.0,
+                                                                  vertical:
+                                                                      5.0),
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            gradient:
+                                                                const LinearGradient(
+                                                              colors: [
+                                                                _promoPrimaryBlue,
+                                                                _promoCtaCyan,
+                                                              ],
+                                                              begin: Alignment
+                                                                  .centerLeft,
+                                                              end: Alignment
+                                                                  .centerRight,
+                                                            ),
+                                                            borderRadius:
+                                                                const BorderRadius
+                                                                    .only(
+                                                              topLeft: Radius
+                                                                  .circular(
+                                                                      20.0),
+                                                              topRight: Radius
+                                                                  .circular(
+                                                                      20.0),
+                                                            ),
+                                                          ),
+                                                          child: AutoSizeText(
+                                                            dateFormatDate.format(
+                                                                stringToDateTime.parse(
+                                                                    availableDate![
+                                                                        index])),
+                                                            style: transConTitl
+                                                                .copyWith(
+                                                                    color: Colors
+                                                                        .white),
+                                                          ),
+                                                        ),
+                                                      ),
+
+                                                      const SizedBox(width: 10),
+                                                      //Today, Yesterday
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(
+                                                                right: 10.0),
+                                                        child: AutoSizeText(
+                                                          stringToDateTime
+                                                                  .parse(
+                                                                      availableDate![
+                                                                          index])
+                                                                  .isToday()
+                                                              ? S
+                                                                  .of(context)
+                                                                  .today
+                                                              : stringToDateTime
+                                                                      .parse(availableDate![
+                                                                          index])
+                                                                      .isYesterday()
+                                                                  ? S
+                                                                      .of(
+                                                                          context)
+                                                                      .yesterday
+                                                                  : timeAgoCustom(stringToDateTime.parse(availableDate![
+                                                                              index])) ==
+                                                                          "Sunday"
+                                                                      ? S
+                                                                          .of(
+                                                                              context)
+                                                                          .sunday
+                                                                      : timeAgoCustom(stringToDateTime.parse(availableDate![index])) ==
+                                                                              "Monday"
+                                                                          ? S
+                                                                              .of(context)
+                                                                              .monday
+                                                                          : timeAgoCustom(stringToDateTime.parse(availableDate![index])) == "Tuesday"
+                                                                              ? S.of(context).tuesday
+                                                                              : timeAgoCustom(stringToDateTime.parse(availableDate![index])) == "Wednesday"
+                                                                                  ? S.of(context).wednesday
+                                                                                  : timeAgoCustom(stringToDateTime.parse(availableDate![index])) == "Thursday"
+                                                                                      ? S.of(context).thursday
+                                                                                      : timeAgoCustom(stringToDateTime.parse(availableDate![index])) == "Friday"
+                                                                                          ? S.of(context).friday
+                                                                                          : S.of(context).saturday,
+                                                          style: transUni,
+                                                          textAlign:
+                                                              TextAlign.end,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+
+                                                  //Transaction Container
+                                                  Container(
                                                       margin: const EdgeInsets
                                                           .symmetric(
                                                           horizontal: 10.0),
                                                       padding: const EdgeInsets
                                                           .symmetric(
-                                                          horizontal: 30.0,
-                                                          vertical: 5.0),
-                                                      decoration:
-                                                          const BoxDecoration(
-                                                        color: GlobalColors
-                                                            .appColor1,
+                                                          horizontal: 15.0,
+                                                          vertical: 10.0),
+                                                      decoration: BoxDecoration(
                                                         borderRadius:
-                                                            BorderRadius.only(
-                                                          topLeft:
-                                                              Radius.circular(
-                                                                  20.0),
+                                                            const BorderRadius
+                                                                .only(
                                                           topRight:
                                                               Radius.circular(
-                                                                  20.0),
+                                                                  5.0),
+                                                          bottomLeft:
+                                                              Radius.circular(
+                                                                  5.0),
+                                                          bottomRight:
+                                                              Radius.circular(
+                                                                  5.0),
                                                         ),
+                                                        color: Colors.white,
+                                                        border: Border.all(
+                                                            color:
+                                                                _promoBorder),
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                            color: Colors.black
+                                                                .withValues(
+                                                                    alpha:
+                                                                        0.06),
+                                                            blurRadius: 18,
+                                                            offset:
+                                                                const Offset(
+                                                                    0, 8),
+                                                          )
+                                                        ],
                                                       ),
-                                                      child: AutoSizeText(
-                                                        dateFormatDate.format(
-                                                            stringToDateTime.parse(
-                                                                availableDate![
-                                                                    index])),
-                                                        style: transConTitl
-                                                            .copyWith(
-                                                                color: Colors
-                                                                    .white),
-                                                      ),
-                                                    ),
-                                                  ),
-
-                                                  const SizedBox(width: 10),
-                                                  //Today, Yesterday
-                                                  Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            right: 10.0),
-                                                    child: AutoSizeText(
-                                                      stringToDateTime
-                                                              .parse(
+                                                      child: ListView.separated(
+                                                          physics:
+                                                              const NeverScrollableScrollPhysics(),
+                                                          shrinkWrap: true,
+                                                          separatorBuilder:
+                                                              (context,
+                                                                  index2) {
+                                                            return const Divider(
+                                                                thickness: 2);
+                                                          },
+                                                          itemCount: snapshot
+                                                              .data!
+                                                              .data![
                                                                   availableDate![
-                                                                      index])
-                                                              .isToday()
-                                                          ? S.of(context).today
-                                                          : stringToDateTime
-                                                                  .parse(
-                                                                      availableDate![
-                                                                          index])
-                                                                  .isYesterday()
-                                                              ? S
-                                                                  .of(context)
-                                                                  .yesterday
-                                                              : timeAgoCustom(stringToDateTime.parse(
-                                                                          availableDate![
-                                                                              index])) ==
-                                                                      "Sunday"
-                                                                  ? S
-                                                                      .of(
-                                                                          context)
-                                                                      .sunday
-                                                                  : timeAgoCustom(stringToDateTime.parse(availableDate![
-                                                                              index])) ==
-                                                                          "Monday"
-                                                                      ? S
-                                                                          .of(
-                                                                              context)
-                                                                          .monday
-                                                                      : timeAgoCustom(stringToDateTime.parse(availableDate![index])) ==
-                                                                              "Tuesday"
-                                                                          ? S
-                                                                              .of(context)
-                                                                              .tuesday
-                                                                          : timeAgoCustom(stringToDateTime.parse(availableDate![index])) == "Wednesday"
-                                                                              ? S.of(context).wednesday
-                                                                              : timeAgoCustom(stringToDateTime.parse(availableDate![index])) == "Thursday"
-                                                                                  ? S.of(context).thursday
-                                                                                  : timeAgoCustom(stringToDateTime.parse(availableDate![index])) == "Friday"
-                                                                                      ? S.of(context).friday
-                                                                                      : S.of(context).saturday,
-                                                      style: transUni,
-                                                      textAlign: TextAlign.end,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-
-                                              //Transaction Container
-                                              Container(
-                                                  margin: const EdgeInsets
-                                                      .symmetric(
-                                                      horizontal: 10.0),
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                      horizontal: 15.0,
-                                                      vertical: 10.0),
-                                                  decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        const BorderRadius.only(
-                                                      topRight:
-                                                          Radius.circular(5.0),
-                                                      bottomLeft:
-                                                          Radius.circular(5.0),
-                                                      bottomRight:
-                                                          Radius.circular(5.0),
-                                                    ),
-                                                    color: GlobalColors
-                                                        .appWhiteBackgroundColor,
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        color: Colors.grey
-                                                            .withValues(
-                                                                alpha: 0.5),
-                                                        blurRadius: 4,
-                                                        spreadRadius: 4,
-                                                        offset:
-                                                            const Offset(2, 2),
-                                                      )
-                                                    ],
-                                                  ),
-                                                  child: ListView.separated(
-                                                      physics:
-                                                          const NeverScrollableScrollPhysics(),
-                                                      shrinkWrap: true,
-                                                      separatorBuilder:
-                                                          (context, index2) {
-                                                        return const Divider(
-                                                            thickness: 2);
-                                                      },
-                                                      itemCount: snapshot
-                                                          .data!
-                                                          .data![availableDate![
-                                                              index]]!
-                                                          .length,
-                                                      itemBuilder:
-                                                          (context, index2) {
-                                                        var transactionData =
-                                                            snapshot.data!
+                                                                      index]]!
+                                                              .length,
+                                                          itemBuilder: (context,
+                                                              index2) {
+                                                            var transactionData =
+                                                                snapshot.data!
                                                                         .data![
                                                                     availableDate![
-                                                                        index]]![
-                                                                index2];
-                                                        return Column(
-                                                          children: [
-                                                            Row(
+                                                                        index]]![index2];
+                                                            return Column(
                                                               children: [
-                                                                AutoSizeText(
-                                                                  "${S.of(context).premiumCode}: ",
-                                                                  style: transUni
-                                                                      .copyWith(
+                                                                Row(
+                                                                  children: [
+                                                                    AutoSizeText(
+                                                                      "Promo code: ",
+                                                                      style: transUni.copyWith(
                                                                           color:
-                                                                              GlobalColors.gray),
-                                                                ),
-                                                                AutoSizeText(
-                                                                  transactionData
-                                                                      .memberPremiumCode
-                                                                      .toString(),
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                  style: transUni
-                                                                      .copyWith(
+                                                                              _promoMuted),
+                                                                    ),
+                                                                    AutoSizeText(
+                                                                      transactionData
+                                                                          .memberPremiumCode
+                                                                          .toString(),
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
+                                                                      style: transUni.copyWith(
                                                                           color:
-                                                                              GlobalColors.appColor),
+                                                                              _promoPrimaryBlue),
+                                                                    ),
+                                                                  ],
                                                                 ),
-                                                              ],
-                                                            ),
-                                                            Row(
-                                                              children: [
-                                                                AutoSizeText(
-                                                                  "${S.of(context).receivedTouristSavers}: ",
-                                                                  style: transUni
-                                                                      .copyWith(
+                                                                Row(
+                                                                  children: [
+                                                                    AutoSizeText(
+                                                                      "${S.of(context).receivedTouristSavers}: ",
+                                                                      style: transUni.copyWith(
                                                                           color:
-                                                                              GlobalColors.gray),
-                                                                ),
-                                                                AutoSizeText(
-                                                                  "${removeTrailingZero(numFormatter.format(transactionData.piiinksProvided))} ${S.of(context).touristSavers}",
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                  style: transUni
-                                                                      .copyWith(
+                                                                              _promoMuted),
+                                                                    ),
+                                                                    AutoSizeText(
+                                                                      "${removeTrailingZero(numFormatter.format(transactionData.piiinksProvided))} ${S.of(context).touristSavers}",
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
+                                                                      style: transUni.copyWith(
                                                                           color:
-                                                                              GlobalColors.appColor),
+                                                                              _promoPrimaryBlue),
+                                                                    ),
+                                                                  ],
                                                                 ),
-                                                              ],
-                                                            ),
-                                                            Row(
-                                                              children: [
-                                                                AutoSizeText(
-                                                                  "${S.of(context).package}: ",
-                                                                  style: transUni
-                                                                      .copyWith(
+                                                                Row(
+                                                                  children: [
+                                                                    AutoSizeText(
+                                                                      "${S.of(context).package}: ",
+                                                                      style: transUni.copyWith(
                                                                           color:
-                                                                              GlobalColors.gray),
-                                                                ),
-                                                                AutoSizeText(
-                                                                  "${transactionData.membershipPackage?.packageName}",
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                  style: transUni
-                                                                      .copyWith(
+                                                                              _promoMuted),
+                                                                    ),
+                                                                    AutoSizeText(
+                                                                      "${transactionData.membershipPackage?.packageName}",
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
+                                                                      style: transUni.copyWith(
                                                                           color:
-                                                                              GlobalColors.appColor1),
+                                                                              _promoPrimaryBlue),
+                                                                    ),
+                                                                  ],
                                                                 ),
-                                                              ],
-                                                            ),
-                                                            //TopUpDate
-                                                            Row(
-                                                              children: [
-                                                                Expanded(
-                                                                  child:
-                                                                      AutoSizeText(
-                                                                    // you have time in utc and it is converted into local
-                                                                    dateFormatTime.format(snapshot
-                                                                        .data!
-                                                                        .data![
-                                                                            availableDate![index]]![
-                                                                            index2]
-                                                                        .appliedDate!
-                                                                        .toLocal()),
-                                                                    style: transUni
-                                                                        .copyWith(
+                                                                //TopUpDate
+                                                                Row(
+                                                                  children: [
+                                                                    Expanded(
+                                                                      child:
+                                                                          AutoSizeText(
+                                                                        // you have time in utc and it is converted into local
+                                                                        dateFormatTime.format(snapshot
+                                                                            .data!
+                                                                            .data![availableDate![index]]![index2]
+                                                                            .appliedDate!
+                                                                            .toLocal()),
+                                                                        style: transUni.copyWith(
                                                                             color:
-                                                                                Colors.grey),
-                                                                    textAlign:
-                                                                        TextAlign
-                                                                            .end,
-                                                                  ),
+                                                                                _promoMuted),
+                                                                        textAlign:
+                                                                            TextAlign.end,
+                                                                      ),
+                                                                    ),
+                                                                  ],
                                                                 ),
                                                               ],
-                                                            ),
-                                                          ],
-                                                        );
-                                                      }))
-                                            ],
-                                          );
-                                        }),
+                                                            );
+                                                          }))
+                                                ],
+                                              );
+                                            }),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -394,20 +431,133 @@ class _PremiumTopUpHistoryState extends State<PremiumTopUpHistory> {
 
   //If no transaction data is available
   noData() {
-    String replacement =
-        dateFormatDate.format(DateTime.parse(previousDateController.text));
-    String replacement2 =
-        dateFormatDate.format(DateTime.parse(latestDateController.text));
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
-      child: NotAvailable(
-        titleText: S.of(context).noPremiumCodeHasBeenUsedYet,
-        bodyText: S
-            .of(context)
-            .youDoNotHavePremiumCodeUsedHistoryToViewBetweenXTOY
-            .replaceAll('@X', replacement)
-            .replaceAll('@Y', replacement2),
-        image: "assets/images/shopping-bag.png",
+      child: _PromoCodesEmptyState(
+        title: 'No promo codes used yet',
+        body:
+            'Promo or voucher codes used to add Discount Credits will appear here.',
+      ),
+    );
+  }
+}
+
+class _PromoCodesEmptyState extends StatelessWidget {
+  const _PromoCodesEmptyState({
+    required this.title,
+    required this.body,
+  });
+
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: _promoBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  _promoPrimaryBlue.withValues(alpha: 0.10),
+                  _promoCtaCyan.withValues(alpha: 0.10),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const Icon(
+              Icons.confirmation_number_outlined,
+              color: _promoPrimaryBlue,
+              size: 28,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: _promoNavy,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Sans',
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            body,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: _promoMuted,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Sans',
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: () {
+                  Navigator.maybePop(context);
+                },
+                child: Ink(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [_promoPrimaryBlue, _promoCtaCyan],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _promoPrimaryBlue.withValues(alpha: 0.18),
+                        blurRadius: 18,
+                        offset: const Offset(0, 9),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Ok',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        fontFamily: 'Sans',
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

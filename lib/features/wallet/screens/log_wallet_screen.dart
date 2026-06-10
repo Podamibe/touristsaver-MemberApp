@@ -703,8 +703,8 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
               },
             ),
             _moreOptionTile(
-              icon: Icons.payments_outlined,
-              label: 'Discount Credit purchase history',
+              icon: Icons.savings_outlined,
+              label: 'TouristSaver Discount Credits',
               onTap: () => context.pushNamed('top_up_history'),
             ),
           ],

@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/error.dart';
-import 'package:touristsaver/common/widgets/not_available.dart';
-import 'package:touristsaver/constants/global_colors.dart';
 import 'package:touristsaver/constants/number_formatter.dart';
 import 'package:touristsaver/constants/style.dart';
 import 'package:touristsaver/features/top_up/services/top_up_dio.dart';
@@ -13,6 +11,12 @@ import '../../../constants/date_helper.dart';
 import '../../../constants/decimal_remove.dart';
 import '../../../models/response/top_up_res.dart';
 import 'package:touristsaver/generated/l10n.dart';
+
+const Color _creditsPrimaryBlue = Color(0xFF0009FE);
+const Color _creditsCtaCyan = Color(0xFF18C6FF);
+const Color _creditsNavy = Color(0xFF111C44);
+const Color _creditsMuted = Color(0xFF61708A);
+const Color _creditsBorder = Color(0xFFE2E8F3);
 
 class TopUpHistoryWidget extends StatefulWidget {
   // static const String routeName = '/top_up_history';
@@ -143,12 +147,21 @@ class _TopUpHistoryWidgetState extends State<TopUpHistoryWidget> {
                                                           .symmetric(
                                                           horizontal: 30.0,
                                                           vertical: 5.0),
-                                                      decoration:
-                                                          const BoxDecoration(
-                                                        color: GlobalColors
-                                                            .appColor1,
+                                                      decoration: BoxDecoration(
+                                                        gradient:
+                                                            const LinearGradient(
+                                                          colors: [
+                                                            _creditsPrimaryBlue,
+                                                            _creditsCtaCyan,
+                                                          ],
+                                                          begin: Alignment
+                                                              .centerLeft,
+                                                          end: Alignment
+                                                              .centerRight,
+                                                        ),
                                                         borderRadius:
-                                                            BorderRadius.only(
+                                                            const BorderRadius
+                                                                .only(
                                                           topLeft:
                                                               Radius.circular(
                                                                   20.0),
@@ -244,17 +257,17 @@ class _TopUpHistoryWidgetState extends State<TopUpHistoryWidget> {
                                                       bottomRight:
                                                           Radius.circular(5.0),
                                                     ),
-                                                    color: GlobalColors
-                                                        .appWhiteBackgroundColor,
+                                                    color: Colors.white,
+                                                    border: Border.all(
+                                                        color: _creditsBorder),
                                                     boxShadow: [
                                                       BoxShadow(
-                                                        color: Colors.grey
+                                                        color: Colors.black
                                                             .withValues(
-                                                                alpha: 0.5),
-                                                        blurRadius: 4,
-                                                        spreadRadius: 4,
+                                                                alpha: 0.06),
+                                                        blurRadius: 18,
                                                         offset:
-                                                            const Offset(2, 2),
+                                                            const Offset(0, 8),
                                                       )
                                                     ],
                                                   ),
@@ -341,7 +354,7 @@ class _TopUpHistoryWidgetState extends State<TopUpHistoryWidget> {
                                                                   style: transUni
                                                                       .copyWith(
                                                                           color:
-                                                                              GlobalColors.gray),
+                                                                              _creditsMuted),
                                                                 ),
                                                                 AutoSizeText(
                                                                   "${removeTrailingZero(numFormatter.format(transactionData.piiinksProvided))} ${S.of(context).touristSavers}",
@@ -351,7 +364,7 @@ class _TopUpHistoryWidgetState extends State<TopUpHistoryWidget> {
                                                                   style: transUni
                                                                       .copyWith(
                                                                           color:
-                                                                              GlobalColors.appColor),
+                                                                              _creditsPrimaryBlue),
                                                                 ),
                                                               ],
                                                             ),
@@ -372,7 +385,7 @@ class _TopUpHistoryWidgetState extends State<TopUpHistoryWidget> {
                                                                     style: transUni
                                                                         .copyWith(
                                                                             color:
-                                                                                Colors.grey),
+                                                                                _creditsMuted),
                                                                     textAlign:
                                                                         TextAlign
                                                                             .end,
@@ -402,20 +415,133 @@ class _TopUpHistoryWidgetState extends State<TopUpHistoryWidget> {
 
   //If no transaction data is available
   noData() {
-    String replacement =
-        dateFormatDate.format(DateTime.parse(previousDateController.text));
-    String replacement2 =
-        dateFormatDate.format(DateTime.parse(latestDateController.text));
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
-      child: NotAvailable(
-        titleText: S.of(context).noTopUpHasBeenDoneYet,
-        bodyText: S
-            .of(context)
-            .youDoNotHaveAnyTopUpHistoryToViewBetweenXTOY
-            .replaceAll('@X', replacement)
-            .replaceAll('@Y', replacement2),
-        image: "assets/images/shopping-bag.png",
+      child: _DiscountCreditsEmptyState(
+        title: 'No Discount Credits added yet',
+        body:
+            'Added Discount Credits from memberships or purchases will appear here.',
+      ),
+    );
+  }
+}
+
+class _DiscountCreditsEmptyState extends StatelessWidget {
+  const _DiscountCreditsEmptyState({
+    required this.title,
+    required this.body,
+  });
+
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: _creditsBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  _creditsPrimaryBlue.withValues(alpha: 0.10),
+                  _creditsCtaCyan.withValues(alpha: 0.10),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const Icon(
+              Icons.savings_outlined,
+              color: _creditsPrimaryBlue,
+              size: 28,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: _creditsNavy,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Sans',
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            body,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: _creditsMuted,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Sans',
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: () {
+                  Navigator.maybePop(context);
+                },
+                child: Ink(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [_creditsPrimaryBlue, _creditsCtaCyan],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _creditsPrimaryBlue.withValues(alpha: 0.18),
+                        blurRadius: 18,
+                        offset: const Offset(0, 9),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Ok',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        fontFamily: 'Sans',
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

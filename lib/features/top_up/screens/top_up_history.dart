@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
-import 'package:touristsaver/constants/global_colors.dart';
-import 'package:touristsaver/constants/style.dart';
 import 'package:touristsaver/features/top_up/widgets/premium_topup_history_widget.dart';
 import 'package:touristsaver/features/top_up/widgets/top_up_history_widget.dart';
 
-import 'package:touristsaver/generated/l10n.dart';
+const Color _historyPrimaryBlue = Color(0xFF0009FE);
+const Color _historyNavy = Color(0xFF111C44);
+const Color _historyMuted = Color(0xFF61708A);
+const Color _historyBackground = Color(0xFFF8FAFE);
 
 class TopUpHistoryScreen extends StatefulWidget {
   static const String routeName = '/top_up_history';
@@ -23,11 +24,17 @@ class _TopUpHistoryScreenState extends State<TopUpHistoryScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+          backgroundColor: _historyBackground,
           appBar: PreferredSize(
             preferredSize: const Size.fromHeight(kToolbarHeight * 1.6),
             child: CustomAppBar(
-              text: S.of(context).topUpHistory,
+              text: 'TouristSaver Discount Credits',
               icon: Icons.arrow_back_ios,
+              textColor: _historyNavy,
+              fontSize: 17,
+              leadingWidth: 40,
+              titleSpacing: 0,
+              reserveEmptyActions: false,
               onPressed: () {
                 context.pop();
               },
@@ -36,17 +43,22 @@ class _TopUpHistoryScreenState extends State<TopUpHistoryScreen> {
                   indicatorSize: TabBarIndicatorSize.tab,
                   indicatorPadding: const EdgeInsets.symmetric(horizontal: 10),
                   isScrollable: true,
-                  indicatorColor: GlobalColors.appColor,
-                  labelColor: GlobalColors.appColor,
-                  unselectedLabelColor: Colors.grey,
-                  labelStyle: profileListStyle,
+                  indicatorColor: _historyPrimaryBlue,
+                  labelColor: _historyPrimaryBlue,
+                  unselectedLabelColor: _historyMuted,
+                  labelStyle: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'Sans',
+                  ),
+                  unselectedLabelStyle: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Sans',
+                  ),
                   tabs: [
-                    Tab(
-                      text: S.of(context).topUpHistory,
-                    ),
-                    Tab(
-                      text: S.of(context).premiumCodeUseHistory,
-                    ),
+                    const Tab(text: 'Added Discount Credits'),
+                    const Tab(text: 'Promo Codes Used'),
                   ]),
             ),
           ),
