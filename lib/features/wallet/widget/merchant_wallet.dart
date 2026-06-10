@@ -178,7 +178,7 @@ class _MerchantWalletScreenState extends State<MerchantWalletScreen> {
                             showCursor: true,
                             cursorColor: _walletPrimaryBlue,
                             decoration: InputDecoration(
-                              hintText: 'Search merchant credits',
+                              hintText: 'Search merchants',
                               hintStyle: TextStyle(
                                 color: _walletMuted,
                                 fontSize: 14.sp,
