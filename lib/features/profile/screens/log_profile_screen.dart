@@ -42,7 +42,7 @@ const Color _profileNavy = Color(0xFF111C44);
 const Color _profileMuted = Color(0xFF63708A);
 const Color _profileBorder = Color(0xFFE5EAF4);
 const Color _profileBrandBlue = Color(0xFF0009FE);
-const Color _profileBrandPurple = Color(0xFFF146EA);
+const Color _profileCtaCyan = Color(0xFF18C6FF);
 const bool _showLaunchDeferredProfileSections = false;
 
 class _ProfileActionItem {
@@ -1101,23 +1101,23 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
     required bool isLoading,
   }) {
     return SizedBox(
-      height: 48,
+      height: 52,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           onTap: isLoading ? null : onPressed,
           child: Ink(
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [
                   _profileBrandBlue,
-                  _profileBrandPurple,
+                  _profileCtaCyan,
                 ],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
               boxShadow: [
                 BoxShadow(
                   color: _profileBrandBlue.withValues(alpha: 0.18),

@@ -46,7 +46,7 @@ import 'package:touristsaver/generated/l10n.dart';
 
 const Color _changeCountryNavy = Color(0xFF111C44);
 const Color _changeCountryBrandBlue = Color(0xFF0009FE);
-const Color _changeCountryBrandPurple = Color(0xFFF146EA);
+const Color _changeCountryCtaCyan = Color(0xFF18C6FF);
 
 class ChangeCountry extends StatefulWidget {
   static const String routeName = '/change-country';
@@ -190,8 +190,7 @@ class _ChangeCountryState extends State<ChangeCountry> {
                                 colors: [
                                   _changeCountryBrandBlue.withValues(
                                       alpha: 0.12),
-                                  _changeCountryBrandPurple.withValues(
-                                      alpha: 0.12),
+                                  _changeCountryCtaCyan.withValues(alpha: 0.12),
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
@@ -1045,13 +1044,13 @@ class _VerifyEmailPrimaryButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         onTap: isLoading ? null : onPressed,
         child: Ink(
-          height: 50.h,
+          height: 52,
           width: double.infinity,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [
                 _changeCountryBrandBlue,
-                _changeCountryBrandPurple,
+                _changeCountryCtaCyan,
               ],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
