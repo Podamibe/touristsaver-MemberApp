@@ -6,14 +6,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
-import 'package:touristsaver/common/widgets/custom_button.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
 import 'package:touristsaver/common/widgets/dropdown_button_widget.dart';
 import 'package:touristsaver/common/widgets/error.dart';
 import 'package:touristsaver/common/widgets/not_available.dart';
-import 'package:touristsaver/constants/global_colors.dart';
-import 'package:touristsaver/constants/style.dart';
 import 'package:touristsaver/features/location/services/dio_location.dart';
 import 'package:touristsaver/features/profile/bloc/profile_wallet_blocs.dart';
 import 'package:touristsaver/features/profile/bloc/profile_wallet_events.dart';
@@ -29,6 +26,13 @@ import '../../../constants/fixed_decimal.dart';
 import 'package:touristsaver/generated/l10n.dart';
 
 // import '../../../models/request/transfer_piiinks_req_model.dart';
+
+const Color _sharePrimaryBlue = Color(0xFF0009FE);
+const Color _shareCtaCyan = Color(0xFF18C6FF);
+const Color _shareNavy = Color(0xFF111C44);
+const Color _shareMuted = Color(0xFF61708A);
+const Color _shareBorder = Color(0xFFE2E8F3);
+const Color _shareBackground = Color(0xFFF8FAFE);
 
 class TransferPiiinks extends StatefulWidget {
   static const String routeName = '/transfer-piiinks';
@@ -143,11 +147,14 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _shareBackground,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: CustomAppBar(
-          text: S.of(context).transferTouristSavers,
+          text: 'Share Discount Credits',
           icon: Icons.arrow_back_ios,
+          textColor: _shareNavy,
+          reserveEmptyActions: false,
           onPressed: () {
             context.pop();
           },
@@ -187,81 +194,105 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
                   walletLoaded = true;
                 }
                 return SingleChildScrollView(
-                  child: Container(
-                    width: MediaQuery.of(context).size.width / 1.05,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 20.0, horizontal: 10.0),
-                    margin: const EdgeInsets.symmetric(
-                        vertical: 10.0, horizontal: 10.0),
-                    decoration: BoxDecoration(
-                        color: GlobalColors.appWhiteBackgroundColor,
-                        borderRadius: BorderRadius.circular(5.0),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withValues(alpha: 0.2),
-                            blurRadius: 4,
-                            spreadRadius: 1,
-                            offset: const Offset(2, 2),
-                          )
-                        ]),
-                    child: Column(
-                      children: [
-                        merchantPiiink(totalMerchantWallets),
-                        const SizedBox(height: 15),
-                        SizedBox(
-                          height: 50.h,
-                          width: MediaQuery.of(context).size.width / 1.2,
-                          child: TextFormField(
-                            controller: transferredPiiinksController,
-                            cursorColor: GlobalColors.appColor,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: <TextInputFormatter>[
-                              FilteringTextInputFormatter.allow(
-                                  RegExp(r'(^\d*\.?\d{0,2})'))
-                            ],
-                            decoration: textInputDecoration1.copyWith(
-                                hintText: S
-                                    .of(context)
-                                    .numberOfTouristSaversToBeTransferred),
-                          ),
+                  padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 26.h),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _ShareCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Share unused Merchant Discount Credits with another TouristSaver member.',
+                              style: _headingStyle(),
+                            ),
+                            SizedBox(height: 8.h),
+                            Text(
+                              'For example, you can share leftover merchant credits with a friend so they can save on their next visit.',
+                              style: _helperStyle(),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 15),
-                        qrScanLoading
-                            ? const CustomButtonWithCircular()
-                            : CustomButton(
-                                onPressed: isLoading ? () {} : _scanMemberQr,
-                                text: S.of(context).scanReceiverMemberQr),
-                        const SizedBox(height: 15),
-                        Text(
-                          S.of(context).or,
-                          style: merchantNameStyle,
-                        ),
-                        const SizedBox(height: 15),
-                        //  Select Receiver Number
-                        preNumSection(),
-
-                        const SizedBox(height: 15),
-
-                        // Send Button
-                        isLoading == true
-                            ? const CustomButtonWithCircular()
-                            : CustomButton(
-                                text: S.of(context).send,
-                                onPressed:
-                                    qrScanLoading ? () {} : manualTransfer,
+                      ),
+                      SizedBox(height: 14.h),
+                      _ShareCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Merchant credits', style: _labelStyle()),
+                            SizedBox(height: 8.h),
+                            merchantPiiink(totalMerchantWallets),
+                            SizedBox(height: 16.h),
+                            Text(
+                              'Enter the TouristSaver Discount Credits you would like to transfer.',
+                              style: _helperStyle(),
+                            ),
+                            SizedBox(height: 8.h),
+                            SizedBox(
+                              height: 52.h,
+                              child: TextFormField(
+                                controller: transferredPiiinksController,
+                                cursorColor: _sharePrimaryBlue,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: <TextInputFormatter>[
+                                  FilteringTextInputFormatter.allow(
+                                      RegExp(r'(^\d*\.?\d{0,2})'))
+                                ],
+                                decoration: _shareInputDecoration(
+                                  hintText: 'Discount Credits amount',
+                                ),
                               ),
-
-                        const SizedBox(height: 15),
-
-                        // Cancel Button
-                        CustomButton1(
-                          text: S.of(context).cancel,
-                          onPressed: () {
-                            context.pop();
-                          },
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      SizedBox(height: 14.h),
+                      _ShareCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text('Send to another member',
+                                style: _headingStyle()),
+                            SizedBox(height: 12.h),
+                            _SharePrimaryButton(
+                              text: 'Scan Recipient QR Code',
+                              isLoading: qrScanLoading,
+                              onPressed: isLoading ? () {} : _scanMemberQr,
+                            ),
+                            SizedBox(height: 14.h),
+                            Center(
+                              child: Text(
+                                S.of(context).or.toUpperCase(),
+                                style: TextStyle(
+                                  color: _shareMuted,
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w900,
+                                  fontFamily: 'Sans',
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 14.h),
+                            Text('Enter mobile number', style: _labelStyle()),
+                            SizedBox(height: 8.h),
+                            preNumSection(),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                      _SharePrimaryButton(
+                        text: S.of(context).send,
+                        isLoading: isLoading,
+                        onPressed: qrScanLoading ? () {} : manualTransfer,
+                      ),
+                      SizedBox(height: 10.h),
+                      _ShareSecondaryButton(
+                        text: S.of(context).cancel,
+                        onPressed: () {
+                          context.pop();
+                        },
+                      ),
+                    ],
                   ),
                 );
               }
@@ -364,7 +395,7 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
   // select merchant piiink dropDown
   merchantPiiink(List<MerchantWallet> totalMerchantWallets) {
     return DropdownButtonWidget(
-      label: S.of(context).selectMerchantTouristSavers,
+      label: 'Choose merchant credits',
       searchController: searchController,
       value: selectedMerchantPiiinks,
       lPadding: 15,
@@ -380,7 +411,7 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
               child: AutoSizeText(
                 "${e.merchant!.merchantName} (${toFixed2DecimalPlaces(e.balance!)} ${S.of(context).touristSavers})",
                 overflow: TextOverflow.ellipsis,
-                style: dopdownTextStyle,
+                style: _dropdownTextStyle(),
               ),
             ),
           ),
@@ -403,46 +434,50 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
   // receiver number with prefix
   preNumSection() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         FutureBuilder<LocationGetAllResModel?>(
             future: phonePrefix,
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return Container(
-                  height: 50,
-                  width: 80,
+                  height: 52.h,
+                  width: 82.w,
                   decoration: BoxDecoration(
-                    color: GlobalColors.paleGray,
-                    borderRadius: BorderRadius.circular(5.0),
+                    color: const Color(0xFFF7F9FC),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: _shareBorder),
                   ),
                 );
               } else {
                 return Container(
-                  height: 50,
-                  width: 80,
+                  height: 52.h,
+                  width: 82.w,
                   decoration: BoxDecoration(
-                    color: GlobalColors.paleGray,
-                    borderRadius: BorderRadius.circular(5.0),
+                    color: const Color(0xFFF7F9FC),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: _shareBorder),
                   ),
                   child: Center(
                     child: AutoSizeText(
                       phPrefix!,
-                      style:
-                          locationStyle.copyWith(fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                        color: _shareNavy,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'Sans',
+                      ),
                     ),
                   ),
                 );
               }
             }),
-        const SizedBox(width: 5),
-        SizedBox(
-          width: MediaQuery.of(context).size.width / 1.7,
+        SizedBox(width: 10.w),
+        Expanded(
           child: TextFormField(
             controller: receiverNumberController,
-            cursorColor: GlobalColors.appColor,
-            decoration: textInputDecoration1.copyWith(
-                hintText: S.of(context).mobileNumber),
+            cursorColor: _sharePrimaryBlue,
+            decoration: _shareInputDecoration(hintText: 'Enter mobile number'),
             keyboardType: TextInputType.number,
             inputFormatters: <TextInputFormatter>[
               FilteringTextInputFormatter.allow(RegExp(r'(^\d{0,15})'))
@@ -450,6 +485,200 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
           ),
         ),
       ],
+    );
+  }
+
+  TextStyle _headingStyle() {
+    return TextStyle(
+      color: _shareNavy,
+      fontSize: 17.sp,
+      fontWeight: FontWeight.w900,
+      fontFamily: 'Sans',
+      height: 1.25,
+    );
+  }
+
+  TextStyle _labelStyle() {
+    return TextStyle(
+      color: _shareNavy,
+      fontSize: 14.sp,
+      fontWeight: FontWeight.w900,
+      fontFamily: 'Sans',
+    );
+  }
+
+  TextStyle _helperStyle() {
+    return TextStyle(
+      color: _shareMuted,
+      fontSize: 13.sp,
+      fontWeight: FontWeight.w600,
+      fontFamily: 'Sans',
+      height: 1.35,
+    );
+  }
+
+  TextStyle _dropdownTextStyle() {
+    return TextStyle(
+      color: _shareNavy,
+      fontSize: 14.sp,
+      fontWeight: FontWeight.w800,
+      fontFamily: 'Sans',
+    );
+  }
+
+  InputDecoration _shareInputDecoration({required String hintText}) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: TextStyle(
+        color: _shareMuted,
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w700,
+        fontFamily: 'Sans',
+      ),
+      filled: true,
+      fillColor: const Color(0xFFF7F9FC),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: _shareBorder),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: _sharePrimaryBlue, width: 1.3),
+      ),
+    );
+  }
+}
+
+class _ShareCard extends StatelessWidget {
+  const _ShareCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(18.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22.r),
+        border: Border.all(color: _shareBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _SharePrimaryButton extends StatelessWidget {
+  const _SharePrimaryButton({
+    required this.text,
+    required this.onPressed,
+    this.isLoading = false,
+  });
+
+  final String text;
+  final VoidCallback onPressed;
+  final bool isLoading;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 52,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: isLoading ? null : onPressed,
+          child: Ink(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [_sharePrimaryBlue, _shareCtaCyan],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: _sharePrimaryBlue.withValues(alpha: 0.18),
+                  blurRadius: 18,
+                  offset: const Offset(0, 9),
+                ),
+              ],
+            ),
+            child: Center(
+              child: isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.2,
+                      ),
+                    )
+                  : AutoSizeText(
+                      text,
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w900,
+                        fontFamily: 'Sans',
+                      ),
+                    ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ShareSecondaryButton extends StatelessWidget {
+  const _ShareSecondaryButton({
+    required this.text,
+    required this.onPressed,
+  });
+
+  final String text;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 50,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: _sharePrimaryBlue,
+          side: const BorderSide(color: _shareBorder),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          backgroundColor: Colors.white,
+        ),
+        child: AutoSizeText(
+          text,
+          maxLines: 1,
+          style: TextStyle(
+            color: _sharePrimaryBlue,
+            fontSize: 15.sp,
+            fontWeight: FontWeight.w900,
+            fontFamily: 'Sans',
+          ),
+        ),
+      ),
     );
   }
 }
