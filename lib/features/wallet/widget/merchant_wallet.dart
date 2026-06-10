@@ -5,10 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/error.dart';
-import 'package:touristsaver/common/widgets/not_available.dart';
 import 'package:touristsaver/features/wallet/services/dio_wallet.dart';
 import 'package:touristsaver/models/response/merchant_get_my_wallet.dart';
 import 'package:touristsaver/generated/l10n.dart';
@@ -37,7 +35,6 @@ class _MerchantWalletScreenState extends State<MerchantWalletScreen> {
   bool isSearching = false;
   //For Sorting
   List<String> sort = ['Sort by Alphabetical', 'Sort by Discount Credits'];
-  List<String> walletTypeDropdownItems = ['Merchant', 'Group Merchant'];
   String selectedWalletType = 'Merchant';
   String sortBy = 'Sort by Alphabetical';
 
@@ -154,17 +151,9 @@ class _MerchantWalletScreenState extends State<MerchantWalletScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: _walletBackground,
-      appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: CustomAppBar(
-            text: 'Merchant Discount Credits',
-            icon: Icons.arrow_back_ios,
-            onPressed: () {
-              context.pop();
-            },
-          )),
+      appBar: _merchantCreditsAppBar(),
       body: isFirstLoading
-          ? const MerchantWalletLoader()
+          ? const _MerchantCreditsLoadingState()
           : err == 'Something went wrong'
               ? const Error1()
               : RefreshIndicator(
@@ -232,129 +221,73 @@ class _MerchantWalletScreenState extends State<MerchantWalletScreen> {
                           ),
                         ),
                       ),
-
-                      // --------------------------------------------------
-                      // ✅ FIXED RESPONSIVE DROPDOWNS START HERE
-                      // --------------------------------------------------
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(16.w, 6.h, 16.w, 2.h),
+                        child: AutoSizeText(
+                          'Merchant Discount Credits are merchant-specific credits you can use toward eligible future purchases with that merchant.',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: _walletMuted,
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Sans',
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
                       Padding(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10.0, vertical: 10.0),
-                        child: Row(
-                          children: [
-                            // LEFT DROPDOWN (Wallet Type)
-                            Expanded(
-                              child: _filterShell(
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton2(
-                                    isExpanded: true,
-                                    iconStyleData: IconStyleData(
-                                      icon: const Icon(
-                                        Icons.expand_more,
-                                        size: 20,
-                                        color: _walletPrimaryBlue,
-                                      ),
-                                      openMenuIcon: const Icon(
-                                        Icons.expand_less,
-                                        size: 20,
-                                        color: _walletPrimaryBlue,
-                                      ),
-                                    ),
-                                    items: walletTypeDropdownItems.map((e) {
-                                      return DropdownMenuItem(
-                                        value: e,
-                                        child: AutoSizeText(
-                                          e == 'Merchant'
-                                              ? S.of(context).merchant
-                                              : S.of(context).groupMerchant,
-                                          style: _dropdownTextStyle(),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      );
-                                    }).toList(),
-                                    onChanged: (newValue) {
-                                      setState(() {
-                                        selectedWalletType = newValue!;
-                                      });
-                                    },
-                                    value: selectedWalletType,
-                                    buttonStyleData: const ButtonStyleData(
-                                      padding:
-                                          EdgeInsets.symmetric(horizontal: 10),
-                                      height: 50,
-                                    ),
-                                    dropdownStyleData: const DropdownStyleData(
-                                      maxHeight: 400,
-                                    ),
-                                    menuItemStyleData: const MenuItemStyleData(
-                                      height: 40,
-                                    ),
-                                  ),
+                        child: _filterShell(
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton2(
+                              isExpanded: true,
+                              iconStyleData: const IconStyleData(
+                                icon: Icon(
+                                  Icons.expand_more,
+                                  size: 20,
+                                  color: _walletPrimaryBlue,
+                                ),
+                                openMenuIcon: Icon(
+                                  Icons.expand_less,
+                                  size: 20,
+                                  color: _walletPrimaryBlue,
                                 ),
                               ),
-                            ),
-
-                            SizedBox(width: 10.w),
-
-                            // RIGHT DROPDOWN (Sort By)
-                            Expanded(
-                              child: _filterShell(
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton2(
-                                    isExpanded: true,
-                                    iconStyleData: IconStyleData(
-                                      icon: const Icon(
-                                        Icons.expand_more,
-                                        size: 20,
-                                        color: _walletPrimaryBlue,
-                                      ),
-                                      openMenuIcon: const Icon(
-                                        Icons.expand_less,
-                                        size: 20,
-                                        color: _walletPrimaryBlue,
-                                      ),
-                                    ),
-                                    items: sort.map((e) {
-                                      return DropdownMenuItem(
-                                        value: e,
-                                        child: AutoSizeText(
-                                          e == 'Sort by Alphabetical'
-                                              ? S.of(context).sortByAlphabetical
-                                              : 'Sort by Discount Credits',
-                                          style: _dropdownTextStyle(),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      );
-                                    }).toList(),
-                                    onChanged: (newValue) {
-                                      setState(() {
-                                        sortBy = newValue.toString();
-                                      });
-                                    },
-                                    value: sortBy,
-                                    buttonStyleData: const ButtonStyleData(
-                                      padding:
-                                          EdgeInsets.symmetric(horizontal: 10),
-                                      height: 50,
-                                    ),
-                                    dropdownStyleData: const DropdownStyleData(
-                                      maxHeight: 250,
-                                    ),
-                                    menuItemStyleData: const MenuItemStyleData(
-                                      height: 40,
-                                    ),
+                              items: sort.map((e) {
+                                return DropdownMenuItem(
+                                  value: e,
+                                  child: AutoSizeText(
+                                    e == 'Sort by Alphabetical'
+                                        ? S.of(context).sortByAlphabetical
+                                        : 'Sort by Discount Credits',
+                                    style: _dropdownTextStyle(),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
+                                );
+                              }).toList(),
+                              onChanged: (newValue) {
+                                setState(() {
+                                  sortBy = newValue.toString();
+                                });
+                              },
+                              value: sortBy,
+                              buttonStyleData: const ButtonStyleData(
+                                padding: EdgeInsets.symmetric(horizontal: 10),
+                                height: 50,
+                              ),
+                              dropdownStyleData: const DropdownStyleData(
+                                maxHeight: 250,
+                              ),
+                              menuItemStyleData: const MenuItemStyleData(
+                                height: 40,
                               ),
                             ),
-                          ],
+                          ),
                         ),
                       ),
-                      // --------------------------------------------------
-                      // ✅ FIXED RESPONSIVE DROPDOWNS END HERE
-                      // --------------------------------------------------
-
                       searchController.text.isNotEmpty
                           ? searchedMerchantWalletList()
                           : merWallet.isEmpty &&
@@ -370,6 +303,53 @@ class _MerchantWalletScreenState extends State<MerchantWalletScreen> {
                     ],
                   ),
                 ),
+    );
+  }
+
+  PreferredSizeWidget _merchantCreditsAppBar() {
+    return AppBar(
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF6F6F6),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withValues(alpha: 0.2),
+              spreadRadius: 1,
+              blurRadius: 4,
+              offset: const Offset(2, 2),
+            ),
+          ],
+        ),
+      ),
+      elevation: 0,
+      centerTitle: true,
+      leadingWidth: 40,
+      titleSpacing: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios),
+        color: Colors.black.withValues(alpha: 0.8),
+        iconSize: 20,
+        onPressed: () {
+          context.pop();
+        },
+      ),
+      title: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 4),
+        child: AutoSizeText(
+          'Merchant Discount Credits',
+          maxLines: 1,
+          minFontSize: 14,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: _walletNavy,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      actions: const [
+        SizedBox(width: 40),
+      ],
     );
   }
 
@@ -655,14 +635,165 @@ class _MerchantWalletScreenState extends State<MerchantWalletScreen> {
 
   //nO Merchant wallet available
   noMerchantWallet() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
-      child: NotAvailable(
-        titleText:
-            '${selectedWalletType == 'Merchant' ? S.of(context).merchant : S.of(context).groupMerchant} Discount Credits ${S.of(context).notAvailable}',
-        bodyText:
+    return Expanded(
+      child: Center(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 24.h),
+          child: _MerchantCreditsEmptyState(
+            onPressed: () {
+              context.pop();
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MerchantCreditsLoadingState extends StatelessWidget {
+  const _MerchantCreditsLoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 34.w,
+            height: 34.w,
+            child: const CircularProgressIndicator(
+              color: _walletPrimaryBlue,
+              strokeWidth: 3,
+            ),
+          ),
+          SizedBox(height: 14.h),
+          Text(
+            'Loading merchant credits...',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: _walletMuted,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Sans',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MerchantCreditsEmptyState extends StatelessWidget {
+  const _MerchantCreditsEmptyState({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(22.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22.r),
+        border: Border.all(color: _walletBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 54.w,
+            height: 54.w,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  _walletPrimaryBlue.withValues(alpha: 0.10),
+                  _walletCtaCyan.withValues(alpha: 0.10),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(18.r),
+            ),
+            child: Icon(
+              Icons.savings_outlined,
+              color: _walletPrimaryBlue,
+              size: 28.sp,
+            ),
+          ),
+          SizedBox(height: 16.h),
+          Text(
+            'Merchant Discount Credits not available',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: _walletNavy,
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Sans',
+              height: 1.2,
+            ),
+          ),
+          SizedBox(height: 10.h),
+          Text(
             'Shop with participating merchants to earn or use merchant-specific Discount Credits.',
-        image: "assets/images/shopping-bag.png",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: _walletMuted,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Sans',
+              height: 1.4,
+            ),
+          ),
+          SizedBox(height: 20.h),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: onPressed,
+                child: Ink(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [_walletPrimaryBlue, _walletCtaCyan],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _walletPrimaryBlue.withValues(alpha: 0.18),
+                        blurRadius: 18,
+                        offset: const Offset(0, 9),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Ok',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w900,
+                        fontFamily: 'Sans',
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
