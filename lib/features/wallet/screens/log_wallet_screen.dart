@@ -695,7 +695,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
             ),
             _moreOptionTile(
               icon: Icons.swap_horiz_rounded,
-              label: 'Transfer Merchant Credits',
+              label: 'Share Merchant Credits',
               onTap: () {
                 context.pushNamed('transfer-piiinks').then((value) {
                   _refreshSavings();

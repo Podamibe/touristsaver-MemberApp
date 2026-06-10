@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
 import 'package:touristsaver/common/widgets/dropdown_button_widget.dart';
@@ -148,18 +147,7 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _shareBackground,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: CustomAppBar(
-          text: 'Share Discount Credits',
-          icon: Icons.arrow_back_ios,
-          textColor: _shareNavy,
-          reserveEmptyActions: false,
-          onPressed: () {
-            context.pop();
-          },
-        ),
-      ),
+      appBar: _shareCreditsAppBar(),
       body: BlocProvider(
         lazy: false,
         create: (context) =>
@@ -228,21 +216,7 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
                               style: _helperStyle(),
                             ),
                             SizedBox(height: 8.h),
-                            SizedBox(
-                              height: 52.h,
-                              child: TextFormField(
-                                controller: transferredPiiinksController,
-                                cursorColor: _sharePrimaryBlue,
-                                keyboardType: TextInputType.number,
-                                inputFormatters: <TextInputFormatter>[
-                                  FilteringTextInputFormatter.allow(
-                                      RegExp(r'(^\d*\.?\d{0,2})'))
-                                ],
-                                decoration: _shareInputDecoration(
-                                  hintText: 'Discount Credits amount',
-                                ),
-                              ),
-                            ),
+                            _discountCreditsAmountRow(),
                           ],
                         ),
                       ),
@@ -304,6 +278,53 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
           },
         ),
       ),
+    );
+  }
+
+  PreferredSizeWidget _shareCreditsAppBar() {
+    return AppBar(
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF6F6F6),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withValues(alpha: 0.2),
+              spreadRadius: 1,
+              blurRadius: 4,
+              offset: const Offset(2, 2),
+            ),
+          ],
+        ),
+      ),
+      elevation: 0,
+      centerTitle: true,
+      leadingWidth: 40,
+      titleSpacing: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios),
+        color: Colors.black.withValues(alpha: 0.8),
+        iconSize: 20,
+        onPressed: () {
+          context.pop();
+        },
+      ),
+      title: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 4),
+        child: AutoSizeText(
+          'Share Merchant Discount Credits',
+          maxLines: 1,
+          minFontSize: 13,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: _shareNavy,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      actions: const [
+        SizedBox(width: 40),
+      ],
     );
   }
 
@@ -392,6 +413,39 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
     );
   }
 
+  Widget _discountCreditsAmountRow() {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            'Discount Credits \$',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _labelStyle(),
+          ),
+        ),
+        SizedBox(width: 12.w),
+        SizedBox(
+          width: 112.w,
+          height: 52.h,
+          child: TextFormField(
+            controller: transferredPiiinksController,
+            cursorColor: _sharePrimaryBlue,
+            textAlign: TextAlign.right,
+            keyboardType: TextInputType.number,
+            inputFormatters: <TextInputFormatter>[
+              FilteringTextInputFormatter.allow(RegExp(r'(^\d*\.?\d{0,2})'))
+            ],
+            decoration: _shareInputDecoration(
+              hintText: '0.00',
+              alignHintRight: true,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   // select merchant piiink dropDown
   merchantPiiink(List<MerchantWallet> totalMerchantWallets) {
     return DropdownButtonWidget(
@@ -399,6 +453,18 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
       searchController: searchController,
       value: selectedMerchantPiiinks,
       lPadding: 15,
+      fillColor: const Color(0xFFF7F9FC),
+      borderColor: _shareBorder,
+      borderRadius: 16,
+      iconColor: _sharePrimaryBlue,
+      hintStyle: TextStyle(
+        color: _shareMuted,
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w700,
+        fontFamily: 'Sans',
+      ),
+      height: 52.h,
+      buttonHeight: 52.h,
       items: totalMerchantWallets.map((e) {
         return DropdownMenuItem(
           value:
@@ -526,9 +592,13 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
     );
   }
 
-  InputDecoration _shareInputDecoration({required String hintText}) {
+  InputDecoration _shareInputDecoration({
+    required String hintText,
+    bool alignHintRight = false,
+  }) {
     return InputDecoration(
       hintText: hintText,
+      hintTextDirection: alignHintRight ? TextDirection.rtl : null,
       hintStyle: TextStyle(
         color: _shareMuted,
         fontSize: 14.sp,
