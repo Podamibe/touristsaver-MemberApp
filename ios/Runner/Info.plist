@@ -74,8 +74,8 @@
 	</dict>
 	<key>branch_universal_link_domains</key>
 	<array>
-		<string>app.piiink.org</string>
-		<string>myapp.piiink.org</string>
+		<string>app.touristsaver.org</string>
+		<string>myapp.touristsaver.org</string>
 	</array>
 	<key>io.flutter.embedded_views_preview</key>
 	<true/>
