@@ -113,6 +113,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? infoMessage;
   bool isSlugLoading = false;
   bool isSlugLoading1 = false;
+  bool firstNameAutoCapitalisedOnce = false;
+  bool lastNameAutoCapitalisedOnce = false;
+  bool _isAutoCapitalisingName = false;
+  String _previousFirstNameText = '';
+  String _previousLastNameText = '';
 
   Future<StateGetAllResModel?>? stateList;
   Future<StateGetAllResModel?> getState() async {
@@ -223,6 +228,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void initState() {
+    firstNameController.addListener(_handleFirstNameChanged);
+    lastNameController.addListener(_handleLastNameChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       phonePrefixList = getPhonePrefix();
       // allCharityy = getAllCharityy();
@@ -274,6 +281,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void dispose() {
     _locationAllBloc.close();
+    firstNameController.removeListener(_handleFirstNameChanged);
+    lastNameController.removeListener(_handleLastNameChanged);
     countrySearchController.dispose();
     charitySearchController.dispose();
     stateSearchController.dispose();
@@ -1045,7 +1054,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() {
       isLoading = true;
     });
-    _normalizeRegistrationNames();
 
     if (selectedCountry == null) {
       GlobalSnackBar.valid(context, S.of(context).selectTheCountry);
@@ -1145,30 +1153,84 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  void _normalizeRegistrationNames() {
-    _normalizeNameController(firstNameController);
-    _normalizeNameController(lastNameController);
-  }
-
-  void _normalizeNameController(TextEditingController controller) {
-    final String normalized = _normalizeNameValue(controller.text);
-    if (controller.text == normalized) return;
-
-    controller.value = TextEditingValue(
-      text: normalized,
-      selection: TextSelection.collapsed(offset: normalized.length),
+  void _handleFirstNameChanged() {
+    _handleNameChanged(
+      controller: firstNameController,
+      previousText: _previousFirstNameText,
+      autoCapitalisedOnce: firstNameAutoCapitalisedOnce,
+      updateState: ({
+        required String previousText,
+        required bool autoCapitalisedOnce,
+      }) {
+        _previousFirstNameText = previousText;
+        firstNameAutoCapitalisedOnce = autoCapitalisedOnce;
+      },
     );
   }
 
-  String _normalizeNameValue(String value) {
-    final String trimmed = value.trim();
-    if (trimmed.isEmpty) return trimmed;
+  void _handleLastNameChanged() {
+    _handleNameChanged(
+      controller: lastNameController,
+      previousText: _previousLastNameText,
+      autoCapitalisedOnce: lastNameAutoCapitalisedOnce,
+      updateState: ({
+        required String previousText,
+        required bool autoCapitalisedOnce,
+      }) {
+        _previousLastNameText = previousText;
+        lastNameAutoCapitalisedOnce = autoCapitalisedOnce;
+      },
+    );
+  }
 
-    final bool isAllLowercase = trimmed == trimmed.toLowerCase();
-    final bool isAllUppercase = trimmed == trimmed.toUpperCase();
-    if (!isAllLowercase && !isAllUppercase) return trimmed;
+  void _handleNameChanged({
+    required TextEditingController controller,
+    required String previousText,
+    required bool autoCapitalisedOnce,
+    required void Function({
+      required String previousText,
+      required bool autoCapitalisedOnce,
+    }) updateState,
+  }) {
+    if (_isAutoCapitalisingName) {
+      updateState(
+        previousText: controller.text,
+        autoCapitalisedOnce: autoCapitalisedOnce,
+      );
+      return;
+    }
 
-    return trimmed[0].toUpperCase() + trimmed.substring(1).toLowerCase();
+    final String currentText = controller.text;
+    if (currentText.isEmpty) {
+      updateState(previousText: '', autoCapitalisedOnce: false);
+      return;
+    }
+
+    if (previousText.isEmpty &&
+        !autoCapitalisedOnce &&
+        currentText.length == 1 &&
+        currentText == currentText.toLowerCase() &&
+        currentText != currentText.toUpperCase()) {
+      final TextSelection selection = controller.selection;
+      final String capitalised = currentText.toUpperCase();
+      _isAutoCapitalisingName = true;
+      controller.value = TextEditingValue(
+        text: capitalised,
+        selection: selection.copyWith(
+          baseOffset: selection.baseOffset.clamp(0, capitalised.length),
+          extentOffset: selection.extentOffset.clamp(0, capitalised.length),
+        ),
+        composing: TextRange.empty,
+      );
+      _isAutoCapitalisingName = false;
+      updateState(previousText: capitalised, autoCapitalisedOnce: true);
+      return;
+    }
+
+    updateState(
+      previousText: currentText,
+      autoCapitalisedOnce: autoCapitalisedOnce,
+    );
   }
 
   @override
@@ -1245,12 +1307,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                 TextCapitalization.words,
                                             textInputAction:
                                                 TextInputAction.next,
-                                            onEditingComplete: () {
-                                              _normalizeNameController(
-                                                  firstNameController);
-                                              FocusScope.of(context)
-                                                  .nextFocus();
-                                            },
                                             decoration: _modernInputDecoration(
                                               hintText: S.of(context).firstName,
                                               icon: Icons.person_outline,
@@ -1266,12 +1322,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                 TextCapitalization.words,
                                             textInputAction:
                                                 TextInputAction.next,
-                                            onEditingComplete: () {
-                                              _normalizeNameController(
-                                                  lastNameController);
-                                              FocusScope.of(context)
-                                                  .nextFocus();
-                                            },
                                             decoration: _modernInputDecoration(
                                               hintText: S.of(context).lastName,
                                             ),
