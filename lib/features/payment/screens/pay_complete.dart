@@ -50,6 +50,8 @@ class _PaymentCompletedState extends State<PaymentCompleted> {
       double.tryParse(widget.discountedTransactionAmount) ?? 0;
   double get _merchantTsdcsEarned =>
       double.tryParse(widget.merchantRebateToMember) ?? 0;
+  bool get _canLeaveReview =>
+      widget.merchantId != null && widget.merchantName.trim().isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -133,6 +135,21 @@ class _PaymentCompletedState extends State<PaymentCompleted> {
                   );
                 },
               ),
+              if (_canLeaveReview) ...[
+                SizedBox(height: 12.h),
+                _SecondaryButton(
+                  label: 'Leave a Review',
+                  onTap: () {
+                    context.pushNamed(
+                      'feedback-screen',
+                      extra: {
+                        'merchantId': widget.merchantId.toString(),
+                        'merchantName': widget.merchantName,
+                      },
+                    );
+                  },
+                ),
+              ],
             ],
           ),
         ),
@@ -248,6 +265,49 @@ class _GradientButton extends StatelessWidget {
               label,
               style: TextStyle(
                 color: Colors.white,
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w900,
+                fontFamily: 'Sans',
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SecondaryButton extends StatelessWidget {
+  const _SecondaryButton({
+    required this.label,
+    required this.onTap,
+  });
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18.r),
+        onTap: onTap,
+        child: Ink(
+          height: 54.h,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18.r),
+            border: Border.all(
+              color: _PaymentCompletedState._primaryBlue,
+              width: 1.2,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: _PaymentCompletedState._primaryBlue,
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w900,
                 fontFamily: 'Sans',
