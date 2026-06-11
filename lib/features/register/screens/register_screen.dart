@@ -1045,6 +1045,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() {
       isLoading = true;
     });
+    _normalizeRegistrationNames();
 
     if (selectedCountry == null) {
       GlobalSnackBar.valid(context, S.of(context).selectTheCountry);
@@ -1144,6 +1145,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  void _normalizeRegistrationNames() {
+    _normalizeNameController(firstNameController);
+    _normalizeNameController(lastNameController);
+  }
+
+  void _normalizeNameController(TextEditingController controller) {
+    final String normalized = _normalizeNameValue(controller.text);
+    if (controller.text == normalized) return;
+
+    controller.value = TextEditingValue(
+      text: normalized,
+      selection: TextSelection.collapsed(offset: normalized.length),
+    );
+  }
+
+  String _normalizeNameValue(String value) {
+    final String trimmed = value.trim();
+    if (trimmed.isEmpty) return trimmed;
+
+    final bool isAllLowercase = trimmed == trimmed.toLowerCase();
+    final bool isAllUppercase = trimmed == trimmed.toUpperCase();
+    if (!isAllLowercase && !isAllUppercase) return trimmed;
+
+    return trimmed[0].toUpperCase() + trimmed.substring(1).toLowerCase();
+  }
+
   @override
   Widget build(BuildContext context) {
     // List arr = S.of(context).iAgreeWithTheTermsAndCondition.split(" ");
@@ -1216,6 +1243,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                             cursorColor: _primaryBlue,
                                             textCapitalization:
                                                 TextCapitalization.words,
+                                            textInputAction:
+                                                TextInputAction.next,
+                                            onEditingComplete: () {
+                                              _normalizeNameController(
+                                                  firstNameController);
+                                              FocusScope.of(context)
+                                                  .nextFocus();
+                                            },
                                             decoration: _modernInputDecoration(
                                               hintText: S.of(context).firstName,
                                               icon: Icons.person_outline,
@@ -1229,6 +1264,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                             cursorColor: _primaryBlue,
                                             textCapitalization:
                                                 TextCapitalization.words,
+                                            textInputAction:
+                                                TextInputAction.next,
+                                            onEditingComplete: () {
+                                              _normalizeNameController(
+                                                  lastNameController);
+                                              FocusScope.of(context)
+                                                  .nextFocus();
+                                            },
                                             decoration: _modernInputDecoration(
                                               hintText: S.of(context).lastName,
                                             ),
