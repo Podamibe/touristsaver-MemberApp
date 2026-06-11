@@ -25,17 +25,13 @@ import '../../../common/widgets/custom_button.dart';
 import '../../../common/widgets/custom_snackbar.dart';
 import '../../../constants/pref.dart';
 import '../../../constants/pref_key.dart';
-import '../../../models/error_res.dart';
 import '../../../models/request/rate_merchant_req.dart';
-import '../../../models/response/get_all_reviews_suggestion.dart';
 import '../../../models/response/get_free_piiinks_res_model.dart';
 import '../../../models/response/is_pay_enable_res.dart';
 import '../../connectivity/screens/connectivity.dart';
 import '../../merchant/services/dio_reviews.dart';
 import '../../payment/services/dio_payment.dart';
 import 'package:touristsaver/generated/l10n.dart';
-
-import 'package:dartz/dartz.dart' as dartz;
 
 class LogWalletScreen extends StatefulWidget {
   static const String routeName = '/wallet-screen';
@@ -51,6 +47,16 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
   static const Color _headingColor = Color(0xFF111C44);
   static const Color _bodyColor = Color(0xFF61708A);
   static const Color _borderColor = Color(0xFFE2E8F3);
+  static const List<String> _feedbackOptions = [
+    'Great Value',
+    'Friendly Staff',
+    'Excellent Service',
+    'Quality Products',
+    'Clean Venue',
+    'Would Visit Again',
+  ];
+  static const String _reviewSuccessMessage =
+      '⭐ Thank you for your review\n\nYour feedback helps other TouristSaver members discover great merchants.';
 
   bool? isTopUpEnabled;
   bool? canClaimFreePiiinks;
@@ -115,25 +121,12 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
   bool isSelected = false;
   final Map<int, Future<String?>> _merchantImageLoads = {};
 
-// For filling the edit form
-  Future<dartz.Either<ErrorResModel, GetAllReviewSuggestionResModel>?>?
-      getReviews;
-  Future<dartz.Either<ErrorResModel, GetAllReviewSuggestionResModel>?>?
-      getSuggestionReview() async {
-    dartz.Either<ErrorResModel, GetAllReviewSuggestionResModel>?
-        getSuggestionReviewRes = await DioReviews().getAllReviews();
-
-    return getSuggestionReviewRes!
-        .fold((l) => getSuggestionReviewRes, (r) => getSuggestionReviewRes);
-  }
-
   @override
   void initState() {
     getPaymentInfo();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       showReviewPopUp = await Pref().readBool(key: showReview) ?? false;
       merchantId = await Pref().readInt(key: addReviewMerchantID);
-      getReviews = getSuggestionReview();
       _rating = _initialRating;
       if (showReviewPopUp == true) {
         _showAddReviewDialog();
@@ -1047,69 +1040,43 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
   }
 
   Widget choiceChips(stateMode) {
-    return FutureBuilder<
-            dartz.Either<ErrorResModel, GetAllReviewSuggestionResModel>?>(
-        future: getReviews,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return const Error1();
-          } else if (!snapshot.hasData) {
-            return const Column(
-              children: [
-                CustomAllLoader(),
-              ],
-            );
-          } else {
-            return snapshot.data!.fold((l) {
-              return ErrorData(text: l.message!);
-            }, (r) {
-              var realData = r.data?.where((x) => x.isActive == true).toList();
-              return r.data!.isNotEmpty
-                  ? Expanded(
-                      child: SingleChildScrollView(
-                        child: Wrap(
-                          children: realData!.map((item) {
-                            // log("Chip item: ${item.reviewText}");
-                            return ChoiceChip(
-                              padding: EdgeInsets.all(10.sp),
-                              selectedColor: Colors.orange.shade300,
-                              label: Text(
-                                item.reviewText ?? '',
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              selected:
-                                  _defaultChoiceIndex == realData.indexOf(item),
-                              shape: RoundedRectangleBorder(
-                                  side: const BorderSide(
-                                      color: GlobalColors.appColor1),
-                                  borderRadius: BorderRadius.circular(15)),
-                              backgroundColor:
-                                  GlobalColors.appWhiteBackgroundColor,
-                              labelStyle: _defaultChoiceIndex ==
-                                          realData.indexOf(item) &&
-                                      isSelected
-                                  ? const TextStyle(
-                                      color:
-                                          GlobalColors.appWhiteBackgroundColor)
-                                  : const TextStyle(
-                                      color: GlobalColors.appColor1),
-                              onSelected: (bool selected) {
-                                stateMode(() {
-                                  _defaultChoiceIndex =
-                                      selected ? realData.indexOf(item) : 0;
-                                  isSelected = true;
-                                  selectedString = item.reviewText ?? '';
-                                });
-                              },
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    )
-                  : SizedBox();
+    return Wrap(
+      spacing: 8.w,
+      runSpacing: 8.h,
+      children: _feedbackOptions.map((item) {
+        final int index = _feedbackOptions.indexOf(item);
+        final bool selected = _defaultChoiceIndex == index && isSelected;
+        return ChoiceChip(
+          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
+          selectedColor: GlobalColors.appColor1,
+          label: Text(
+            item,
+            overflow: TextOverflow.ellipsis,
+          ),
+          selected: selected,
+          shape: RoundedRectangleBorder(
+            side: BorderSide(
+              color: selected ? GlobalColors.appColor1 : _borderColor,
+            ),
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          backgroundColor: const Color(0xFFF7FAFE),
+          labelStyle: TextStyle(
+            color: selected
+                ? GlobalColors.appWhiteBackgroundColor
+                : GlobalColors.appColor1,
+            fontWeight: FontWeight.w700,
+          ),
+          onSelected: (bool isChipSelected) {
+            stateMode(() {
+              _defaultChoiceIndex = isChipSelected ? index : null;
+              isSelected = isChipSelected;
+              selectedString = isChipSelected ? item : null;
             });
-          }
-        });
+          },
+        );
+      }).toList(),
+    );
   }
 
   Widget _ratingBar(int mode) {
@@ -1158,8 +1125,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
         return;
       }, (r) {
         if (r.status == 'Success') {
-          GlobalSnackBar.showSuccess(
-              context, S.of(context).reviewAddedSuccessfully);
+          GlobalSnackBar.showSuccess(context, _reviewSuccessMessage);
           setState(() {
             reviewLoading = false;
           });

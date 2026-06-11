@@ -5,16 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:touristsaver/common/widgets/custom_button.dart';
 import 'package:touristsaver/common/widgets/custom_container_box.dart';
 import 'package:touristsaver/constants/style.dart';
-import 'package:touristsaver/models/response/get_all_reviews_suggestion.dart';
 import '../../../common/widgets/custom_app_bar.dart';
-import '../../../common/widgets/custom_loader.dart';
 import '../../../common/widgets/custom_snackbar.dart';
-import '../../../common/widgets/error.dart';
 import '../../../constants/global_colors.dart';
-import '../../../models/error_res.dart';
 import '../../../models/request/rate_merchant_req.dart';
 import '../services/dio_reviews.dart';
-import 'package:dartz/dartz.dart' as dartz;
 import 'package:touristsaver/generated/l10n.dart';
 
 class FeedbackScreen extends StatefulWidget {
@@ -27,31 +22,29 @@ class FeedbackScreen extends StatefulWidget {
 }
 
 class _FeedbackScreenState extends State<FeedbackScreen> {
+  static const List<String> _feedbackOptions = [
+    'Great Value',
+    'Friendly Staff',
+    'Excellent Service',
+    'Quality Products',
+    'Clean Venue',
+    'Would Visit Again',
+  ];
+  static const String _reviewSuccessMessage =
+      '⭐ Thank you for your review\n\nYour feedback helps other TouristSaver members discover great merchants.';
+
   late double _rating;
   final int _ratingBarMode = 0;
   final double _initialRating = 0;
   IconData? _selectedIcon;
-  var _defaultChoiceIndex;
+  int? _defaultChoiceIndex;
   String? selectedString;
   bool reviewLoading = false;
   bool isSelected = false;
 
-// For filling the edit form
-  Future<dartz.Either<ErrorResModel, GetAllReviewSuggestionResModel>?>?
-      getReviews;
-  Future<dartz.Either<ErrorResModel, GetAllReviewSuggestionResModel>?>?
-      getSuggestionReview() async {
-    dartz.Either<ErrorResModel, GetAllReviewSuggestionResModel>?
-        getSuggestionReviewRes = await DioReviews().getAllReviews();
-
-    return getSuggestionReviewRes!
-        .fold((l) => getSuggestionReviewRes, (r) => getSuggestionReviewRes);
-  }
-
   @override
   void initState() {
     super.initState();
-    getReviews = getSuggestionReview();
     _rating = _initialRating;
   }
 
@@ -105,72 +98,44 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   }
 
   Widget _choiceChips() {
-    return FutureBuilder<
-            dartz.Either<ErrorResModel, GetAllReviewSuggestionResModel>?>(
-        future: getReviews,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return const Error1();
-          } else if (!snapshot.hasData) {
-            return const Column(
-              children: [
-                CustomAllLoader(),
-              ],
-            );
-          } else {
-            return snapshot.data!.fold((l) {
-              return ErrorData(text: l.message!);
-            }, (r) {
-              var realData = r.data?.where((x) => x.isActive == true).toList();
-              return r.data!.isNotEmpty
-                  ? Expanded(
-                      child: SingleChildScrollView(
-                        child: Wrap(
-                          children: realData!.map((item) {
-                            // log("Chip item: ${item.reviewText}");
-                            return Padding(
-                              padding: const EdgeInsets.all(5.0),
-                              child: ChoiceChip(
-                                padding: EdgeInsets.all(10),
-                                selectedColor: Colors.orange.shade300,
-                                label: Text(
-                                  item.reviewText ?? '',
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                selected: _defaultChoiceIndex ==
-                                    realData.indexOf(item),
-                                shape: RoundedRectangleBorder(
-                                    side: const BorderSide(
-                                        color: GlobalColors.appColor1),
-                                    borderRadius: BorderRadius.circular(15)),
-                                backgroundColor:
-                                    GlobalColors.appWhiteBackgroundColor,
-                                labelStyle: _defaultChoiceIndex ==
-                                            realData.indexOf(item) &&
-                                        isSelected
-                                    ? const TextStyle(
-                                        color: GlobalColors
-                                            .appWhiteBackgroundColor)
-                                    : const TextStyle(
-                                        color: GlobalColors.appColor1),
-                                onSelected: (bool selected) {
-                                  setState(() {
-                                    _defaultChoiceIndex =
-                                        selected ? realData.indexOf(item) : 0;
-                                    isSelected = true;
-                                    selectedString = item.reviewText ?? '';
-                                  });
-                                },
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    )
-                  : SizedBox();
+    return Wrap(
+      spacing: 8.w,
+      runSpacing: 8.h,
+      children: _feedbackOptions.map((item) {
+        final int index = _feedbackOptions.indexOf(item);
+        final bool selected = _defaultChoiceIndex == index && isSelected;
+        return ChoiceChip(
+          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
+          selectedColor: GlobalColors.appColor1,
+          label: Text(
+            item,
+            overflow: TextOverflow.ellipsis,
+          ),
+          selected: selected,
+          shape: RoundedRectangleBorder(
+            side: BorderSide(
+              color:
+                  selected ? GlobalColors.appColor1 : const Color(0xFFE2E8F3),
+            ),
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          backgroundColor: const Color(0xFFF7FAFE),
+          labelStyle: TextStyle(
+            color: selected
+                ? GlobalColors.appWhiteBackgroundColor
+                : GlobalColors.appColor1,
+            fontWeight: FontWeight.w700,
+          ),
+          onSelected: (bool isChipSelected) {
+            setState(() {
+              _defaultChoiceIndex = isChipSelected ? index : null;
+              isSelected = isChipSelected;
+              selectedString = isChipSelected ? item : null;
             });
-          }
-        });
+          },
+        );
+      }).toList(),
+    );
   }
 
   Widget _ratingBar(int mode) {
@@ -221,8 +186,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         return;
       }, (r) {
         if (r.status == 'Success') {
-          GlobalSnackBar.showSuccess(
-              context, S.of(context).reviewAddedSuccessfully);
+          GlobalSnackBar.showSuccess(context, _reviewSuccessMessage);
           setState(() {
             reviewLoading = false;
           });

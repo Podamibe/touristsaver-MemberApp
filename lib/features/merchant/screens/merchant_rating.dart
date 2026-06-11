@@ -27,6 +27,12 @@ class MerchantRating extends StatefulWidget {
 }
 
 class _MerchantRatingState extends State<MerchantRating> {
+  static const Color _primaryBlue = Color(0xFF0009FE);
+  static const Color _ctaCyan = Color(0xFF18C6FF);
+  static const Color _headingColor = Color(0xFF111C44);
+  static const Color _bodyColor = Color(0xFF61708A);
+  static const Color _borderColor = Color(0xFFE2E8F3);
+
   IconData? _selectedIcon;
   Future<dartz.Either<ErrorResModel, GetAllMerchantReviewsResModel>?>?
       getMerchantReviews;
@@ -104,6 +110,7 @@ class _MerchantRatingState extends State<MerchantRating> {
                             ),
                             Expanded(
                               child: ListView.builder(
+                                padding: EdgeInsets.only(bottom: 88.h),
                                 shrinkWrap: true,
                                 itemCount: r.data!.length,
                                 itemBuilder: (context, index) {
@@ -111,15 +118,18 @@ class _MerchantRatingState extends State<MerchantRating> {
                                   return Padding(
                                     padding: const EdgeInsets.all(5.0),
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 15.0, vertical: 5.0),
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 15.w, vertical: 12.h),
                                       decoration: BoxDecoration(
                                           color: Colors.white,
-                                          boxShadow: const [
+                                          border: Border.all(
+                                              color: _borderColor, width: 1),
+                                          boxShadow: [
                                             BoxShadow(
-                                                color: GlobalColors.gray,
-                                                blurRadius: 0.1,
-                                                offset: Offset(0.5, 0.5))
+                                                color: _primaryBlue.withValues(
+                                                    alpha: 0.06),
+                                                blurRadius: 16,
+                                                offset: const Offset(0, 8))
                                           ],
                                           borderRadius:
                                               BorderRadius.circular(7)),
@@ -133,13 +143,21 @@ class _MerchantRatingState extends State<MerchantRating> {
                                                       .spaceBetween,
                                               children: [
                                                 _ratingBar(data.rating!),
-                                                AutoSizeText(DateFormat.yMMMd()
-                                                    .format(data.createdAt!))
+                                                AutoSizeText(
+                                                  DateFormat.yMMMd()
+                                                      .format(data.createdAt!),
+                                                  style: TextStyle(
+                                                    color: _bodyColor,
+                                                    fontSize: 12.sp,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                )
                                               ],
                                             ),
+                                            SizedBox(height: 8.h),
                                             reviewerName(
                                                 data.member!.firstname!),
-                                            SizedBox(height: 5.h),
+                                            SizedBox(height: 6.h),
                                             data.review == '' ||
                                                     data.review == null
                                                 ? const SizedBox()
@@ -154,10 +172,7 @@ class _MerchantRatingState extends State<MerchantRating> {
                           ],
                         ),
                       )
-                    : SizedBox(
-                        child:
-                            Center(child: Text(S.of(context).noReviewsToShow)),
-                      );
+                    : _emptyReviewsState();
               });
             }
           }),
@@ -180,13 +195,82 @@ class _MerchantRatingState extends State<MerchantRating> {
     );
   }
 
+  Widget _emptyReviewsState() => Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 28.w),
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 28.h),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18.r),
+              border: Border.all(color: _borderColor),
+              boxShadow: [
+                BoxShadow(
+                  color: _primaryBlue.withValues(alpha: 0.06),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 58.w,
+                  height: 58.w,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [_primaryBlue, _ctaCyan],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(18.r),
+                  ),
+                  child: Icon(
+                    Icons.rate_review_outlined,
+                    color: Colors.white,
+                    size: 30.sp,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                Text(
+                  'Be the first to review this merchant',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: _headingColor,
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'Sans',
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  'Share your experience and help other TouristSaver members discover great places.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: _bodyColor,
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                    fontFamily: 'Sans',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
   Widget reviewerName(String text) => Column(
         children: [
           Text(
-            text,
-            style: const TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: 16.0,
+            _displayName(text),
+            style: TextStyle(
+              color: _headingColor,
+              fontWeight: FontWeight.w800,
+              fontSize: 16.sp,
+              fontFamily: 'Sans',
             ),
           ),
         ],
@@ -196,14 +280,25 @@ class _MerchantRatingState extends State<MerchantRating> {
         children: [
           Text(
             text,
-            style: const TextStyle(
-              fontWeight: FontWeight.w400,
-              color: GlobalColors.textColor,
-              fontSize: 14.0,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: _bodyColor,
+              fontSize: 14.sp,
+              height: 1.35,
+              fontFamily: 'Sans',
             ),
           ),
         ],
       );
+
+  String _displayName(String name) {
+    return name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .map((part) => part[0].toUpperCase() + part.substring(1))
+        .join(' ');
+  }
 
   Widget _ratingBar(String mode) {
     return RatingBar.builder(
