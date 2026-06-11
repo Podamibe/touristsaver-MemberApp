@@ -214,8 +214,8 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
               '${_formatCurrency(_memberSavings)} (${_numberFormat.format(_discountPercent)}%)'),
           _summaryRow('You pay merchant', _formatCurrency(_customerPays),
               emphasized: true),
-          _summaryRow('Discount Credits required',
-              _numberFormat.format(_memberSavings)),
+          _summaryRow(
+              'Discount Credits Required', _formatCurrency(_memberSavings)),
         ],
       ),
     );
@@ -257,10 +257,18 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
           SizedBox(height: 8.h),
           Text(subtitle, style: _bodyStyle()),
           SizedBox(height: 12.h),
-          _summaryRow('Available Discount Credits',
-              _numberFormat.format(availableValue)),
-          _summaryRow('Discount Credit balance after redeeming',
-              _numberFormat.format(remainingValue)),
+          _summaryRow(
+            walletType == 'merchantWallet'
+                ? 'Available Merchant Discount Credits'
+                : 'Available Discount Credits',
+            _formatCurrency(availableValue),
+          ),
+          _summaryRow(
+            walletType == 'merchantWallet'
+                ? 'Merchant Discount Credit Balance After Redeeming'
+                : 'Discount Credit Balance After Redeeming',
+            _formatCurrency(remainingValue),
+          ),
           SizedBox(height: 14.h),
           isLoading
               ? const Center(child: CustomAllLoader())
