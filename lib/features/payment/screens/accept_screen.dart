@@ -77,7 +77,7 @@ class _AcceptScreenState extends State<AcceptScreen> {
         child: CustomAppBar(
           text: 'Redeem Discount',
           icon: Icons.arrow_back_ios,
-          onPressed: () => context.pop(),
+          onPressed: _returnToPayEntrySafely,
         ),
       ),
       body: SafeArea(
@@ -125,7 +125,7 @@ class _AcceptScreenState extends State<AcceptScreen> {
                     ),
               SizedBox(height: 10.h),
               TextButton(
-                onPressed: isLoading ? null : () => context.pop(),
+                onPressed: isLoading ? null : _returnToPayEntrySafely,
                 child: Text(
                   'Try again',
                   style: TextStyle(
@@ -161,6 +161,8 @@ class _AcceptScreenState extends State<AcceptScreen> {
   }
 
   Future<void> _redeemDiscount() async {
+    if (isLoading) return;
+
     setState(() {
       isLoading = true;
     });
@@ -200,6 +202,18 @@ class _AcceptScreenState extends State<AcceptScreen> {
         isLoading = false;
       });
     }
+  }
+
+  void _returnToPayEntrySafely() {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+
+    context.goNamed(
+      'bottom-bar',
+      pathParameters: {'page': '2'},
+    );
   }
 
   Widget _sectionHeader(IconData icon, String text) {

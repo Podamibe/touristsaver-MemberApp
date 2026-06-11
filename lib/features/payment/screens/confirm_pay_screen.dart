@@ -127,7 +127,7 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
               ],
               SizedBox(height: 18.h),
               TextButton(
-                onPressed: () => context.pop(),
+                onPressed: _returnToPayEntrySafely,
                 child: Text(
                   'Try again / Cancel',
                   style: TextStyle(
@@ -326,6 +326,18 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
         isLoading = false;
       });
     }
+  }
+
+  void _returnToPayEntrySafely() {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+
+    context.goNamed(
+      'bottom-bar',
+      pathParameters: {'page': '2'},
+    );
   }
 
   Widget _sectionHeader(IconData icon, String text) {
