@@ -2,7 +2,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:touristsaver/common/models/merchant_summary.dart';
-import 'package:touristsaver/common/widgets/merchant_discount_badge.dart';
 import 'package:touristsaver/common/widgets/merchant_distance.dart';
 
 class MerchantResultTile extends StatelessWidget {
@@ -94,12 +93,6 @@ class MerchantResultTile extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Sans',
                       ),
-                    ),
-                  ],
-                  if (merchant.maxDiscount != null) ...[
-                    SizedBox(height: 8.h),
-                    MerchantDiscountBadge(
-                      discount: merchant.maxDiscount!.toString(),
                     ),
                   ],
                 ],

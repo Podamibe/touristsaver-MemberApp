@@ -11,7 +11,6 @@ import 'package:intl/intl.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/error.dart';
-import 'package:touristsaver/constants/global_colors.dart';
 import 'package:touristsaver/constants/style.dart';
 import 'package:touristsaver/features/connectivity/cubit/internet_cubit.dart';
 import 'package:touristsaver/features/details/services/dio_detail.dart';
@@ -25,17 +24,13 @@ import '../../../common/widgets/custom_button.dart';
 import '../../../common/widgets/custom_snackbar.dart';
 import '../../../constants/pref.dart';
 import '../../../constants/pref_key.dart';
-import '../../../models/error_res.dart';
 import '../../../models/request/rate_merchant_req.dart';
-import '../../../models/response/get_all_reviews_suggestion.dart';
 import '../../../models/response/get_free_piiinks_res_model.dart';
 import '../../../models/response/is_pay_enable_res.dart';
 import '../../connectivity/screens/connectivity.dart';
 import '../../merchant/services/dio_reviews.dart';
 import '../../payment/services/dio_payment.dart';
 import 'package:touristsaver/generated/l10n.dart';
-
-import 'package:dartz/dartz.dart' as dartz;
 
 class LogWalletScreen extends StatefulWidget {
   static const String routeName = '/wallet-screen';
@@ -51,6 +46,18 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
   static const Color _headingColor = Color(0xFF111C44);
   static const Color _bodyColor = Color(0xFF61708A);
   static const Color _borderColor = Color(0xFFE2E8F3);
+  static const Color _chipBackground = Color(0xFFF5F8FF);
+  static const Color _selectedChipBackground = Color(0xFFEAF7FF);
+  static const List<String> _feedbackOptions = [
+    'Great Value',
+    'Friendly Staff',
+    'Excellent Service',
+    'Quality Products',
+    'Clean Venue',
+    'Would Visit Again',
+  ];
+  static const String _reviewSuccessMessage =
+      '⭐ Thank you for your review\n\nYour feedback helps other TouristSaver members discover great merchants.';
 
   bool? isTopUpEnabled;
   bool? canClaimFreePiiinks;
@@ -115,25 +122,12 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
   bool isSelected = false;
   final Map<int, Future<String?>> _merchantImageLoads = {};
 
-// For filling the edit form
-  Future<dartz.Either<ErrorResModel, GetAllReviewSuggestionResModel>?>?
-      getReviews;
-  Future<dartz.Either<ErrorResModel, GetAllReviewSuggestionResModel>?>?
-      getSuggestionReview() async {
-    dartz.Either<ErrorResModel, GetAllReviewSuggestionResModel>?
-        getSuggestionReviewRes = await DioReviews().getAllReviews();
-
-    return getSuggestionReviewRes!
-        .fold((l) => getSuggestionReviewRes, (r) => getSuggestionReviewRes);
-  }
-
   @override
   void initState() {
     getPaymentInfo();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       showReviewPopUp = await Pref().readBool(key: showReview) ?? false;
       merchantId = await Pref().readInt(key: addReviewMerchantID);
-      getReviews = getSuggestionReview();
       _rating = _initialRating;
       if (showReviewPopUp == true) {
         _showAddReviewDialog();
@@ -166,7 +160,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
             behavior: const ScrollBehavior(),
             child: SingleChildScrollView(
               scrollDirection: Axis.vertical,
-              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
+              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 96.h),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   minHeight: MediaQuery.of(context).size.height -
@@ -396,8 +390,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
 
               final List<transaction.Datum> allSavings =
                   _latestSavings(snapshot.data!);
-              final List<transaction.Datum> transactions =
-                  allSavings.take(5).toList();
+              final List<transaction.Datum> transactions = allSavings;
               final double totalSavings = _totalMemberSavings(allSavings);
 
               return Column(
@@ -1048,69 +1041,44 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
   }
 
   Widget choiceChips(stateMode) {
-    return FutureBuilder<
-            dartz.Either<ErrorResModel, GetAllReviewSuggestionResModel>?>(
-        future: getReviews,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return const Error1();
-          } else if (!snapshot.hasData) {
-            return const Column(
-              children: [
-                CustomAllLoader(),
-              ],
-            );
-          } else {
-            return snapshot.data!.fold((l) {
-              return ErrorData(text: l.message!);
-            }, (r) {
-              var realData = r.data?.where((x) => x.isActive == true).toList();
-              return r.data!.isNotEmpty
-                  ? Expanded(
-                      child: SingleChildScrollView(
-                        child: Wrap(
-                          children: realData!.map((item) {
-                            // log("Chip item: ${item.reviewText}");
-                            return ChoiceChip(
-                              padding: EdgeInsets.all(10.sp),
-                              selectedColor: Colors.orange.shade300,
-                              label: Text(
-                                item.reviewText ?? '',
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              selected:
-                                  _defaultChoiceIndex == realData.indexOf(item),
-                              shape: RoundedRectangleBorder(
-                                  side: const BorderSide(
-                                      color: GlobalColors.appColor1),
-                                  borderRadius: BorderRadius.circular(15)),
-                              backgroundColor:
-                                  GlobalColors.appWhiteBackgroundColor,
-                              labelStyle: _defaultChoiceIndex ==
-                                          realData.indexOf(item) &&
-                                      isSelected
-                                  ? const TextStyle(
-                                      color:
-                                          GlobalColors.appWhiteBackgroundColor)
-                                  : const TextStyle(
-                                      color: GlobalColors.appColor1),
-                              onSelected: (bool selected) {
-                                stateMode(() {
-                                  _defaultChoiceIndex =
-                                      selected ? realData.indexOf(item) : 0;
-                                  isSelected = true;
-                                  selectedString = item.reviewText ?? '';
-                                });
-                              },
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    )
-                  : SizedBox();
+    return Wrap(
+      spacing: 8.w,
+      runSpacing: 8.h,
+      children: _feedbackOptions.map((item) {
+        final int index = _feedbackOptions.indexOf(item);
+        final bool selected = _defaultChoiceIndex == index && isSelected;
+        return ChoiceChip(
+          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
+          selectedColor: _selectedChipBackground,
+          showCheckmark: selected,
+          checkmarkColor: _primaryBlue,
+          label: Text(
+            item,
+            overflow: TextOverflow.ellipsis,
+          ),
+          selected: selected,
+          shape: RoundedRectangleBorder(
+            side: BorderSide(
+              color: selected ? _primaryBlue : _borderColor,
+              width: selected ? 1.4 : 1,
+            ),
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          backgroundColor: _chipBackground,
+          labelStyle: TextStyle(
+            color: selected ? _primaryBlue : _headingColor,
+            fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
+          ),
+          onSelected: (bool isChipSelected) {
+            stateMode(() {
+              _defaultChoiceIndex = isChipSelected ? index : null;
+              isSelected = isChipSelected;
+              selectedString = isChipSelected ? item : null;
             });
-          }
-        });
+          },
+        );
+      }).toList(),
+    );
   }
 
   Widget _ratingBar(int mode) {
@@ -1159,8 +1127,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
         return;
       }, (r) {
         if (r.status == 'Success') {
-          GlobalSnackBar.showSuccess(
-              context, S.of(context).reviewAddedSuccessfully);
+          _showReviewSuccess();
           setState(() {
             reviewLoading = false;
           });
@@ -1168,6 +1135,39 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
         }
       });
     }
+  }
+
+  void _showReviewSuccess() {
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          elevation: 0,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+          duration: const Duration(seconds: 4),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: _borderColor),
+          ),
+          content: Text(
+            _reviewSuccessMessage,
+            style: const TextStyle(
+              color: _headingColor,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              height: 1.3,
+              fontFamily: 'Sans',
+            ),
+          ),
+          action: SnackBarAction(
+            textColor: _primaryBlue,
+            label: S.of(context).ok,
+            onPressed: () {},
+          ),
+        ),
+      );
   }
 }
 

@@ -769,7 +769,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     onTap: () {
                       context.pushNamed(
                         'merchant-rating',
-                        extra: {'merchantId': widget.merchantID},
+                        extra: {
+                          'merchantId': widget.merchantID,
+                          'merchantName': merchantDetail.data?.merchantName,
+                        },
                       );
                     },
                   ),
