@@ -1214,6 +1214,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           child: TextFormField(
                                             controller: firstNameController,
                                             cursorColor: _primaryBlue,
+                                            textCapitalization:
+                                                TextCapitalization.words,
                                             decoration: _modernInputDecoration(
                                               hintText: S.of(context).firstName,
                                               icon: Icons.person_outline,
@@ -1225,6 +1227,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           child: TextFormField(
                                             controller: lastNameController,
                                             cursorColor: _primaryBlue,
+                                            textCapitalization:
+                                                TextCapitalization.words,
                                             decoration: _modernInputDecoration(
                                               hintText: S.of(context).lastName,
                                             ),
