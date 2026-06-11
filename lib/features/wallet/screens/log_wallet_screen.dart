@@ -166,7 +166,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
             behavior: const ScrollBehavior(),
             child: SingleChildScrollView(
               scrollDirection: Axis.vertical,
-              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
+              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 96.h),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   minHeight: MediaQuery.of(context).size.height -
@@ -396,8 +396,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
 
               final List<transaction.Datum> allSavings =
                   _latestSavings(snapshot.data!);
-              final List<transaction.Datum> transactions =
-                  allSavings.take(5).toList();
+              final List<transaction.Datum> transactions = allSavings;
               final double totalSavings = _totalMemberSavings(allSavings);
 
               return Column(
