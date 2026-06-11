@@ -11,7 +11,6 @@ import 'package:intl/intl.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/error.dart';
-import 'package:touristsaver/constants/global_colors.dart';
 import 'package:touristsaver/constants/style.dart';
 import 'package:touristsaver/features/connectivity/cubit/internet_cubit.dart';
 import 'package:touristsaver/features/details/services/dio_detail.dart';
@@ -47,6 +46,8 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
   static const Color _headingColor = Color(0xFF111C44);
   static const Color _bodyColor = Color(0xFF61708A);
   static const Color _borderColor = Color(0xFFE2E8F3);
+  static const Color _chipBackground = Color(0xFFF5F8FF);
+  static const Color _selectedChipBackground = Color(0xFFEAF7FF);
   static const List<String> _feedbackOptions = [
     'Great Value',
     'Friendly Staff',
@@ -1048,7 +1049,9 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
         final bool selected = _defaultChoiceIndex == index && isSelected;
         return ChoiceChip(
           padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
-          selectedColor: GlobalColors.appColor1,
+          selectedColor: _selectedChipBackground,
+          showCheckmark: selected,
+          checkmarkColor: _primaryBlue,
           label: Text(
             item,
             overflow: TextOverflow.ellipsis,
@@ -1056,16 +1059,15 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
           selected: selected,
           shape: RoundedRectangleBorder(
             side: BorderSide(
-              color: selected ? GlobalColors.appColor1 : _borderColor,
+              color: selected ? _primaryBlue : _borderColor,
+              width: selected ? 1.4 : 1,
             ),
             borderRadius: BorderRadius.circular(16.r),
           ),
-          backgroundColor: const Color(0xFFF7FAFE),
+          backgroundColor: _chipBackground,
           labelStyle: TextStyle(
-            color: selected
-                ? GlobalColors.appWhiteBackgroundColor
-                : GlobalColors.appColor1,
-            fontWeight: FontWeight.w700,
+            color: selected ? _primaryBlue : _headingColor,
+            fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
           ),
           onSelected: (bool isChipSelected) {
             stateMode(() {
@@ -1125,7 +1127,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
         return;
       }, (r) {
         if (r.status == 'Success') {
-          GlobalSnackBar.showSuccess(context, _reviewSuccessMessage);
+          _showReviewSuccess();
           setState(() {
             reviewLoading = false;
           });
@@ -1133,6 +1135,39 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
         }
       });
     }
+  }
+
+  void _showReviewSuccess() {
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          elevation: 0,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+          duration: const Duration(seconds: 4),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: _borderColor),
+          ),
+          content: Text(
+            _reviewSuccessMessage,
+            style: const TextStyle(
+              color: _headingColor,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              height: 1.3,
+              fontFamily: 'Sans',
+            ),
+          ),
+          action: SnackBarAction(
+            textColor: _primaryBlue,
+            label: S.of(context).ok,
+            onPressed: () {},
+          ),
+        ),
+      );
   }
 }
 

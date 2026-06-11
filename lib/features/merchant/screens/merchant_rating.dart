@@ -11,7 +11,6 @@ import 'package:touristsaver/features/merchant/services/dio_reviews.dart';
 import '../../../common/widgets/custom_app_bar.dart';
 import '../../../common/widgets/custom_loader.dart';
 import '../../../common/widgets/error.dart';
-import '../../../constants/global_colors.dart';
 import '../../../models/error_res.dart';
 import '../../../models/response/get_all_merchant_reviews.dart';
 import 'package:dartz/dartz.dart' as dartz;
@@ -19,8 +18,9 @@ import 'package:touristsaver/generated/l10n.dart';
 
 class MerchantRating extends StatefulWidget {
   static const String routeName = '/merchant-rating';
-  const MerchantRating({super.key, this.merchantId});
+  const MerchantRating({super.key, this.merchantId, this.merchantName});
   final String? merchantId;
+  final String? merchantName;
 
   @override
   State<MerchantRating> createState() => _MerchantRatingState();
@@ -180,8 +180,20 @@ class _MerchantRatingState extends State<MerchantRating> {
           ? null
           : Container(
               decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: GlobalColors.appColor1),
+                borderRadius: BorderRadius.circular(20),
+                gradient: const LinearGradient(
+                  colors: [_primaryBlue, _ctaCyan],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _primaryBlue.withValues(alpha: 0.18),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
               child: MaterialButton(
                   child: Text(
                     S.of(context).addReview,
@@ -189,8 +201,13 @@ class _MerchantRatingState extends State<MerchantRating> {
                     style: buttonText,
                   ),
                   onPressed: () {
-                    context.pushNamed('feedback-screen',
-                        extra: {'merchantId': widget.merchantId});
+                    context.pushNamed(
+                      'feedback-screen',
+                      extra: {
+                        'merchantId': widget.merchantId,
+                        'merchantName': widget.merchantName,
+                      },
+                    );
                   })),
     );
   }

@@ -175,6 +175,7 @@ final GoRouter goRouter = GoRouter(
           Map<String, dynamic> args = state.extra as Map<String, dynamic>;
           return MerchantRating(
             merchantId: args['merchantId'],
+            merchantName: args['merchantName'],
           );
         }),
     //Merchant Reviews Screen
@@ -185,6 +186,7 @@ final GoRouter goRouter = GoRouter(
           Map<String, dynamic> args = state.extra as Map<String, dynamic>;
           return FeedbackScreen(
             merchantId: args['merchantId'],
+            merchantName: args['merchantName'],
           );
         }),
     //Search Merchant Screen
