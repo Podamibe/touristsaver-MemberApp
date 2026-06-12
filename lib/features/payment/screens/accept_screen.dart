@@ -15,7 +15,7 @@ import 'package:touristsaver/models/response/sure_apply_piiink_res.dart';
 class AcceptScreen extends StatefulWidget {
   static const String routeName = '/accept-screen';
   final String merchantName;
-  final String logo;
+  final String? logo;
   final String totalAmount;
   final String qrCode;
   final String discountedTransactionAmount;

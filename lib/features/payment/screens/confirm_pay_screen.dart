@@ -26,7 +26,7 @@ class ConfimrPaymentScreen extends StatefulWidget {
   final String merchantDiscountPercentage;
   final String discountedTransactionAmount;
   final String totalPiiinkDiscount;
-  final String logo;
+  final String? logo;
   final String universalPiiinkOnHold;
   final String merchantPiiinkOnHold;
   final int? terminalUserId;
