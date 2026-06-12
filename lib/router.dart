@@ -176,6 +176,7 @@ final GoRouter goRouter = GoRouter(
           return MerchantRating(
             merchantId: args['merchantId'],
             merchantName: args['merchantName'],
+            merchantLogo: args['merchantLogo'],
           );
         }),
     //Merchant Reviews Screen
@@ -187,6 +188,7 @@ final GoRouter goRouter = GoRouter(
           return FeedbackScreen(
             merchantId: args['merchantId'],
             merchantName: args['merchantName'],
+            merchantLogo: args['merchantLogo'],
           );
         }),
     //Search Merchant Screen
@@ -515,6 +517,7 @@ final GoRouter goRouter = GoRouter(
             merchantRebateToMember: args['merchantRebateToMember'],
             merchantDiscountPercentage: args['merchantDiscountPercentage'],
             walletType: args['walletType'],
+            merchantLogo: args['merchantLogo'],
           );
         }),
     //Bottom Navigation Bar

@@ -327,6 +327,7 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
         'merchantRebateToMember': widget.merchantRebateToMember,
         'merchantDiscountPercentage': widget.merchantDiscountPercentage,
         'walletType': walletType,
+        'merchantLogo': widget.logo,
       });
     } else {
       GlobalSnackBar.showError(context, 'The discount could not be redeemed.');

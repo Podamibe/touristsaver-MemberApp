@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:touristsaver/common/widgets/custom_button.dart';
 import 'package:touristsaver/common/widgets/custom_container_box.dart';
 import 'package:touristsaver/constants/style.dart';
@@ -13,9 +14,15 @@ import 'package:touristsaver/generated/l10n.dart';
 
 class FeedbackScreen extends StatefulWidget {
   static const String routeName = '/feedback-screen';
-  const FeedbackScreen({super.key, this.merchantId, this.merchantName});
+  const FeedbackScreen({
+    super.key,
+    this.merchantId,
+    this.merchantName,
+    this.merchantLogo,
+  });
   final String? merchantId;
   final String? merchantName;
+  final String? merchantLogo;
 
   @override
   State<FeedbackScreen> createState() => _FeedbackScreenState();
@@ -29,13 +36,20 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   static const Color _borderColor = Color(0xFFE2E8F3);
   static const Color _chipBackground = Color(0xFFF5F8FF);
   static const Color _selectedChipBackground = Color(0xFFEAF7FF);
+  static const Color _selectedStarGold = Color(0xFFFFC83D);
+  static const Color _unselectedStarGrey = Color(0xFFC7CDD8);
   static const List<String> _feedbackOptions = [
-    'Great Value',
-    'Friendly Staff',
+    'Great Deals',
+    'Friendly and Helpful Staff',
     'Excellent Service',
-    'Quality Products',
+    'Amazing Products',
     'Clean Venue',
     'Would Visit Again',
+    'Long Wait Time',
+    'Service Could Improve',
+    'Difficult Parking',
+    'Venue Busy',
+    'Not As Expected',
   ];
   static const String _reviewSuccessMessage =
       '⭐ Thank you for your review\n\nYour feedback helps other TouristSaver members discover great merchants.';
@@ -44,10 +58,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   final int _ratingBarMode = 0;
   final double _initialRating = 0;
   IconData? _selectedIcon;
-  int? _defaultChoiceIndex;
-  String? selectedString;
+  final Set<String> _selectedFeedbackOptions = <String>{};
   bool reviewLoading = false;
-  bool isSelected = false;
 
   @override
   void initState() {
@@ -60,6 +72,11 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     final String merchantName = widget.merchantName?.trim().isNotEmpty == true
         ? widget.merchantName!.trim()
         : 'this merchant';
+    final String? merchantLogo =
+        widget.merchantLogo?.trim().isNotEmpty == true &&
+                widget.merchantLogo?.trim() != 'null'
+            ? widget.merchantLogo!.trim()
+            : null;
 
     return Scaffold(
       appBar: PreferredSize(
@@ -74,95 +91,134 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       ),
       body: CustomContainerBox(
         padVer: 25.h,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16.r),
-                border: Border.all(color: _borderColor),
-                boxShadow: [
-                  BoxShadow(
-                    color: _primaryBlue.withValues(alpha: 0.06),
-                    blurRadius: 16,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Reviewing',
-                    style: TextStyle(
-                      color: _bodyColor,
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'Sans',
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16.r),
+                  border: Border.all(color: _borderColor),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _primaryBlue.withValues(alpha: 0.06),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
                     ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    merchantName,
-                    style: TextStyle(
-                      color: _headingColor,
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.w900,
-                      fontFamily: 'Sans',
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    _merchantAvatar(merchantLogo),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Reviewing',
+                            style: TextStyle(
+                              color: _bodyColor,
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Sans',
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            merchantName,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: _headingColor,
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.w900,
+                              fontFamily: 'Sans',
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            SizedBox(height: 18.h),
-            Text(
-              S.of(context).rateThisMerchant,
-              style: topicStyle.copyWith(
-                color: _headingColor,
-                fontSize: 20.sp,
+              SizedBox(height: 18.h),
+              Text(
+                S.of(context).rateThisMerchant,
+                style: topicStyle.copyWith(
+                  color: _headingColor,
+                  fontSize: 20.sp,
+                ),
               ),
-            ),
-            SizedBox(height: 15.h),
-            Center(child: _ratingBar(_ratingBarMode)),
-            SizedBox(height: 15.h),
-            const Divider(thickness: 1, color: _borderColor),
-            SizedBox(height: 15.h),
-            Text(
-              S.of(context).yourFeedback,
-              style: topicStyle.copyWith(
-                color: _headingColor,
-                fontSize: 15.sp,
-                fontWeight: FontWeight.bold,
+              SizedBox(height: 15.h),
+              Center(child: _ratingBar(_ratingBarMode)),
+              SizedBox(height: 15.h),
+              const Divider(thickness: 1, color: _borderColor),
+              SizedBox(height: 15.h),
+              Text(
+                S.of(context).yourFeedback,
+                style: topicStyle.copyWith(
+                  color: _headingColor,
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            SizedBox(height: 5.h),
-            Text(
-              'Choose one that best describes your experience.',
-              style: TextStyle(
-                color: _bodyColor,
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Sans',
+              SizedBox(height: 5.h),
+              Text(
+                'Choose any that describe your experience.',
+                style: TextStyle(
+                  color: _bodyColor,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Sans',
+                ),
               ),
-            ),
-            SizedBox(height: 14.h),
-            _choiceChips(),
-            SizedBox(height: 22.h),
-            Center(
-                child: reviewLoading == true
-                    ? const CustomButtonWithCircular()
-                    : _GradientReviewButton(
-                        text: S.of(context).sendReview,
-                        onPressed: () {
-                          onSendReview();
-                        },
-                      )),
-          ],
+              SizedBox(height: 14.h),
+              _choiceChips(),
+              SizedBox(height: 22.h),
+              Center(
+                  child: reviewLoading == true
+                      ? const CustomButtonWithCircular()
+                      : _GradientReviewButton(
+                          text: S.of(context).sendReview,
+                          onPressed: () {
+                            onSendReview();
+                          },
+                        )),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _merchantAvatar(String? imageUrl) {
+    return Container(
+      width: 54.w,
+      height: 54.w,
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF7FF),
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: imageUrl == null
+          ? Icon(
+              Icons.storefront_outlined,
+              color: _primaryBlue,
+              size: 28.sp,
+            )
+          : CachedNetworkImage(
+              imageUrl: imageUrl,
+              fit: BoxFit.cover,
+              errorWidget: (context, url, error) => Icon(
+                Icons.storefront_outlined,
+                color: _primaryBlue,
+                size: 28.sp,
+              ),
+            ),
     );
   }
 
@@ -171,8 +227,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       spacing: 8.w,
       runSpacing: 8.h,
       children: _feedbackOptions.map((item) {
-        final int index = _feedbackOptions.indexOf(item);
-        final bool selected = _defaultChoiceIndex == index && isSelected;
+        final bool selected = _selectedFeedbackOptions.contains(item);
         return ChoiceChip(
           padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
           selectedColor: _selectedChipBackground,
@@ -197,9 +252,11 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           ),
           onSelected: (bool isChipSelected) {
             setState(() {
-              _defaultChoiceIndex = isChipSelected ? index : null;
-              isSelected = isChipSelected;
-              selectedString = isChipSelected ? item : null;
+              if (isChipSelected) {
+                _selectedFeedbackOptions.add(item);
+              } else {
+                _selectedFeedbackOptions.remove(item);
+              }
             });
           },
         );
@@ -213,13 +270,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       minRating: 0,
       direction: Axis.horizontal,
       allowHalfRating: true,
-      unratedColor: Colors.orange.withAlpha(50),
+      unratedColor: _unselectedStarGrey,
       itemCount: 5,
       itemSize: 30.0,
       itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
       itemBuilder: (context, _) => Icon(
-        _selectedIcon ?? Icons.star,
-        color: Colors.orange,
+        _selectedIcon ?? Icons.star_rounded,
+        color: _selectedStarGold,
       ),
       onRatingUpdate: (rating) {
         setState(() {
@@ -235,7 +292,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       reviewLoading = true;
     });
 
-    if (_rating == 0.0 && selectedString == null) {
+    if (_rating == 0.0 && _selectedFeedbackOptions.isEmpty) {
       GlobalSnackBar.valid(
           context, S.of(context).pleaseRateThisMerchantOrProvideFeedback);
       setState(() {
@@ -246,7 +303,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           rateMerchantReqModel: RateMerchantReqModel(
               rating: _rating,
               merchantId: int.parse(widget.merchantId!),
-              review: selectedString));
+              review: _selectedFeedbackOptions.isEmpty
+                  ? null
+                  : _selectedFeedbackOptions.join(', ')));
       rez?.fold((l) {
         GlobalSnackBar.showError(context, l.message!);
         setState(() {

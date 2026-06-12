@@ -772,6 +772,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
                         extra: {
                           'merchantId': widget.merchantID,
                           'merchantName': merchantDetail.data?.merchantName,
+                          'merchantLogo': merchantDetail
+                                  .data?.merchantImageInfo?.logoUrl ??
+                              merchantDetail.data?.merchantImageInfo?.slider1 ??
+                              merchantDetail.data?.merchantImageInfo?.slider2,
                         },
                       );
                     },

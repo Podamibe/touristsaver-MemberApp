@@ -15,6 +15,7 @@ class PaymentCompleted extends StatefulWidget {
   final String merchantDiscountPercentage;
   final String walletType;
   final int? merchantId;
+  final String? merchantLogo;
 
   const PaymentCompleted({
     super.key,
@@ -26,6 +27,7 @@ class PaymentCompleted extends StatefulWidget {
     required this.merchantDiscountPercentage,
     required this.walletType,
     required this.merchantId,
+    this.merchantLogo,
   });
 
   @override
@@ -144,6 +146,7 @@ class _PaymentCompletedState extends State<PaymentCompleted> {
                       extra: {
                         'merchantId': widget.merchantId.toString(),
                         'merchantName': widget.merchantName,
+                        'merchantLogo': widget.merchantLogo,
                       },
                     );
                   },

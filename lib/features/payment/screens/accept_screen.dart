@@ -195,6 +195,7 @@ class _AcceptScreenState extends State<AcceptScreen> {
         'merchantRebateToMember': widget.merchantRebateToMember,
         'merchantDiscountPercentage': widget.merchantDiscountPercentage,
         'walletType': widget.walletType,
+        'merchantLogo': widget.logo,
       });
     } else {
       GlobalSnackBar.showError(context, 'The discount could not be redeemed.');

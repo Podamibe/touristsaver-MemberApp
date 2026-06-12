@@ -18,9 +18,15 @@ import 'package:touristsaver/generated/l10n.dart';
 
 class MerchantRating extends StatefulWidget {
   static const String routeName = '/merchant-rating';
-  const MerchantRating({super.key, this.merchantId, this.merchantName});
+  const MerchantRating({
+    super.key,
+    this.merchantId,
+    this.merchantName,
+    this.merchantLogo,
+  });
   final String? merchantId;
   final String? merchantName;
+  final String? merchantLogo;
 
   @override
   State<MerchantRating> createState() => _MerchantRatingState();
@@ -206,6 +212,7 @@ class _MerchantRatingState extends State<MerchantRating> {
                       extra: {
                         'merchantId': widget.merchantId,
                         'merchantName': widget.merchantName,
+                        'merchantLogo': widget.merchantLogo,
                       },
                     );
                   })),
