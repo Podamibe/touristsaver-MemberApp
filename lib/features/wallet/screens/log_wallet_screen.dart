@@ -346,41 +346,20 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: _sectionHeader(
-                  icon: Icons.history_outlined,
-                  title: 'Recent savings',
-                ),
-              ),
-              TextButton(
-                onPressed: _openTransactionHistory,
-                style: TextButton.styleFrom(
-                  foregroundColor: _primaryBlue,
-                  padding: EdgeInsets.symmetric(horizontal: 8.w),
-                ),
-                child: Text(
-                  'Transaction History',
-                  style: TextStyle(
-                    color: _primaryBlue,
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w800,
-                    fontFamily: 'Sans',
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 10.h),
           FutureBuilder<transaction.TransactionResModel?>(
             future: recentSavingsLoad,
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
-                return TouristSaverLoadingView(
-                  height: 80.h,
-                  spinnerSize: 24,
-                  strokeWidth: 2,
+                return Column(
+                  children: [
+                    _recentSavingsHeader(),
+                    SizedBox(height: 10.h),
+                    TouristSaverLoadingView(
+                      height: 80.h,
+                      spinnerSize: 24,
+                      strokeWidth: 2,
+                    ),
+                  ],
                 );
               }
 
@@ -392,24 +371,28 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _recentSavingsHeader(transactionCount: transactions.length),
+                  SizedBox(height: 10.h),
                   _totalMemberSavingsBlock(totalSavings),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 12.h),
                   if (transactions.isEmpty)
                     Text(
                       'Your recent savings will appear here after you use TouristSaver with participating merchants.',
                       style: _bodyTextStyle(),
                     )
                   else
-                    Column(
-                      children: [
-                        for (int index = 0;
-                            index < transactions.length;
-                            index++) ...[
-                          _recentSavingTile(transactions[index]),
-                          if (index != transactions.length - 1)
-                            SizedBox(height: 10.h),
-                        ],
-                      ],
+                    SizedBox(
+                      height: _recentSavingsListHeight(transactions.length),
+                      child: ListView.separated(
+                        padding: EdgeInsets.zero,
+                        physics: const ClampingScrollPhysics(),
+                        itemCount: transactions.length,
+                        separatorBuilder: (context, index) =>
+                            SizedBox(height: 6.h),
+                        itemBuilder: (context, index) {
+                          return _recentSavingTile(transactions[index]);
+                        },
+                      ),
                     ),
                 ],
               );
@@ -417,6 +400,69 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _recentSavingsHeader({int? transactionCount}) {
+    final String? countLabel = transactionCount == null
+        ? null
+        : '$transactionCount ${transactionCount == 1 ? 'transaction' : 'transactions'}';
+
+    return Row(
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              Icon(Icons.history_outlined, color: _primaryBlue, size: 22.sp),
+              SizedBox(width: 8.w),
+              Flexible(
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 6.w,
+                  runSpacing: 2.h,
+                  children: [
+                    Text(
+                      'Recent savings',
+                      style: TextStyle(
+                        color: _headingColor,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w900,
+                        fontFamily: 'Sans',
+                      ),
+                    ),
+                    if (countLabel != null)
+                      Text(
+                        '· $countLabel',
+                        style: TextStyle(
+                          color: _bodyColor,
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Sans',
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        TextButton(
+          onPressed: _openTransactionHistory,
+          style: TextButton.styleFrom(
+            foregroundColor: _primaryBlue,
+            padding: EdgeInsets.symmetric(horizontal: 8.w),
+          ),
+          child: Text(
+            'Transaction History',
+            style: TextStyle(
+              color: _primaryBlue,
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w800,
+              fontFamily: 'Sans',
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -431,16 +477,16 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
     final String? merchantImageUrl = _merchantImageUrl(transaction);
 
     return Container(
-      padding: EdgeInsets.all(12.w),
+      padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 7.h),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: _borderColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -450,7 +496,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
             merchantImageUrl,
             merchantId: transaction.merchantId,
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: 9.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -461,13 +507,13 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: _headingColor,
-                    fontSize: 15.sp,
+                    fontSize: 13.5.sp,
                     fontWeight: FontWeight.w800,
                     fontFamily: 'Sans',
                   ),
                 ),
                 if (date.isNotEmpty) ...[
-                  SizedBox(height: 5.h),
+                  SizedBox(height: 2.h),
                   Text(
                     date,
                     maxLines: 1,
@@ -478,9 +524,9 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
               ],
             ),
           ),
-          SizedBox(width: 8.w),
+          SizedBox(width: 7.w),
           ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: 104.w),
+            constraints: BoxConstraints(maxWidth: 94.w),
             child: Text(
               'Saved $discount',
               maxLines: 2,
@@ -488,7 +534,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
               textAlign: TextAlign.right,
               style: TextStyle(
                 color: _primaryBlue,
-                fontSize: 13.sp,
+                fontSize: 12.25.sp,
                 fontWeight: FontWeight.w900,
                 fontFamily: 'Sans',
               ),
@@ -497,6 +543,14 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
         ],
       ),
     );
+  }
+
+  double _recentSavingsListHeight(int itemCount) {
+    final int visibleItems = itemCount < 6 ? itemCount : 6;
+    final double rowHeight = 62.h;
+    final double separatorHeight = 6.h;
+    return (visibleItems * rowHeight) +
+        ((visibleItems - 1).clamp(0, 5) * separatorHeight);
   }
 
   Widget _recentSavingMerchantImage(String? imageUrl, {int? merchantId}) {
@@ -526,8 +580,8 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(14.r),
       child: Container(
-        width: 66.w,
-        height: 66.w,
+        width: 50.w,
+        height: 50.w,
         color: const Color(0xFFF2F6FC),
         child: isLoading
             ? _recentSavingImageLoader()

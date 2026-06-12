@@ -16,6 +16,7 @@ import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
 import 'package:touristsaver/common/widgets/error.dart';
 import 'package:touristsaver/common/widgets/no_merchant.dart';
+import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
 import 'package:touristsaver/constants/decimal_remove.dart';
 import 'package:touristsaver/constants/global_colors.dart';
 import 'package:touristsaver/constants/style.dart';
@@ -169,16 +170,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   },
                 ),
               ),
-              body: const SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // SizedBox(height: 10),
-                    // CarouselWidget(imageList: []),
-                    // SizedBox(height: 20),
-                    Center(child: CustomAllLoader()),
-                  ],
-                ),
-              ),
+              body: const TouristSaverLoadingView(),
             );
           } else if (state is MerchantDetailLoadedState) {
             MerchantDetailResModel merchantDetail = state.merchantDetail;
