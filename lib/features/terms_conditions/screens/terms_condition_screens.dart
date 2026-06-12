@@ -5,8 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:go_router/go_router.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
-import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/error.dart';
+import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
 import 'package:touristsaver/features/terms_conditions/bloc/agreement_blocs.dart';
 import 'package:touristsaver/features/terms_conditions/bloc/agreement_events.dart';
 import 'package:touristsaver/features/terms_conditions/bloc/agreement_states.dart';
@@ -131,7 +131,7 @@ class _TermsConditionScreenState extends State<TermsConditionScreen> {
                     builder: (context, state) {
                       //Loading State
                       if (state is AgreementLoadingState) {
-                        return const CustomAllLoader();
+                        return const TouristSaverLoadingView();
                       }
                       // Loaded State
                       else if (state is AgreementLoadedState) {

@@ -8,10 +8,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:touristsaver/common/services/dio_common.dart';
 import 'package:touristsaver/common/services/image_service.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
-import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
 import 'package:touristsaver/common/widgets/error.dart' as error_widget;
 import 'package:touristsaver/common/widgets/not_available.dart';
+import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
 import 'package:touristsaver/features/connectivity/cubit/internet_cubit.dart';
 import 'package:touristsaver/features/recommend/services/dio_recommend.dart';
 import 'package:touristsaver/generated/l10n.dart';
@@ -121,7 +121,7 @@ class _RecommendScreenState extends State<RecommendScreen> {
                 if (snapshot.hasError) {
                   return const error_widget.Error();
                 } else if (!snapshot.hasData) {
-                  return const CustomAllLoader();
+                  return const TouristSaverLoadingView();
                 }
 
                 if (snapshot.data?.data?.hideReferredMerchantInApp != false) {

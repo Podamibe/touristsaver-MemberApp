@@ -12,9 +12,9 @@ import 'package:touristsaver/constants/initialize_stripe.dart';
 import 'package:touristsaver/constants/read_sms_otp.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/common/widgets/custom_button.dart';
-import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
 import 'package:touristsaver/common/widgets/error.dart';
+import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
 import 'package:touristsaver/constants/global_colors.dart';
 import 'package:touristsaver/constants/pref.dart';
 import 'package:touristsaver/constants/pref_key.dart';
@@ -146,12 +146,7 @@ class _ChangeCountryState extends State<ChangeCountry> {
             builder: (context, locationState) {
           // Loading State
           if (locationState is LocationAllLoadingState) {
-            return const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CustomAllLoader(),
-              ],
-            );
+            return const TouristSaverLoadingView();
           }
           // Loaded State
           else if (locationState is LocationAllLoadedState) {
@@ -168,7 +163,7 @@ class _ChangeCountryState extends State<ChangeCountry> {
                     padding: const EdgeInsets.fromLTRB(16, 22, 16, 18),
                     child: Container(
                       width: MediaQuery.of(context).size.width,
-                      padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
+                      padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
                       decoration: BoxDecoration(
                           color: GlobalColors.appWhiteBackgroundColor,
                           borderRadius: BorderRadius.circular(22.0),
@@ -198,15 +193,25 @@ class _ChangeCountryState extends State<ChangeCountry> {
                               shape: BoxShape.circle,
                             ),
                             child: Center(
-                              child: Image.asset(
-                                "assets/images/mail.png",
-                                height: 78.h,
-                                width: 78.h,
-                                fit: BoxFit.contain,
+                              child: ShaderMask(
+                                shaderCallback: (bounds) =>
+                                    const LinearGradient(
+                                  colors: [
+                                    _changeCountryBrandBlue,
+                                    _changeCountryCtaCyan,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ).createShader(bounds),
+                                child: Icon(
+                                  Icons.mark_email_unread_rounded,
+                                  size: 38.sp,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 16),
                           AutoSizeText(
                             'Verify Email',
                             textAlign: TextAlign.center,
@@ -217,7 +222,7 @@ class _ChangeCountryState extends State<ChangeCountry> {
                               height: 1.15,
                             ),
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 8),
                           AutoSizeText(
                             'Please verify your email before changing your country settings.',
                             textAlign: TextAlign.center,
@@ -227,17 +232,18 @@ class _ChangeCountryState extends State<ChangeCountry> {
                               height: 1.35,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 7),
                           AutoSizeText(
                             'Verification helps protect your account and access across regions.',
                             textAlign: TextAlign.center,
                             style: textStyle15h.copyWith(
-                              color: GlobalColors.gray.withValues(alpha: 0.72),
-                              fontSize: 13.sp,
-                              height: 1.35,
+                              color: _changeCountryNavy.withValues(alpha: 0.66),
+                              fontSize: 14.5.sp,
+                              fontWeight: FontWeight.w600,
+                              height: 1.38,
                             ),
                           ),
-                          const SizedBox(height: 22),
+                          const SizedBox(height: 20),
                           _VerifyEmailPrimaryButton(
                             text: 'Verify Now',
                             isLoading: isLoading,
@@ -291,12 +297,7 @@ class _ChangeCountryState extends State<ChangeCountry> {
                 if (snapshot.hasError) {
                   return const Error1();
                 } else if (!snapshot.hasData) {
-                  return const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CustomAllLoader(),
-                    ],
-                  );
+                  return const TouristSaverLoadingView();
                 } else {
                   return Container(
                     margin: const EdgeInsets.all(10.0),

@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
 import 'package:touristsaver/common/widgets/error.dart';
+import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
 import 'package:touristsaver/features/profile/services/dio_membership.dart';
 
 import 'package:qr_flutter/qr_flutter.dart';
@@ -74,11 +74,7 @@ class _MemberReferralScreenState extends State<MemberReferralScreen> {
           builder: (context, state) {
             //loading state
             if (state is UserProfileLoadingState) {
-              return const Column(
-                children: [
-                  CustomAllLoader(),
-                ],
-              );
+              return const TouristSaverLoadingView();
             } else if (state is UserProfileLoadedState) {
               UserProfileResModel userProfile = state.userProfile;
               return userProfile.data!.results!.uniqueMemberCode == null
