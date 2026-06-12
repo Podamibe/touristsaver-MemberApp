@@ -1,9 +1,11 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:touristsaver/common/app_variables.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
+import 'package:touristsaver/constants/helper.dart';
 
 class PaymentCompleted extends StatefulWidget {
   static const String routeName = "/payment-complete";
@@ -72,34 +74,9 @@ class _PaymentCompletedState extends State<PaymentCompleted> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(
-                      child: Container(
-                        width: 72.w,
-                        height: 72.w,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEFF7FF),
-                          borderRadius: BorderRadius.circular(24.r),
-                        ),
-                        child: Icon(
-                          Icons.verified_rounded,
-                          color: _primaryBlue,
-                          size: 40.sp,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 18.h),
-                    Center(
-                      child: Text(
-                        'Discount Approved',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: _headingColor,
-                          fontSize: 25.sp,
-                          fontWeight: FontWeight.w900,
-                          fontFamily: 'Sans',
-                        ),
-                      ),
-                    ),
+                    _merchantApprovalHeader(),
+                    SizedBox(height: 16.h),
+                    _approvalTitle(),
                     SizedBox(height: 8.h),
                     Center(
                       child: Text(
@@ -109,7 +86,6 @@ class _PaymentCompletedState extends State<PaymentCompleted> {
                       ),
                     ),
                     SizedBox(height: 22.h),
-                    _summaryRow('Merchant', widget.merchantName),
                     _summaryRow('Bill amount', _formatCurrency(_billAmount)),
                     _summaryRow(
                         'Member savings', _formatCurrency(_memberSavings)),
@@ -159,6 +135,82 @@ class _PaymentCompletedState extends State<PaymentCompleted> {
     );
   }
 
+  Widget _merchantApprovalHeader() {
+    return Row(
+      children: [
+        _merchantLogo(),
+        SizedBox(width: 14.w),
+        Expanded(
+          child: Text(
+            widget.merchantName,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: _headingColor,
+              fontSize: 22.sp,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Sans',
+            ),
+          ),
+        ),
+        SizedBox(width: 10.w),
+        Container(
+          width: 42.w,
+          height: 42.w,
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF7FF),
+            borderRadius: BorderRadius.circular(15.r),
+          ),
+          child: Icon(
+            Icons.verified_rounded,
+            color: _primaryBlue,
+            size: 26.sp,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _approvalTitle() {
+    return Center(
+      child: Text(
+        'Discount Approved',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: _headingColor,
+          fontSize: 24.sp,
+          fontWeight: FontWeight.w900,
+          fontFamily: 'Sans',
+        ),
+      ),
+    );
+  }
+
+  Widget _merchantLogo() {
+    final String? logoUrl = _normalizedMerchantLogo(widget.merchantLogo);
+
+    return Container(
+      width: 62.w,
+      height: 62.w,
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF7FF),
+        borderRadius: BorderRadius.circular(18.r),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: logoUrl != null
+          ? CachedNetworkImage(
+              imageUrl: logoUrl,
+              fit: BoxFit.cover,
+              errorWidget: (context, url, error) => _fallbackLogo(),
+            )
+          : _fallbackLogo(),
+    );
+  }
+
+  Widget _fallbackLogo() {
+    return Icon(Icons.storefront_outlined, color: _primaryBlue, size: 31.sp);
+  }
+
   Widget _summaryRow(String label, String value, {bool emphasized = false}) {
     return Padding(
       padding: EdgeInsets.only(bottom: 12.h),
@@ -195,6 +247,22 @@ class _PaymentCompletedState extends State<PaymentCompleted> {
 
   String _formatCurrency(num value) {
     return _currencyFormat.format(value);
+  }
+
+  String? _normalizedMerchantLogo(String? imageUrl) {
+    final String? trimmed = imageUrl?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    final String lower = trimmed.toLowerCase();
+    if (lower == 'null' || lower == 'undefined') return null;
+    if (trimmed.startsWith('//')) return 'https:$trimmed';
+
+    final Uri? parsed = Uri.tryParse(trimmed);
+    if (parsed == null) return trimmed;
+    if (parsed.hasScheme) return trimmed;
+
+    final Uri apiHost = Uri.parse(baseUrl);
+    final String imagePath = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+    return apiHost.replace(path: imagePath, query: '', fragment: '').toString();
   }
 }
 

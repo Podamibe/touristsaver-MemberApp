@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +7,7 @@ import 'package:touristsaver/common/app_variables.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
 import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
+import 'package:touristsaver/constants/helper.dart';
 import 'package:touristsaver/features/payment/services/dio_payment.dart';
 import 'package:touristsaver/models/request/sure_apply_piiink_req.dart';
 import 'package:touristsaver/models/response/sure_apply_piiink_res.dart';
@@ -90,6 +92,8 @@ class _AcceptScreenState extends State<AcceptScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _merchantHeader(),
+                    SizedBox(height: 16.h),
                     _sectionHeader(Icons.verified_outlined,
                         'Ready to redeem your member discount'),
                     SizedBox(height: 10.h),
@@ -158,6 +162,68 @@ class _AcceptScreenState extends State<AcceptScreen> {
         ),
       ),
     );
+  }
+
+  Widget _merchantHeader() {
+    return Row(
+      children: [
+        _merchantLogo(),
+        SizedBox(width: 14.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Merchant',
+                style: TextStyle(
+                  color: _bodyColor,
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Sans',
+                ),
+              ),
+              SizedBox(height: 4.h),
+              Text(
+                widget.merchantName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: _headingColor,
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w900,
+                  fontFamily: 'Sans',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _merchantLogo() {
+    final String? logoUrl = _normalizedMerchantLogo(widget.logo);
+
+    return Container(
+      width: 58.w,
+      height: 58.w,
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF7FF),
+        borderRadius: BorderRadius.circular(18.r),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: logoUrl != null
+          ? CachedNetworkImage(
+              imageUrl: logoUrl,
+              fit: BoxFit.cover,
+              errorWidget: (context, url, error) => _fallbackLogo(),
+            )
+          : _fallbackLogo(),
+    );
+  }
+
+  Widget _fallbackLogo() {
+    return Icon(Icons.storefront_outlined, color: _primaryBlue, size: 30.sp);
   }
 
   Future<void> _redeemDiscount() async {
@@ -273,6 +339,22 @@ class _AcceptScreenState extends State<AcceptScreen> {
 
   String _formatCurrency(num value) {
     return _currencyFormat.format(value);
+  }
+
+  String? _normalizedMerchantLogo(String? imageUrl) {
+    final String? trimmed = imageUrl?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    final String lower = trimmed.toLowerCase();
+    if (lower == 'null' || lower == 'undefined') return null;
+    if (trimmed.startsWith('//')) return 'https:$trimmed';
+
+    final Uri? parsed = Uri.tryParse(trimmed);
+    if (parsed == null) return trimmed;
+    if (parsed.hasScheme) return trimmed;
+
+    final Uri apiHost = Uri.parse(baseUrl);
+    final String imagePath = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+    return apiHost.replace(path: imagePath, query: '', fragment: '').toString();
   }
 }
 

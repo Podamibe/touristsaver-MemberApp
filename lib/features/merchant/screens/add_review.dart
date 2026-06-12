@@ -96,110 +96,118 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           }),
         ),
       ),
-      body: CustomContainerBox(
-        padVer: 16.h,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(color: _borderColor),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _primaryBlue.withValues(alpha: 0.06),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Row(
+      body: Column(
+        children: [
+          Expanded(
+            child: CustomContainerBox(
+              padVer: 10.h,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(bottom: 18.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _merchantAvatar(merchantLogo),
-                    SizedBox(width: 10.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Reviewing',
-                            style: TextStyle(
-                              color: _bodyColor,
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Sans',
-                            ),
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            merchantName,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: _headingColor,
-                              fontSize: 18.sp,
-                              fontWeight: FontWeight.w900,
-                              fontFamily: 'Sans',
-                            ),
-                          ),
-                        ],
+                    _merchantHeader(merchantName, merchantLogo),
+                    SizedBox(height: 8.h),
+                    Text(
+                      S.of(context).rateThisMerchant,
+                      style: topicStyle.copyWith(
+                        color: _headingColor,
+                        fontSize: 18.sp,
                       ),
                     ),
+                    SizedBox(height: 6.h),
+                    Center(child: _ratingBar(_ratingBarMode)),
+                    SizedBox(height: 7.h),
+                    const Divider(thickness: 1, color: _borderColor),
+                    SizedBox(height: 7.h),
+                    Text(
+                      S.of(context).yourFeedback,
+                      style: topicStyle.copyWith(
+                        color: _headingColor,
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 3.h),
+                    Text(
+                      'Choose any that describe your experience.',
+                      style: TextStyle(
+                        color: _bodyColor,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Sans',
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    _choiceChips(),
+                    SizedBox(height: 10.h),
+                    _optionalCommentField(),
                   ],
                 ),
               ),
-              SizedBox(height: 12.h),
-              Text(
-                S.of(context).rateThisMerchant,
-                style: topicStyle.copyWith(
-                  color: _headingColor,
-                  fontSize: 20.sp,
-                ),
-              ),
-              SizedBox(height: 10.h),
-              Center(child: _ratingBar(_ratingBarMode)),
-              SizedBox(height: 10.h),
-              const Divider(thickness: 1, color: _borderColor),
-              SizedBox(height: 10.h),
-              Text(
-                S.of(context).yourFeedback,
-                style: topicStyle.copyWith(
-                  color: _headingColor,
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 5.h),
-              Text(
-                'Choose any that describe your experience.',
-                style: TextStyle(
-                  color: _bodyColor,
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Sans',
-                ),
-              ),
-              SizedBox(height: 10.h),
-              _choiceChips(),
-              SizedBox(height: 12.h),
-              _optionalCommentField(),
-              SizedBox(height: 16.h),
-              Center(
-                  child: reviewLoading == true
-                      ? const CustomButtonWithCircular()
-                      : _GradientReviewButton(
-                          text: S.of(context).sendReview,
-                          onPressed: () {
-                            onSendReview();
-                          },
-                        )),
-            ],
+            ),
           ),
-        ),
+          _StickySubmitBar(
+            isLoading: reviewLoading,
+            child: _GradientReviewButton(
+              text: S.of(context).sendReview,
+              onPressed: onSendReview,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _merchantHeader(String merchantName, String? merchantLogo) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: _borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: _primaryBlue.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          _merchantAvatar(merchantLogo),
+          SizedBox(width: 9.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Reviewing',
+                  style: TextStyle(
+                    color: _bodyColor,
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Sans',
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  merchantName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: _headingColor,
+                    fontSize: 17.sp,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'Sans',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -285,6 +293,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         final bool selected = _selectedFeedbackOptions.contains(item);
         return ChoiceChip(
           padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: const VisualDensity(horizontal: -1, vertical: -3),
           selectedColor: _selectedChipBackground,
           showCheckmark: selected,
           checkmarkColor: _primaryBlue,
@@ -336,7 +346,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         TextField(
           controller: _commentController,
           maxLength: 100,
-          maxLines: 2,
+          maxLines: 1,
           minLines: 1,
           cursorColor: _primaryBlue,
           decoration: InputDecoration(
@@ -347,17 +357,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               fontWeight: FontWeight.w600,
               fontFamily: 'Sans',
             ),
-            counterStyle: TextStyle(
-              color: _bodyColor,
-              fontSize: 11.sp,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'Sans',
-            ),
+            counterText: '',
             filled: true,
             fillColor: const Color(0xFFF7FAFE),
             contentPadding: EdgeInsets.symmetric(
               horizontal: 14.w,
-              vertical: 12.h,
+              vertical: 10.h,
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16.r),
@@ -494,6 +499,41 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           ),
         ),
       );
+  }
+}
+
+class _StickySubmitBar extends StatelessWidget {
+  const _StickySubmitBar({
+    required this.isLoading,
+    required this.child,
+  });
+
+  final bool isLoading;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 12.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: const Border(
+            top: BorderSide(color: _FeedbackScreenState._borderColor),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0A236B).withValues(alpha: 0.08),
+              blurRadius: 18,
+              offset: const Offset(0, -8),
+            ),
+          ],
+        ),
+        child: isLoading ? const CustomButtonWithCircular() : child,
+      ),
+    );
   }
 }
 
