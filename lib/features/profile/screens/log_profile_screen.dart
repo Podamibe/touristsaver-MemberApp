@@ -365,24 +365,6 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
                                 : (state == ConnectivityState.connected)
                                     ? memberShipBox()
                                     : const SizedBox(),
-
-                        if (hideRemoveAccountButton == false)
-                          Column(
-                            children: [
-                              const SizedBox(height: 20),
-                              Center(
-                                child: CustomButton1(
-                                  text: S.of(context).removeAccount,
-                                  onPressed: () {
-                                    removeButton();
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        const SizedBox(height: 10),
-                        // Logout Button
-                        logOut(),
                       ],
                     ),
                   ),
@@ -485,6 +467,23 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
             children: _helpfulActions().map(_actionTile).toList(),
           ),
         ),
+        if (hideRemoveAccountButton == false)
+          Column(
+            children: [
+              const SizedBox(height: 20),
+              Center(
+                child: CustomButton1(
+                  text: S.of(context).removeAccount,
+                  onPressed: () {
+                    removeButton();
+                  },
+                ),
+              ),
+            ],
+          ),
+        const SizedBox(height: 10),
+        // Logout Button
+        logOut(),
       ],
     );
   }
