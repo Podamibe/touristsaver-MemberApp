@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:touristsaver/common/widgets/custom_button.dart';
 import 'package:touristsaver/common/widgets/custom_container_box.dart';
+import 'package:touristsaver/constants/helper.dart';
 import 'package:touristsaver/constants/style.dart';
 import '../../../common/widgets/custom_app_bar.dart';
 import '../../../common/widgets/custom_snackbar.dart';
@@ -82,11 +83,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     final String merchantName = widget.merchantName?.trim().isNotEmpty == true
         ? widget.merchantName!.trim()
         : 'this merchant';
-    final String? merchantLogo =
-        widget.merchantLogo?.trim().isNotEmpty == true &&
-                widget.merchantLogo?.trim() != 'null'
-            ? widget.merchantLogo!.trim()
-            : null;
+    final String? merchantLogo = _normalizedMerchantLogo(widget.merchantLogo);
 
     return Scaffold(
       appBar: PreferredSize(
@@ -100,14 +97,14 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         ),
       ),
       body: CustomContainerBox(
-        padVer: 25.h,
+        padVer: 16.h,
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 width: double.infinity,
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16.r),
@@ -123,7 +120,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 child: Row(
                   children: [
                     _merchantAvatar(merchantLogo),
-                    SizedBox(width: 12.w),
+                    SizedBox(width: 10.w),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,7 +141,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: _headingColor,
-                              fontSize: 20.sp,
+                              fontSize: 18.sp,
                               fontWeight: FontWeight.w900,
                               fontFamily: 'Sans',
                             ),
@@ -155,7 +152,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   ],
                 ),
               ),
-              SizedBox(height: 18.h),
+              SizedBox(height: 12.h),
               Text(
                 S.of(context).rateThisMerchant,
                 style: topicStyle.copyWith(
@@ -163,11 +160,11 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   fontSize: 20.sp,
                 ),
               ),
-              SizedBox(height: 15.h),
+              SizedBox(height: 10.h),
               Center(child: _ratingBar(_ratingBarMode)),
-              SizedBox(height: 15.h),
+              SizedBox(height: 10.h),
               const Divider(thickness: 1, color: _borderColor),
-              SizedBox(height: 15.h),
+              SizedBox(height: 10.h),
               Text(
                 S.of(context).yourFeedback,
                 style: topicStyle.copyWith(
@@ -186,11 +183,11 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   fontFamily: 'Sans',
                 ),
               ),
-              SizedBox(height: 14.h),
+              SizedBox(height: 10.h),
               _choiceChips(),
-              SizedBox(height: 16.h),
+              SizedBox(height: 12.h),
               _optionalCommentField(),
-              SizedBox(height: 20.h),
+              SizedBox(height: 16.h),
               Center(
                   child: reviewLoading == true
                       ? const CustomButtonWithCircular()
@@ -209,8 +206,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   Widget _merchantAvatar(String? imageUrl) {
     return Container(
-      width: 54.w,
-      height: 54.w,
+      width: 48.w,
+      height: 48.w,
       decoration: BoxDecoration(
         color: const Color(0xFFEFF7FF),
         borderRadius: BorderRadius.circular(16.r),
@@ -243,7 +240,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           options: _positiveFeedbackOptions,
         ),
         Padding(
-          padding: EdgeInsets.symmetric(vertical: 12.h),
+          padding: EdgeInsets.symmetric(vertical: 9.h),
           child: const Divider(
             height: 1,
             thickness: 1,
@@ -274,7 +271,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             fontFamily: 'Sans',
           ),
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: 6.h),
         _feedbackChips(options),
       ],
     );
@@ -283,11 +280,11 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   Widget _feedbackChips(List<String> options) {
     return Wrap(
       spacing: 8.w,
-      runSpacing: 8.h,
+      runSpacing: 6.h,
       children: options.map((item) {
         final bool selected = _selectedFeedbackOptions.contains(item);
         return ChoiceChip(
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
+          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
           selectedColor: _selectedChipBackground,
           showCheckmark: selected,
           checkmarkColor: _primaryBlue,
@@ -335,7 +332,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             fontFamily: 'Sans',
           ),
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: 6.h),
         TextField(
           controller: _commentController,
           maxLength: 100,
@@ -434,6 +431,20 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         }
       });
     }
+  }
+
+  String? _normalizedMerchantLogo(String? imageUrl) {
+    final String? trimmed = imageUrl?.trim();
+    if (trimmed == null || trimmed.isEmpty || trimmed == 'null') return null;
+    if (trimmed.startsWith('//')) return 'https:$trimmed';
+
+    final Uri? parsed = Uri.tryParse(trimmed);
+    if (parsed == null) return trimmed;
+    if (parsed.hasScheme) return trimmed;
+
+    final Uri apiHost = Uri.parse(baseUrl);
+    final String imagePath = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+    return apiHost.replace(path: imagePath, query: '', fragment: '').toString();
   }
 
   String? _reviewPayload() {
