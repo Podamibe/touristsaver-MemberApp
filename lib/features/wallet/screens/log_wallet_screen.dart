@@ -9,8 +9,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
-import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/error.dart';
+import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
 import 'package:touristsaver/constants/style.dart';
 import 'package:touristsaver/features/connectivity/cubit/internet_cubit.dart';
 import 'package:touristsaver/features/details/services/dio_detail.dart';
@@ -188,7 +188,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
         if (snapshot.hasError) {
           return const ProfileError();
         } else if (!snapshot.hasData || isLoading == false) {
-          return const ProfileLoader();
+          return const TouristSaverLoadingView();
         }
 
         final UniversalGetMyWallet wallet = snapshot.data!;
@@ -377,14 +377,10 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
             future: recentSavingsLoad,
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
-                return Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      color: _primaryBlue,
-                      strokeWidth: 2,
-                    ),
-                  ),
+                return TouristSaverLoadingView(
+                  height: 80.h,
+                  spinnerSize: 24,
+                  strokeWidth: 2,
                 );
               }
 
@@ -555,7 +551,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
         height: 18.w,
         child: const CircularProgressIndicator(
           strokeWidth: 2,
-          color: Color(0xFF009FE3),
+          color: _primaryBlue,
         ),
       ),
     );

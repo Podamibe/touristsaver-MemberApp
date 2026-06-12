@@ -15,9 +15,9 @@ import 'package:intl/intl.dart';
 import 'package:touristsaver/common/app_variables.dart';
 import 'package:touristsaver/common/navigation/safe_primary_navigation.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
-import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
 import 'package:touristsaver/common/widgets/error.dart';
+import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
 import 'package:touristsaver/constants/global_colors.dart';
 import 'package:touristsaver/features/connectivity/cubit/internet_cubit.dart';
 import 'package:touristsaver/features/payment/services/dio_payment.dart';
@@ -427,7 +427,7 @@ class _PayScreenState extends State<PayScreen> {
                       if (snapShot.hasError) {
                         return const Error1();
                       } else if (!snapShot.hasData) {
-                        return const CustomAllLoader();
+                        return const TouristSaverLoadingView();
                       } else {
                         return snapShot.data!.data!.transactionIsEnabled == true
                             ? Container(

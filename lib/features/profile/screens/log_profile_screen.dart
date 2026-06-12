@@ -11,8 +11,8 @@ import 'package:touristsaver/common/services/dio_common.dart';
 import 'package:touristsaver/common/utils.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/common/widgets/custom_button.dart';
-import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
+import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
 import 'package:touristsaver/constants/global_colors.dart';
 import 'package:touristsaver/constants/pref.dart';
 import 'package:touristsaver/constants/pref_key.dart';
@@ -386,10 +386,7 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
       child: BlocBuilder<UserProfileBloc, UserProfileState>(
         builder: (context, state) {
           if (state is UserProfileLoadingState) {
-            return Padding(
-              padding: EdgeInsets.symmetric(vertical: 42.h),
-              child: const Center(child: CustomAllLoader1()),
-            );
+            return const TouristSaverLoadingView();
           } else if (state is UserProfileLoadedState) {
             return profileSection(state.userProfile);
           } else if (state is UserProfileErrorState) {

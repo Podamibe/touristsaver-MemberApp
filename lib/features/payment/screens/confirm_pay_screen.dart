@@ -6,8 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:touristsaver/common/app_variables.dart';
 import 'package:touristsaver/common/navigation/safe_primary_navigation.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
-import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
+import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
 import 'package:touristsaver/features/payment/services/dio_payment.dart';
 import 'package:touristsaver/models/request/sure_apply_piiink_req.dart';
 import 'package:touristsaver/models/response/sure_apply_piiink_res.dart';
@@ -271,7 +271,7 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
           ),
           SizedBox(height: 14.h),
           isLoading
-              ? const Center(child: CustomAllLoader())
+              ? TouristSaverLoadingView(height: 54.h, spinnerSize: 24)
               : _GradientButton(
                   label: 'Redeem Discount',
                   enabled: enabled,
