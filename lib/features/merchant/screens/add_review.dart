@@ -38,18 +38,21 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   static const Color _selectedChipBackground = Color(0xFFEAF7FF);
   static const Color _selectedStarGold = Color(0xFFFFC83D);
   static const Color _unselectedStarGrey = Color(0xFFC7CDD8);
-  static const List<String> _feedbackOptions = [
+  static const List<String> _positiveFeedbackOptions = [
     'Great Deals',
     'Friendly and Helpful Staff',
     'Excellent Service',
     'Amazing Products',
     'Clean Venue',
     'Would Visit Again',
+  ];
+  static const List<String> _constructiveFeedbackOptions = [
     'Long Wait Time',
     'Service Could Improve',
     'Difficult Parking',
     'Venue Busy',
     'Not As Expected',
+    'Could Be Better',
   ];
   static const String _reviewSuccessMessage =
       '⭐ Thank you for your review\n\nYour feedback helps other TouristSaver members discover great merchants.';
@@ -57,6 +60,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   late double _rating;
   final int _ratingBarMode = 0;
   final double _initialRating = 0;
+  final TextEditingController _commentController = TextEditingController();
   IconData? _selectedIcon;
   final Set<String> _selectedFeedbackOptions = <String>{};
   bool reviewLoading = false;
@@ -65,6 +69,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   void initState() {
     super.initState();
     _rating = _initialRating;
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
   }
 
   @override
@@ -97,7 +107,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             children: [
               Container(
                 width: double.infinity,
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16.r),
@@ -178,7 +188,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               ),
               SizedBox(height: 14.h),
               _choiceChips(),
-              SizedBox(height: 22.h),
+              SizedBox(height: 16.h),
+              _optionalCommentField(),
+              SizedBox(height: 20.h),
               Center(
                   child: reviewLoading == true
                       ? const CustomButtonWithCircular()
@@ -223,10 +235,56 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   }
 
   Widget _choiceChips() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _feedbackSection(
+          label: 'Positive Feedback',
+          options: _positiveFeedbackOptions,
+        ),
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 12.h),
+          child: const Divider(
+            height: 1,
+            thickness: 1,
+            color: Color(0xFFE5EAF2),
+          ),
+        ),
+        _feedbackSection(
+          label: 'Constructive Feedback',
+          options: _constructiveFeedbackOptions,
+        ),
+      ],
+    );
+  }
+
+  Widget _feedbackSection({
+    required String label,
+    required List<String> options,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: _headingColor,
+            fontSize: 12.5.sp,
+            fontWeight: FontWeight.w900,
+            fontFamily: 'Sans',
+          ),
+        ),
+        SizedBox(height: 8.h),
+        _feedbackChips(options),
+      ],
+    );
+  }
+
+  Widget _feedbackChips(List<String> options) {
     return Wrap(
       spacing: 8.w,
       runSpacing: 8.h,
-      children: _feedbackOptions.map((item) {
+      children: options.map((item) {
         final bool selected = _selectedFeedbackOptions.contains(item);
         return ChoiceChip(
           padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
@@ -264,6 +322,60 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     );
   }
 
+  Widget _optionalCommentField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Additional Comments (Optional)',
+          style: TextStyle(
+            color: _headingColor,
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w900,
+            fontFamily: 'Sans',
+          ),
+        ),
+        SizedBox(height: 8.h),
+        TextField(
+          controller: _commentController,
+          maxLength: 100,
+          maxLines: 2,
+          minLines: 1,
+          cursorColor: _primaryBlue,
+          decoration: InputDecoration(
+            hintText: 'Share a brief note',
+            hintStyle: TextStyle(
+              color: _bodyColor.withValues(alpha: 0.72),
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Sans',
+            ),
+            counterStyle: TextStyle(
+              color: _bodyColor,
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Sans',
+            ),
+            filled: true,
+            fillColor: const Color(0xFFF7FAFE),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 14.w,
+              vertical: 12.h,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16.r),
+              borderSide: const BorderSide(color: _borderColor),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16.r),
+              borderSide: const BorderSide(color: _primaryBlue, width: 1.4),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _ratingBar(int mode) {
     return RatingBar.builder(
       initialRating: 0,
@@ -292,7 +404,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       reviewLoading = true;
     });
 
-    if (_rating == 0.0 && _selectedFeedbackOptions.isEmpty) {
+    final String? reviewPayload = _reviewPayload();
+
+    if (_rating == 0.0 && reviewPayload == null) {
       GlobalSnackBar.valid(
           context, S.of(context).pleaseRateThisMerchantOrProvideFeedback);
       setState(() {
@@ -303,9 +417,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           rateMerchantReqModel: RateMerchantReqModel(
               rating: _rating,
               merchantId: int.parse(widget.merchantId!),
-              review: _selectedFeedbackOptions.isEmpty
-                  ? null
-                  : _selectedFeedbackOptions.join(', ')));
+              review: reviewPayload));
       rez?.fold((l) {
         GlobalSnackBar.showError(context, l.message!);
         setState(() {
@@ -322,6 +434,22 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         }
       });
     }
+  }
+
+  String? _reviewPayload() {
+    final List<String> selectedFeedback = [
+      ..._positiveFeedbackOptions
+          .where((item) => _selectedFeedbackOptions.contains(item)),
+      ..._constructiveFeedbackOptions
+          .where((item) => _selectedFeedbackOptions.contains(item)),
+    ];
+    final String feedbackText = selectedFeedback.join(', ');
+    final String note = _commentController.text.trim();
+
+    if (feedbackText.isEmpty && note.isEmpty) return null;
+    if (note.isEmpty) return feedbackText;
+    if (feedbackText.isEmpty) return 'Note: $note';
+    return '$feedbackText | Note: $note';
   }
 
   void _showReviewSuccess() {
