@@ -42,7 +42,6 @@ class _PaymentCompletedState extends State<PaymentCompleted> {
 
   final NumberFormat _currencyFormat = NumberFormat.currency(
       symbol: AppVariables.currency ?? '\$', decimalDigits: 2);
-  final NumberFormat _numberFormat = NumberFormat('#,##0.##');
 
   double get _billAmount => double.tryParse(widget.totalAmount) ?? 0;
   double get _memberSavings => double.tryParse(widget.totalPiiinkDiscount) ?? 0;
@@ -115,12 +114,12 @@ class _PaymentCompletedState extends State<PaymentCompleted> {
                     _summaryRow('Customer pays merchant',
                         _formatCurrency(_customerPays),
                         emphasized: true),
-                    _summaryRow('Discount Credits redeemed',
-                        _numberFormat.format(_memberSavings)),
+                    _summaryRow('Discount Credits Redeemed',
+                        _formatCurrency(_memberSavings)),
                     if (_merchantTsdcsEarned > 0)
                       _summaryRow(
-                        'Merchant Discount Credits earned',
-                        '+${_numberFormat.format(_merchantTsdcsEarned)}',
+                        'Merchant Credits Earned',
+                        '+${_formatCurrency(_merchantTsdcsEarned)}',
                       ),
                   ],
                 ),
