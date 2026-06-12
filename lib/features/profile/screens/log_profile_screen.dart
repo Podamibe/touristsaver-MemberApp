@@ -1198,11 +1198,23 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        S.of(context).areYouSureYouWantToLogOut,
+                        'Log out of TouristSaver?',
                         textAlign: TextAlign.center,
                         style: topicStyle,
                       ),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 10),
+                      Text(
+                        'You can log back in anytime to continue exploring member savings and exclusive offers.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: const Color(0xFF61708A),
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
+                          fontFamily: 'Sans',
+                        ),
+                      ),
+                      const SizedBox(height: 18),
                       // Yes Button
                       logOutConfirmed == true
                           ? const CustomButtonWithCircular()
@@ -1272,7 +1284,7 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
 
                                 context.pushReplacementNamed('login');
                               },
-                              text: S.of(context).yes,
+                              text: 'Log Out',
                             ),
                       const SizedBox(height: 10),
                       CustomButton1(
@@ -1280,7 +1292,7 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
                           // Correctly pop the dialog
                           Navigator.of(context).pop();
                         },
-                        text: S.of(context).cancel,
+                        text: 'Stay Signed In',
                       ),
                     ],
                   );
