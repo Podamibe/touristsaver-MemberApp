@@ -11,8 +11,8 @@ import 'package:touristsaver/common/services/dio_common.dart';
 import 'package:touristsaver/common/utils.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/common/widgets/custom_button.dart';
-import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
+import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
 import 'package:touristsaver/constants/global_colors.dart';
 import 'package:touristsaver/constants/pref.dart';
 import 'package:touristsaver/constants/pref_key.dart';
@@ -365,24 +365,6 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
                                 : (state == ConnectivityState.connected)
                                     ? memberShipBox()
                                     : const SizedBox(),
-
-                        if (hideRemoveAccountButton == false)
-                          Column(
-                            children: [
-                              const SizedBox(height: 20),
-                              Center(
-                                child: CustomButton1(
-                                  text: S.of(context).removeAccount,
-                                  onPressed: () {
-                                    removeButton();
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        const SizedBox(height: 10),
-                        // Logout Button
-                        logOut(),
                       ],
                     ),
                   ),
@@ -404,10 +386,7 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
       child: BlocBuilder<UserProfileBloc, UserProfileState>(
         builder: (context, state) {
           if (state is UserProfileLoadingState) {
-            return Padding(
-              padding: EdgeInsets.symmetric(vertical: 42.h),
-              child: const Center(child: CustomAllLoader1()),
-            );
+            return const TouristSaverLoadingView();
           } else if (state is UserProfileLoadedState) {
             return profileSection(state.userProfile);
           } else if (state is UserProfileErrorState) {
@@ -485,6 +464,23 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
             children: _helpfulActions().map(_actionTile).toList(),
           ),
         ),
+        if (hideRemoveAccountButton == false)
+          Column(
+            children: [
+              const SizedBox(height: 20),
+              Center(
+                child: CustomButton1(
+                  text: S.of(context).removeAccount,
+                  onPressed: () {
+                    removeButton();
+                  },
+                ),
+              ),
+            ],
+          ),
+        const SizedBox(height: 10),
+        // Logout Button
+        logOut(),
       ],
     );
   }
@@ -1192,95 +1188,57 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
               // Use a distinct context for the dialog
               bool logOutConfirmed = false;
               return AlertDialog(
+                backgroundColor: Colors.white,
+                surfaceTintColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 22),
                 content: StatefulBuilder(
                     builder: (BuildContext context, StateSetter setState) {
                   return Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        S.of(context).areYouSureYouWantToLogOut,
+                        'Log out of TouristSaver?',
                         textAlign: TextAlign.center,
                         style: topicStyle,
                       ),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 10),
+                      Text(
+                        'You can log back in anytime to continue exploring member savings and exclusive offers.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: const Color(0xFF61708A),
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
+                          fontFamily: 'Sans',
+                        ),
+                      ),
+                      const SizedBox(height: 18),
                       // Yes Button
                       logOutConfirmed == true
                           ? const CustomButtonWithCircular()
-                          : CustomButton(
+                          : _logoutDialogPrimaryButton(
+                              text: 'Log Out',
                               onPressed: () async {
-                                // 1. Show loading state immediately
-                                setState(() {
-                                  logOutConfirmed = true;
-                                });
-
-                                // 2. BACKGROUND TASKS: Do not put 'await' in front of this!
-                                // This lets the app continue instantly while the server thinks.
-                                Future.delayed(Duration.zero, () async {
-                                  try {
-                                    String deviceId;
-                                    if (AppVariables.deviceId.isNotEmpty) {
-                                      deviceId = AppVariables.deviceId;
-                                    } else {
-                                      deviceId = await getDeviceId();
-                                    }
-
-                                    if (deviceId.isNotEmpty) {
-                                      await getClient().then(
-                                        (dio) => dio.delete(
-                                          deleteDeviceIdOnLogOut
-                                              .format(params: [deviceId]),
-                                        ),
-                                      );
-                                    }
-                                  } catch (e) {
-                                    debugPrint(
-                                        'Error during device ID deletion: $e');
-                                  }
-
-                                  try {
-                                    await FirebaseMessaging.instance
-                                        .deleteToken();
-                                  } catch (e) {
-                                    debugPrint(
-                                        'Firebase token deletion failed: $e');
-                                  }
-                                });
-
-                                // 3. CLEAR LOCAL DATA IMMEDIATELY
-                                await Pref().removeData(saveToken);
-                                await Pref().removeData(issuerType);
-                                await Pref().removeData('fcmToken');
-                                await Pref().removeData('isTokenSent');
-                                await Pref().removeData('notificationsCount');
-                                await Pref().removeData(saveUserID);
-                                await Pref().removeData(saveCurrency);
-                                await Pref().removeData(savePublishableKey);
-                                await Pref()
-                                    .removeData(userChosenLocationStateID);
-                                await Pref()
-                                    .removeData(userChosenLocationRegionID);
-                                AppVariables.accessToken = null;
-
-                                AppVariables.notificationLabel.value = 0;
-                                AppVariables.initNotifications = false;
-
-                                if (!mounted) return;
-
-                                // 4. INSTANT NAVIGATION
-                                // Close the dialog
-                                Navigator.of(dialogContext).pop();
-
-                                context.pushReplacementNamed('login');
+                                await _performLogout(
+                                  dialogContext: dialogContext,
+                                  setDialogState: setState,
+                                  markConfirmed: () {
+                                    logOutConfirmed = true;
+                                  },
+                                );
                               },
-                              text: S.of(context).yes,
                             ),
                       const SizedBox(height: 10),
-                      CustomButton1(
+                      _logoutDialogSecondaryButton(
+                        text: 'Stay Signed In',
                         onPressed: () {
                           // Correctly pop the dialog
                           Navigator.of(context).pop();
                         },
-                        text: S.of(context).cancel,
                       ),
                     ],
                   );
@@ -1329,6 +1287,144 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _performLogout({
+    required BuildContext dialogContext,
+    required StateSetter setDialogState,
+    required VoidCallback markConfirmed,
+  }) async {
+    // 1. Show loading state immediately
+    setDialogState(markConfirmed);
+
+    // 2. BACKGROUND TASKS: Do not put 'await' in front of this!
+    // This lets the app continue instantly while the server thinks.
+    Future.delayed(Duration.zero, () async {
+      try {
+        String deviceId;
+        if (AppVariables.deviceId.isNotEmpty) {
+          deviceId = AppVariables.deviceId;
+        } else {
+          deviceId = await getDeviceId();
+        }
+
+        if (deviceId.isNotEmpty) {
+          await getClient().then(
+            (dio) => dio.delete(
+              deleteDeviceIdOnLogOut.format(params: [deviceId]),
+            ),
+          );
+        }
+      } catch (e) {
+        debugPrint('Error during device ID deletion: $e');
+      }
+
+      try {
+        await FirebaseMessaging.instance.deleteToken();
+      } catch (e) {
+        debugPrint('Firebase token deletion failed: $e');
+      }
+    });
+
+    // 3. CLEAR LOCAL DATA IMMEDIATELY
+    await Pref().removeData(saveToken);
+    await Pref().removeData(issuerType);
+    await Pref().removeData('fcmToken');
+    await Pref().removeData('isTokenSent');
+    await Pref().removeData('notificationsCount');
+    await Pref().removeData(saveUserID);
+    await Pref().removeData(saveCurrency);
+    await Pref().removeData(savePublishableKey);
+    await Pref().removeData(userChosenLocationStateID);
+    await Pref().removeData(userChosenLocationRegionID);
+    AppVariables.accessToken = null;
+
+    AppVariables.notificationLabel.value = 0;
+    AppVariables.initNotifications = false;
+
+    if (!mounted) return;
+
+    // 4. INSTANT NAVIGATION
+    // Close the dialog
+    Navigator.of(dialogContext).pop();
+
+    context.pushReplacementNamed('login');
+  }
+
+  Widget _logoutDialogPrimaryButton({
+    required String text,
+    required VoidCallback onPressed,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onPressed,
+        child: Ink(
+          width: double.infinity,
+          height: 54,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [_profileBrandBlue, _profileCtaCyan],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: _profileBrandBlue.withValues(alpha: 0.18),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
+                fontFamily: 'Sans',
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _logoutDialogSecondaryButton({
+    required String text,
+    required VoidCallback onPressed,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onPressed,
+        child: Ink(
+          width: double.infinity,
+          height: 54,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: _profileBrandBlue, width: 1.2),
+          ),
+          child: Center(
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: _profileBrandBlue,
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
+                fontFamily: 'Sans',
+              ),
+            ),
           ),
         ),
       ),

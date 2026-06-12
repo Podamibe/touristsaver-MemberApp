@@ -5,8 +5,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:touristsaver/common/app_variables.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
-import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
+import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
 import 'package:touristsaver/constants/pref.dart';
 import 'package:touristsaver/constants/read_sms_otp.dart';
 import 'package:touristsaver/common/widgets/error.dart';
@@ -224,7 +224,7 @@ class _EditProfileState extends State<EditProfile> {
                 if (snapshot.hasError) {
                   return const Error1();
                 } else if (!snapshot.hasData) {
-                  return const CustomAllLoader();
+                  return const TouristSaverLoadingView();
                 } else {
                   bool? isEmailVerified =
                       snapshot.data?.data?.results?.isEmailVerified;

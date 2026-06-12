@@ -15,11 +15,12 @@ import 'package:intl/intl.dart';
 import 'package:touristsaver/common/app_variables.dart';
 import 'package:touristsaver/common/navigation/safe_primary_navigation.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
-import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
 import 'package:touristsaver/common/widgets/error.dart';
+import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
 import 'package:touristsaver/constants/global_colors.dart';
 import 'package:touristsaver/features/connectivity/cubit/internet_cubit.dart';
+import 'package:touristsaver/features/details/services/dio_detail.dart';
 import 'package:touristsaver/features/payment/services/dio_payment.dart';
 import 'package:touristsaver/models/response/is_pay_enable_res.dart';
 
@@ -27,7 +28,8 @@ import '../../../common/services/dio_common.dart';
 import '../../../constants/fixed_decimal.dart';
 import '../../../models/error_res.dart';
 import '../../../models/request/confirm_piiink_req.dart';
-import '../../../models/response/confirm_piiink_res.dart';
+import '../../../models/response/confirm_piiink_res.dart' as confirm_piiink;
+import '../../../models/response/detail_res.dart' as detail;
 import '../../../models/response/piiink_info_res.dart';
 import '../../connectivity/screens/connectivity.dart';
 import '../../connectivity/screens/connectivity_screen.dart';
@@ -254,12 +256,14 @@ class _PayScreenState extends State<PayScreen> {
           lang: AppVariables.selectedLanguageNow),
     );
     // if (!mounted) return;
-    if (res is ConfirmApplyPiiinkResModel) {
+    if (res is confirm_piiink.ConfirmApplyPiiinkResModel) {
       if (res.status == "Success") {
         setState(() {
           isLoading = false;
         });
         var data = res.data!;
+        final String? merchantLogo = await _merchantLogoFromConfirmData(data);
+        if (!mounted) return;
         context.pushNamed('confirm-pay', extra: {
           'merchantId': data.merchantInfo!.id,
           'totalAmount': amountController.text.trim(),
@@ -277,11 +281,7 @@ class _PayScreenState extends State<PayScreen> {
           'discountedTransactionAmount':
               data.discountedTransactionAmount.toString(),
           'totalPiiinkDiscount': data.totalPiiinkDiscount.toString(),
-          'logo': data.merchantInfo?.merchantImageInfo == null
-              ? 'null'
-              : data.merchantInfo?.merchantImageInfo?.logoUrl ??
-                  data.merchantInfo?.merchantImageInfo?.slider1 ??
-                  'null',
+          'logo': merchantLogo,
           'universalPiiinkOnHold': data.universalPiiinkBalanceOnHold.toString(),
           'merchantPiiinkOnHold': data.merchantPiiinkBalanceOnHold.toString(),
           'returnToSearch': widget.returnToSearch,
@@ -320,12 +320,14 @@ class _PayScreenState extends State<PayScreen> {
     var res = await DioPay()
         .confirmTerminalApplyPiiink(transactionQrCode: merchantQrCode);
 
-    if (res is ConfirmApplyPiiinkResModel) {
+    if (res is confirm_piiink.ConfirmApplyPiiinkResModel) {
       if (res.status == "Success") {
         setState(() {
           isMerchantQrLoading = false;
         });
         var data = res.data!;
+        final String? merchantLogo = await _merchantLogoFromConfirmData(data);
+        if (!mounted) return;
         context.pushNamed('confirm-pay', extra: {
           'merchantId': data.merchantInfo!.id,
           'totalAmount': data.totalTransactionAmount.toString(),
@@ -343,11 +345,7 @@ class _PayScreenState extends State<PayScreen> {
           'discountedTransactionAmount':
               data.discountedTransactionAmount.toString(),
           'totalPiiinkDiscount': data.totalPiiinkDiscount.toString(),
-          'logo': data.merchantInfo?.merchantImageInfo == null
-              ? 'null'
-              : data.merchantInfo?.merchantImageInfo?.logoUrl ??
-                  data.merchantInfo?.merchantImageInfo?.slider1 ??
-                  'null',
+          'logo': merchantLogo,
           'universalPiiinkOnHold': data.universalPiiinkBalanceOnHold.toString(),
           'merchantPiiinkOnHold': data.merchantPiiinkBalanceOnHold.toString(),
           'terminalUserId': data.terminalUserId,
@@ -427,7 +425,7 @@ class _PayScreenState extends State<PayScreen> {
                       if (snapShot.hasError) {
                         return const Error1();
                       } else if (!snapShot.hasData) {
-                        return const CustomAllLoader();
+                        return const TouristSaverLoadingView();
                       } else {
                         return snapShot.data!.data!.transactionIsEnabled == true
                             ? Container(
@@ -786,6 +784,53 @@ class _PayScreenState extends State<PayScreen> {
   bool _hasValidAmount() {
     final double? amount = double.tryParse(amountController.text.trim());
     return amount != null && amount > 0;
+  }
+
+  Future<String?> _merchantLogoFromConfirmData(
+    confirm_piiink.Data data,
+  ) async {
+    final confirmImageInfo = data.merchantInfo?.merchantImageInfo;
+    final String? confirmLogo = _firstNotEmpty([
+      confirmImageInfo?.logoUrl,
+      confirmImageInfo?.slider1,
+      confirmImageInfo?.slider2,
+      confirmImageInfo?.slider3,
+      confirmImageInfo?.slider4,
+      confirmImageInfo?.slider5,
+      confirmImageInfo?.slider6,
+    ]);
+    if (confirmLogo != null) return confirmLogo;
+
+    final int? merchantId = data.merchantInfo?.id;
+    if (merchantId == null) return null;
+
+    final DateTime now = DateTime.now();
+    final detail.MerchantDetailResModel? merchantDetail =
+        await DioDetail().getMerchantDetail(
+      id: merchantId,
+      day: DateFormat('EEEE').format(now),
+      hour: now.hour,
+    );
+    final detail.MerchantImageInfo? imageInfo =
+        merchantDetail?.data?.merchantImageInfo;
+    return _firstNotEmpty([
+      imageInfo?.logoUrl,
+      imageInfo?.slider1,
+      imageInfo?.slider2,
+      imageInfo?.slider3,
+      imageInfo?.slider4,
+      imageInfo?.slider5,
+      imageInfo?.slider6,
+    ]);
+  }
+
+  String? _firstNotEmpty(List<String?> values) {
+    for (final String? value in values) {
+      if (value != null && value.trim().isNotEmpty) {
+        return value.trim();
+      }
+    }
+    return null;
   }
 
   //Showing how many more days to go for a pay section

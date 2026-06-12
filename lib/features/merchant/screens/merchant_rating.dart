@@ -5,11 +5,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
 import 'package:touristsaver/constants/style.dart';
 import 'package:touristsaver/features/merchant/services/dio_reviews.dart';
 
 import '../../../common/widgets/custom_app_bar.dart';
-import '../../../common/widgets/custom_loader.dart';
 import '../../../common/widgets/error.dart';
 import '../../../models/error_res.dart';
 import '../../../models/response/get_all_merchant_reviews.dart';
@@ -18,9 +18,15 @@ import 'package:touristsaver/generated/l10n.dart';
 
 class MerchantRating extends StatefulWidget {
   static const String routeName = '/merchant-rating';
-  const MerchantRating({super.key, this.merchantId, this.merchantName});
+  const MerchantRating({
+    super.key,
+    this.merchantId,
+    this.merchantName,
+    this.merchantLogo,
+  });
   final String? merchantId;
   final String? merchantName;
+  final String? merchantLogo;
 
   @override
   State<MerchantRating> createState() => _MerchantRatingState();
@@ -72,11 +78,7 @@ class _MerchantRatingState extends State<MerchantRating> {
             if (snapshot.hasError) {
               return const Error1();
             } else if (!snapshot.hasData) {
-              return const Column(
-                children: [
-                  CustomAllLoader(),
-                ],
-              );
+              return const TouristSaverLoadingView();
             } else {
               return snapshot.data!.fold((l) {
                 return ErrorData(text: l.message!);
@@ -206,6 +208,7 @@ class _MerchantRatingState extends State<MerchantRating> {
                       extra: {
                         'merchantId': widget.merchantId,
                         'merchantName': widget.merchantName,
+                        'merchantLogo': widget.merchantLogo,
                       },
                     );
                   })),

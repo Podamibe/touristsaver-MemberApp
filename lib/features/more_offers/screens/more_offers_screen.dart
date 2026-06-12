@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/error.dart';
+import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
 import 'package:touristsaver/constants/global_colors.dart';
 import 'package:touristsaver/features/more_offers/bloc/discount_bloc.dart';
 import 'package:touristsaver/features/more_offers/bloc/discount_events.dart';
@@ -80,10 +81,7 @@ class _MoreOffersScreenState extends State<MoreOffersScreen> {
                   builder: (context, state) {
                 //Loading State
                 if (state is MerchantDiscountLoadingState) {
-                  // return const CustomAllLoader();
-                  return const Padding(
-                      padding: EdgeInsets.only(top: 200),
-                      child: Center(child: CustomAllLoader1()));
+                  return const TouristSaverLoadingView();
                 }
                 //Loaded State
                 if (state is MerchantDiscountLoadedState) {

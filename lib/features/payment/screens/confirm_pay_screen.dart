@@ -6,8 +6,9 @@ import 'package:intl/intl.dart';
 import 'package:touristsaver/common/app_variables.dart';
 import 'package:touristsaver/common/navigation/safe_primary_navigation.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
-import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
+import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
+import 'package:touristsaver/constants/helper.dart';
 import 'package:touristsaver/features/payment/services/dio_payment.dart';
 import 'package:touristsaver/models/request/sure_apply_piiink_req.dart';
 import 'package:touristsaver/models/response/sure_apply_piiink_res.dart';
@@ -25,7 +26,7 @@ class ConfimrPaymentScreen extends StatefulWidget {
   final String merchantDiscountPercentage;
   final String discountedTransactionAmount;
   final String totalPiiinkDiscount;
-  final String logo;
+  final String? logo;
   final String universalPiiinkOnHold;
   final String merchantPiiinkOnHold;
   final int? terminalUserId;
@@ -178,7 +179,7 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
   }
 
   Widget _merchantLogo() {
-    final bool hasLogo = widget.logo.isNotEmpty && widget.logo != 'null';
+    final String? logoUrl = _normalizedMerchantLogo(widget.logo);
 
     return Container(
       width: 58.w,
@@ -188,9 +189,9 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
         borderRadius: BorderRadius.circular(18.r),
       ),
       clipBehavior: Clip.antiAlias,
-      child: hasLogo
+      child: logoUrl != null
           ? CachedNetworkImage(
-              imageUrl: widget.logo,
+              imageUrl: logoUrl,
               fit: BoxFit.cover,
               errorWidget: (context, url, error) => _fallbackLogo(),
             )
@@ -271,7 +272,7 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
           ),
           SizedBox(height: 14.h),
           isLoading
-              ? const Center(child: CustomAllLoader())
+              ? TouristSaverLoadingView(height: 54.h, spinnerSize: 24)
               : _GradientButton(
                   label: 'Redeem Discount',
                   enabled: enabled,
@@ -327,6 +328,7 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
         'merchantRebateToMember': widget.merchantRebateToMember,
         'merchantDiscountPercentage': widget.merchantDiscountPercentage,
         'walletType': walletType,
+        'merchantLogo': widget.logo,
       });
     } else {
       GlobalSnackBar.showError(context, 'The discount could not be redeemed.');
@@ -402,6 +404,22 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
 
   String _formatCurrency(num value) {
     return _currencyFormat.format(value);
+  }
+
+  String? _normalizedMerchantLogo(String? imageUrl) {
+    final String? trimmed = imageUrl?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    final String lower = trimmed.toLowerCase();
+    if (lower == 'null' || lower == 'undefined') return null;
+    if (trimmed.startsWith('//')) return 'https:$trimmed';
+
+    final Uri? parsed = Uri.tryParse(trimmed);
+    if (parsed == null) return trimmed;
+    if (parsed.hasScheme) return trimmed;
+
+    final Uri apiHost = Uri.parse(baseUrl);
+    final String imagePath = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+    return apiHost.replace(path: imagePath, query: '', fragment: '').toString();
   }
 }
 
