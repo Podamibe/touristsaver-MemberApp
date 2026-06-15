@@ -545,13 +545,18 @@ class _DetailsScreenState extends State<DetailsScreen> {
     }
     double lat = latlang![0];
     double lon = latlang[1];
-    String appleUrl =
-        'https://maps.apple.com/?saddr=&daddr=$lat,$lon&directionsmode=driving';
-    String googleUrl =
-        'https://www.google.com/maps/search/?api=1&query=$lat,$lon';
-
-    Uri appleUri = Uri.parse(appleUrl);
-    Uri googleUri = Uri.parse(googleUrl);
+    final String destination = '$lat,$lon';
+    final Uri appleUri = Uri.https('maps.apple.com', '/', {
+      'saddr': 'Current Location',
+      'daddr': destination,
+      'directionsmode': 'driving',
+    });
+    final Uri googleUri = Uri.https('www.google.com', '/maps/dir/', {
+      'api': '1',
+      'origin': 'Current Location',
+      'destination': destination,
+      'travelmode': 'driving',
+    });
 
     if (Platform.isIOS) {
       if (await canLaunchUrl(appleUri)) {
