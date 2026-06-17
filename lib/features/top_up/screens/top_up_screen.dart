@@ -80,7 +80,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: CustomAppBar(
-          text: 'Add Discount Credits',
+          text: 'Premium Membership',
           icon: Icons.arrow_back_ios,
           onPressed: () => navigateToSafePrimaryScreen(context),
         ),
@@ -108,9 +108,9 @@ class _TopUpScreenState extends State<TopUpScreen> {
                         padding: EdgeInsets.symmetric(
                             vertical: 18.h, horizontal: 16.w),
                         child: NoDataFound(
-                          titleText: 'No Discount Credit packages available',
+                          titleText: 'No Premium Membership packages available',
                           bodyText:
-                              'Please check again soon for available Add Credits packages.',
+                              'Please check again soon for available membership packages.',
                           image: "assets/images/oops.png",
                         ),
                       )
@@ -120,7 +120,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              'Add Discount Credits',
+                              'Premium Membership',
                               style: TextStyle(
                                 color: _headingColor,
                                 fontSize: 28.sp,
@@ -131,7 +131,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
                             ),
                             SizedBox(height: 8.h),
                             Text(
-                              'Add TouristSaver Discount Credits to unlock more member savings at participating merchants.',
+                              'Unlock Premium Savings with participating TouristSaver merchants.',
                               style: TextStyle(
                                 color: _bodyColor,
                                 fontSize: 15.sp,
@@ -443,7 +443,7 @@ class _TopUpWidgetState extends State<TopUpWidget> {
                     ),
                     SizedBox(height: 5.h),
                     Text(
-                      '${_creditsText(package)} Discount Credits',
+                      'Premium Membership',
                       style: TextStyle(
                         color: _bodyColor,
                         fontSize: 14.sp,
@@ -468,7 +468,7 @@ class _TopUpWidgetState extends State<TopUpWidget> {
           ),
           SizedBox(height: 6.h),
           Text(
-            'Add credits to your TouristSaver wallet and keep saving with participating merchants.',
+            'Keep unlocking Premium Savings with participating merchants.',
             style: TextStyle(
               color: _bodyColor,
               fontSize: 13.5.sp,
@@ -503,12 +503,10 @@ class _TopUpWidgetState extends State<TopUpWidget> {
     if (name == null || name.isEmpty) {
       return 'Premium Package';
     }
-    return name.replaceAll(RegExp('top-up', caseSensitive: false), 'Credits');
-  }
-
-  String _creditsText(Datum package) {
-    return removeTrailingZero(
-        numFormatter.format(package.universalPiiinks ?? 0));
+    return name.replaceAll(
+      RegExp('top-up', caseSensitive: false),
+      'Premium Membership',
+    );
   }
 
   Future<void> _startTopUp(Datum package) async {
@@ -517,8 +515,8 @@ class _TopUpWidgetState extends State<TopUpWidget> {
     final int? packageId = package.id;
     final String? countryId = widget.countryID ?? package.countryId?.toString();
     if (packageId == null || countryId == null || countryId.isEmpty) {
-      GlobalSnackBar.showError(
-          context, 'This Add Credits package is not available right now.');
+      GlobalSnackBar.showError(context,
+          'This Premium Membership package is not available right now.');
       return;
     }
 

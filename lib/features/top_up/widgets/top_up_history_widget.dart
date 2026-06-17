@@ -1,15 +1,16 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/error.dart';
 import 'package:touristsaver/constants/number_formatter.dart';
 import 'package:touristsaver/constants/style.dart';
+import 'package:touristsaver/features/transaction/services/dio_transaction.dart';
 import 'package:touristsaver/features/top_up/services/top_up_dio.dart';
+import 'package:touristsaver/models/response/transaction_res.dart'
+    as transaction;
 
 import '../../../constants/date_helper.dart';
-import '../../../constants/decimal_remove.dart';
 import '../../../models/response/top_up_res.dart';
 import 'package:touristsaver/generated/l10n.dart';
 
@@ -50,6 +51,7 @@ class _TopUpHistoryWidgetState extends State<TopUpHistoryWidget> {
 
   //Calling API of Transaction
   Future<TopUpHistoryResModel>? topUpRes;
+  Future<transaction.TransactionResModel?>? savingsRes;
   Future<TopUpHistoryResModel>? getTopUpData() async {
     TopUpHistoryResModel? topUpHistoryResModel = await DioTopUpStripe()
         .topUpHist(latestDateController.text.trim(),
@@ -62,6 +64,14 @@ class _TopUpHistoryWidgetState extends State<TopUpHistoryWidget> {
       load = false;
     });
     return topUpHistoryResModel!;
+  }
+
+  Future<transaction.TransactionResModel?> loadPremiumSavings() async {
+    final DateFormat apiDateFormat = DateFormat('yyyy-MM-dd');
+    final String latestDate = apiDateFormat.format(DateTime.now());
+    const String previousDate = '2000-01-01';
+
+    return DioTransaction().transac(previousDate, latestDate);
   }
 
   //For achieving the date before 7 days from the latest day
@@ -77,6 +87,7 @@ class _TopUpHistoryWidgetState extends State<TopUpHistoryWidget> {
     previousDateController.text = stringToDateTime.format(dateBefore7Days!);
     latestDateController.text = stringToDateTime.format(DateTime.now());
     topUpRes = getTopUpData();
+    savingsRes = loadPremiumSavings();
     super.initState();
   }
 
@@ -272,134 +283,51 @@ class _TopUpHistoryWidgetState extends State<TopUpHistoryWidget> {
                                                       )
                                                     ],
                                                   ),
-                                                  child: ListView.separated(
-                                                      physics:
-                                                          const NeverScrollableScrollPhysics(),
-                                                      shrinkWrap: true,
-                                                      separatorBuilder:
-                                                          (context, index2) {
-                                                        return const Divider(
-                                                            thickness: 2);
-                                                      },
-                                                      itemCount: snapshot
-                                                          .data!
-                                                          .data![availableDate![
-                                                              index]]!
-                                                          .length,
-                                                      itemBuilder:
-                                                          (context, index2) {
-                                                        var transactionData =
-                                                            snapshot.data!
-                                                                        .data![
-                                                                    availableDate![
-                                                                        index]]![
-                                                                index2];
-                                                        return Column(
-                                                          children: [
-                                                            // Title and SubTitle and Transaction Done
-                                                            Row(
-                                                              children: [
-                                                                //Title and Sub Title
-                                                                SizedBox(
-                                                                  width: MediaQuery.of(
-                                                                              context)
-                                                                          .size
-                                                                          .width /
-                                                                      1.7,
-                                                                  child: Column(
-                                                                    crossAxisAlignment:
-                                                                        CrossAxisAlignment
-                                                                            .start,
-                                                                    children: [
-                                                                      //Title or Merchant Name and Discount Percentage
+                                                  child: FutureBuilder<
+                                                      transaction
+                                                      .TransactionResModel?>(
+                                                    future: savingsRes,
+                                                    builder: (context,
+                                                        savingsSnapshot) {
+                                                      final double
+                                                          premiumSavings =
+                                                          savingsSnapshot
+                                                                  .hasData
+                                                              ? _totalPremiumSavings(
+                                                                  savingsSnapshot
+                                                                      .data!)
+                                                              : 0;
 
-                                                                      Text(
-                                                                        S
-                                                                            .of(context)
-                                                                            .topUpAmount,
-                                                                        style:
-                                                                            transConTitl,
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ),
-
-                                                                //Transaction Amount Piiinks and Currency
-                                                                Expanded(
-                                                                  child: Column(
-                                                                    crossAxisAlignment:
-                                                                        CrossAxisAlignment
-                                                                            .end,
-                                                                    children: [
-                                                                      //Topup Amount and Currency
-                                                                      AutoSizeText(
-                                                                        '${transactionData.foreignTransactionCurrency == null ? numFormatter.format(transactionData.totalAmount!) : numFormatter.format(transactionData.foreignTotalAmount!)}'
-                                                                        ' ${transactionData.foreignTransactionCurrency ?? transactionData.transactionCurrency}',
-                                                                        // textAlign:
-                                                                        //     TextAlign.end,
-                                                                        style:
-                                                                            transacAmtStyle,
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                            const SizedBox(
-                                                              height: 10,
-                                                            ),
-                                                            Row(
-                                                              children: [
-                                                                AutoSizeText(
-                                                                  "${S.of(context).receivedTouristSavers}: ",
-                                                                  style: transUni
-                                                                      .copyWith(
-                                                                          color:
-                                                                              _creditsMuted),
-                                                                ),
-                                                                AutoSizeText(
-                                                                  "${removeTrailingZero(numFormatter.format(transactionData.piiinksProvided))} ${S.of(context).touristSavers}",
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                  style: transUni
-                                                                      .copyWith(
-                                                                          color:
-                                                                              _creditsPrimaryBlue),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                            //TopUpDate
-                                                            Row(
-                                                              children: [
-                                                                Expanded(
-                                                                  child:
-                                                                      AutoSizeText(
-                                                                    // you have time in utc and it is converted into local
-                                                                    dateFormatTime.format(snapshot
-                                                                        .data!
-                                                                        .data![
-                                                                            availableDate![index]]![
-                                                                            index2]
-                                                                        .transactionDate!
-                                                                        .toLocal()),
-                                                                    style: transUni
-                                                                        .copyWith(
-                                                                            color:
-                                                                                _creditsMuted),
-                                                                    textAlign:
-                                                                        TextAlign
-                                                                            .end,
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-
-                                                            // const SizedBox(
-                                                            //     height: 5),
-                                                          ],
-                                                        );
-                                                      }))
+                                                      return ListView.separated(
+                                                        physics:
+                                                            const NeverScrollableScrollPhysics(),
+                                                        shrinkWrap: true,
+                                                        separatorBuilder:
+                                                            (context, index2) {
+                                                          return const Divider(
+                                                              thickness: 2);
+                                                        },
+                                                        itemCount: snapshot
+                                                            .data!
+                                                            .data![
+                                                                availableDate![
+                                                                    index]]!
+                                                            .length,
+                                                        itemBuilder:
+                                                            (context, index2) {
+                                                          final transactionData =
+                                                              snapshot.data!
+                                                                      .data![
+                                                                  availableDate![
+                                                                      index]]![index2];
+                                                          return _premiumMembershipActivity(
+                                                            transactionData,
+                                                            premiumSavings,
+                                                          );
+                                                        },
+                                                      );
+                                                    },
+                                                  ))
                                             ],
                                           );
                                         }),
@@ -414,14 +342,81 @@ class _TopUpHistoryWidgetState extends State<TopUpHistoryWidget> {
             });
   }
 
+  Widget _premiumMembershipActivity(
+    Datum transactionData,
+    double premiumSavings,
+  ) {
+    final String membershipAmount =
+        '${transactionData.foreignTransactionCurrency == null ? numFormatter.format(transactionData.totalAmount ?? 0) : numFormatter.format(transactionData.foreignTotalAmount ?? 0)}'
+                ' ${transactionData.foreignTransactionCurrency ?? transactionData.transactionCurrency ?? ''}'
+            .trim();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _activityMetricRow('Premium Membership', membershipAmount),
+        const SizedBox(height: 10),
+        _activityMetricRow(
+          'Premium Savings to Date',
+          NumberFormat.currency(symbol: '\$', decimalDigits: 2)
+              .format(premiumSavings),
+        ),
+        if (transactionData.transactionDate != null) ...[
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: AutoSizeText(
+              dateFormatTime.format(transactionData.transactionDate!.toLocal()),
+              style: transUni.copyWith(color: _creditsMuted),
+              textAlign: TextAlign.end,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _activityMetricRow(String label, String value) {
+    return Row(
+      children: [
+        Expanded(
+          child: AutoSizeText(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: transConTitl,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Flexible(
+          child: AutoSizeText(
+            value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.right,
+            style: transacAmtStyle.copyWith(color: _creditsPrimaryBlue),
+          ),
+        ),
+      ],
+    );
+  }
+
+  double _totalPremiumSavings(transaction.TransactionResModel model) {
+    final Iterable<transaction.Datum> transactions =
+        model.data?.values.expand((items) => items) ?? const [];
+    return transactions.fold<double>(
+      0,
+      (total, item) => total + (item.discountAmount ?? 0),
+    );
+  }
+
   //If no transaction data is available
   noData() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
       child: _DiscountCreditsEmptyState(
-        title: 'No added Discount Credits yet',
-        body:
-            'Discount Credits added after your membership purchase will appear here.',
+        title: 'No membership value added yet',
+        body: 'Premium Membership value added after purchase will appear here.',
       ),
     );
   }
@@ -498,48 +493,6 @@ class _DiscountCreditsEmptyState extends StatelessWidget {
               fontWeight: FontWeight.w600,
               fontFamily: 'Sans',
               height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(18),
-                onTap: () {
-                  context.pushNamed('top-up');
-                },
-                child: Ink(
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [_creditsPrimaryBlue, _creditsCtaCyan],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _creditsPrimaryBlue.withValues(alpha: 0.18),
-                        blurRadius: 18,
-                        offset: const Offset(0, 9),
-                      ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'Add Discount Credits',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        fontFamily: 'Sans',
-                      ),
-                    ),
-                  ),
-                ),
-              ),
             ),
           ),
         ],

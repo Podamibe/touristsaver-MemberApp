@@ -6,6 +6,7 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:go_router/go_router.dart';
 import 'package:touristsaver/common/app_variables.dart';
 import 'package:touristsaver/common/services/dio_common.dart';
+import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/common/widgets/custom_button.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
 import 'package:touristsaver/constants/env.dart';
@@ -127,7 +128,9 @@ class _NumberOTPScreenState extends State<NumberOTPScreen> with CodeAutoFill {
 
   void showPaidFreeScreen() {
     ScaffoldMessenger.of(context).clearSnackBars();
-    context.pushReplacementNamed('paid-free'); // adjust route name
+    context.pushReplacementNamed(
+      'paid-free',
+    );
   }
 
   static const Color _primaryBlue = Color(0xFF0009FE);
@@ -219,6 +222,14 @@ class _NumberOTPScreenState extends State<NumberOTPScreen> with CodeAutoFill {
     );
 
     return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: CustomAppBar(
+          text: 'Verify Mobile',
+          icon: Icons.arrow_back_ios_new,
+          onPressed: _returnToRegistrationForm,
+        ),
+      ),
       backgroundColor: _screenBackground,
       body: SafeArea(
         child: LayoutBuilder(
@@ -499,15 +510,9 @@ class _NumberOTPScreenState extends State<NumberOTPScreen> with CodeAutoFill {
 
                           if (res.data!.premiumCodeIsApplied == true &&
                               res.data?.discount == "100") {
-                            print(
-                                "000000000000000000000000000000000000000000000000000");
-                            showPaidFreeScreen(); // redirect to paid free screen with the message of premium code applied but not paid with the option to continue with free or top up
-                            // context.pushReplacementNamed('congrats-screen',
-                            //     pathParameters: {
-                            //       'piiinkCredit': toFixed2DecimalPlaces(
-                            //               res.data!.universalWallet!.balance!)
-                            //           .toString(),
-                            //     });
+                            context.pushReplacementNamed(
+                              'paid-free',
+                            );
                           }
                           // if premium code is provided plus paid
                           // else if (res.data!.premiumCodeIsApplied == true &&
@@ -617,9 +622,24 @@ class _NumberOTPScreenState extends State<NumberOTPScreen> with CodeAutoFill {
     );
   }
 
+  void _returnToRegistrationForm() {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+
+    context.pushReplacementNamed(
+      'register',
+      queryParameters: {
+        'issuercode': widget.issuerCode == 'null' ? '' : widget.issuerCode,
+        'memberReferralCode':
+            widget.referralCode == 'null' ? '' : widget.referralCode,
+      },
+    );
+  }
+
   // If applied premium code is paid version
   buyPiinkPopUp(String? clientSecret, String? uniBalance) async {
-    bool isLoadingB = false;
     return showGeneralDialog(
       barrierLabel: 'Label',
       barrierDismissible: false, //to dismiss the container once opened
@@ -700,38 +720,8 @@ class _NumberOTPScreenState extends State<NumberOTPScreen> with CodeAutoFill {
 
                   const SizedBox(height: 40),
 
-                  // Top Up Button
-                  StatefulBuilder(builder: (context, stateMod) {
-                    return isLoadingB == true
-                        ? const CustomButtonWithCircular()
-                        : CustomButton(
-                            text: S.of(context).topUp,
-                            onPressed: () async {
-                              stateMod(() {
-                                isLoadingB = true;
-                              });
-
-                              if (!mounted) return;
-                              await Stripe.instance.initPaymentSheet(
-                                  paymentSheetParameters:
-                                      SetupPaymentSheetParameters(
-                                paymentIntentClientSecret: clientSecret,
-                                merchantDisplayName: 'Prospects',
-                                style: ThemeMode.dark,
-                              ));
-                              stateMod(() {
-                                isLoadingB = false;
-                              });
-                              await displayPaymentSheet(clientSecret);
-                            },
-                          );
-                  }),
-
-                  const SizedBox(height: 20),
-
-                  // Free Button
                   CustomButton(
-                    text: S.of(context).continueWithoutTopUp,
+                    text: S.of(context).continueL,
                     onPressed: () {
                       if (!mounted) return;
 

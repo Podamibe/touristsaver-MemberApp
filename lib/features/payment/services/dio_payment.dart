@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
@@ -57,26 +58,56 @@ class DioPay {
   }
 
   // Sure the Payment to apply piiink with the same response
-  Future<SureApplyPiiinkResModel?> sureApplyPiiink(
+  Future<dynamic> sureApplyPiiink(
       {required bool payToMainMerchant,
       required SureApplyPiiinkReqModel sureApplyPiiinkReqModel}) async {
+    final payload = payToMainMerchant
+        ? sureApplyPiiinkReqModel.toJsonMainMerchant()
+        : sureApplyPiiinkReqModel.toJsonTerminalMerchant();
     try {
       Dio dio = await getClient();
-      log(sureApplyPiiinkReqModel.toJsonTerminalMerchant().toString());
-      log('Data: ${sureApplyPiiinkReqModel.toJsonMainMerchant().toString()}');
+      log('POST $surApplyPiiink payload: $payload');
       Response<String> response = await dio.post(
         surApplyPiiink,
-        data: payToMainMerchant
-            ? sureApplyPiiinkReqModel.toJsonMainMerchant()
-            : sureApplyPiiinkReqModel.toJsonTerminalMerchant(),
+        data: payload,
       );
+      log('POST $surApplyPiiink response: ${response.data}');
       return sureApplyPiiinkResModelFromJson(response.data!);
-    } catch (e) {
-      if (e is DioException) {
-        log(e.response!.data.toString());
-        log(e.response!.headers.toString());
+    } on DioException catch (e) {
+      final responseData = e.response?.data;
+      log('POST $surApplyPiiink failed with status '
+          '${e.response?.statusCode}. Payload: $payload. Response: '
+          '$responseData');
+
+      if (responseData is String) {
+        try {
+          return errorResModelFromJson(responseData);
+        } catch (_) {
+          return ErrorResModel(
+            status: e.response?.statusCode,
+            message: responseData,
+          );
+        }
       }
-      return null;
+
+      if (responseData is Map<String, dynamic>) {
+        return ErrorResModel.fromJson(responseData);
+      }
+
+      if (responseData is Map) {
+        return ErrorResModel.fromJson(
+          jsonDecode(jsonEncode(responseData)) as Map<String, dynamic>,
+        );
+      }
+
+      return ErrorResModel(
+        status: e.response?.statusCode,
+        message: e.message,
+      );
+    } catch (e) {
+      log('POST $surApplyPiiink failed before response. Payload: $payload. '
+          'Error: $e');
+      return ErrorResModel(message: e.toString());
     }
   }
 

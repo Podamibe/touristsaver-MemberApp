@@ -44,7 +44,7 @@ class SEn extends S {
 
   @override
   String get congratulationXTouristSaversHasBeenAddedToYourWallet =>
-      'Congratulations! &X TouristSavers has been added to your wallet';
+      'Congratulations! Premium Savings has been added to your membership';
 
   @override
   String get premiumCodeUseHistory => 'Premium Code Use History';
@@ -169,7 +169,7 @@ class SEn extends S {
 
   @override
   String get noTopupPacakgeAvailableForNow =>
-      'No top-up pacakge available for now';
+      'No membership package available for now';
 
   @override
   String get claimFreeTouristSavers => 'Claim Free TouristSavers';
@@ -259,21 +259,21 @@ class SEn extends S {
   String get loadXTouristSavers => 'Load &L TouristSavers';
 
   @override
-  String get touristSaversCreditAdded => 'TouristSaver Credits Added';
+  String get touristSaversCreditAdded => 'Premium Savings Added';
 
   @override
   String get congratulationNowYouHaveXTouristSavers =>
       'Congratulations! You now have &X TouristSavers';
 
   @override
-  String get topUpAndPayXY => 'Top-up and Pay &XY';
+  String get topUpAndPayXY => 'Pay &XY';
 
   @override
   String get iAgreeWithTheTermsAndCondition => 'I agree with the &C';
 
   @override
   String get weWillDeductCPiinksFromYourCredit =>
-      'We will deduct &C&X &CTouristSavers from Your Credit';
+      'We will apply &C&X &CTouristSavers toward your Premium Savings';
 
   @override
   String get noNotificationFrom => 'No notifications from &S to &E';
@@ -284,7 +284,7 @@ class SEn extends S {
 
   @override
   String get youDoNotHaveAnyTopUpHistoryToViewBetweenXTOY =>
-      'You do not have any TopUp history to view between @X to @Y';
+      'You do not have any Premium Savings activity to view between @X to @Y';
 
   @override
   String get upToXdiscount => 'Up to &x% off';
@@ -356,8 +356,7 @@ class SEn extends S {
   String get biometrics => 'Biometrics';
 
   @override
-  String get buyXUniversalTouristSaverCredits =>
-      'Buy &X Universal TouristSaver Credits';
+  String get buyXUniversalTouristSaverCredits => 'Unlock &X Premium Savings';
 
   @override
   String get byClicking => 'By Clicking';
@@ -403,7 +402,7 @@ class SEn extends S {
   String get chooseOne => 'Choose One';
 
   @override
-  String get chooseWallet => 'Choose Wallet';
+  String get chooseWallet => 'Choose Savings Option';
 
   @override
   String get city => 'City *';
@@ -424,14 +423,14 @@ class SEn extends S {
   String get confirmPasswordDoesNotMatch => 'Confirm password does not match';
 
   @override
-  String get confirmWallet => 'Confirm Wallet';
+  String get confirmWallet => 'Confirm Savings Option';
 
   @override
   String get congratulations => 'Congratulations';
 
   @override
   String get congratulationsYouHaveSuccessfullyRegisteredUsingPremiumCodeNextYouCanEitherTopupOrAccountOrContinue =>
-      'Congratulations! You have successfully registered using premium code. Next, you can either topup or account or continue';
+      'Congratulations! Your Premium Membership has been activated. You can continue exploring TouristSaver benefits.';
 
   @override
   String get contact => 'Contact';
@@ -450,10 +449,10 @@ class SEn extends S {
 
   @override
   String get continueWithDefaultTouristSaverCredits =>
-      'Continue with default TouristSaver credits';
+      'Continue with Premium Membership';
 
   @override
-  String get continueWithoutTopUp => 'Continue without Top-up';
+  String get continueWithoutTopUp => 'Continue';
 
   @override
   String get couldNotReceiveNotifications => 'Could not receive notifications';
@@ -475,7 +474,7 @@ class SEn extends S {
   String get countryChangedSuccessfully => 'Country changed successfully';
 
   @override
-  String get creditRemaning => 'Credit Remaning';
+  String get creditRemaning => 'Premium Savings Remaining';
 
   @override
   String get currentPassword => 'Current Password';
@@ -614,7 +613,7 @@ class SEn extends S {
 
   @override
   String get insufficientTouristSaverCredits =>
-      'Insufficient TouristSaver Credits';
+      'Premium Savings access unavailable';
 
   @override
   String get invalidQrCode => 'Invalid QR code';
@@ -688,7 +687,7 @@ class SEn extends S {
   String get merchantRemovedFromFavorites => 'Merchant removed from favorites';
 
   @override
-  String get merchantWallet => 'Merchant Wallet';
+  String get merchantWallet => 'Merchant Premium Savings';
 
   @override
   String get merchants => 'Merchants';
@@ -726,7 +725,7 @@ class SEn extends S {
   String get myMembership => 'My Membership';
 
   @override
-  String get myWallet => 'My Wallet';
+  String get myWallet => 'My Savings';
 
   @override
   String get nearbyCharity => 'Nearby Charity';
@@ -815,10 +814,10 @@ class SEn extends S {
   String get noThanks => 'No thanks';
 
   @override
-  String get noTopUpAvailable => 'No Top-up available';
+  String get noTopUpAvailable => 'No membership package available';
 
   @override
-  String get noTopUpHasBeenDoneYet => 'No Top Up has been done yet';
+  String get noTopUpHasBeenDoneYet => 'No Premium Savings activity yet';
 
   @override
   String get noTransactionHasBeenCompletedYet =>
@@ -832,7 +831,8 @@ class SEn extends S {
   String get noWebsiteLink => 'No Website Link';
 
   @override
-  String get notEnoughTouristSaverCredits => 'Not enough TouristSaver credits';
+  String get notEnoughTouristSaverCredits =>
+      'Not enough Premium Savings access';
 
   @override
   String get notifications => 'Notifications';
@@ -908,14 +908,14 @@ class SEn extends S {
       'Phone number should be at least 7 digits';
 
   @override
-  String get touristSaverCredits => ' TouristSaver Credits';
+  String get touristSaverCredits => ' Premium Savings';
 
   @override
-  String get touristSaverCreditsInfo => 'TouristSaver Credits Info';
+  String get touristSaverCreditsInfo => 'Premium Savings Info';
 
   @override
   String get touristSaverCreditsInfoD =>
-      'Universal TouristSaver Credits allow you to get a discount with any of our Merchants. Every time you use TouristSaver you will receive Merchant TouristSaver credits to spend back with the issuing Merchant';
+      'Premium Savings helps you access eligible discounts with participating TouristSaver merchants.';
 
   @override
   String get touristSaverTransferredSuccessfully =>
@@ -1155,7 +1155,7 @@ class SEn extends S {
       'Search for merchants/category/location';
 
   @override
-  String get searchMerchantWallet => 'Search merchant Wallet';
+  String get searchMerchantWallet => 'Search merchant savings';
 
   @override
   String get searchOrChooseCountryStateRegionFromTheListBelowToFilterOffersAndMerchants =>
@@ -1247,7 +1247,7 @@ class SEn extends S {
   String get sortByAlphabetical => 'Sort by Alphabetical';
 
   @override
-  String get sortByTouristSaverCredits => 'Sort by TouristSaver Credits';
+  String get sortByTouristSaverCredits => 'Sort by Premium Savings';
 
   @override
   String get stripePaymentFail => 'Stripe Payment Fail';
@@ -1295,7 +1295,7 @@ class SEn extends S {
 
   @override
   String get toUseTopUpFunctionRegisterMembershipOrLogIn =>
-      'To use top-up function register membership or log in';
+      'To access Premium Savings, register or log in';
 
   @override
   String get toViewTheTransactionHistoryRegisterMembershipOrLogIn =>
@@ -1305,25 +1305,25 @@ class SEn extends S {
   String get today => 'Today';
 
   @override
-  String get topUp => 'Top-up';
+  String get topUp => 'Premium Membership';
 
   @override
-  String get topUpAmount => 'Top Up Amount';
+  String get topUpAmount => 'Membership Amount';
 
   @override
-  String get topUpHistory => 'Top Up History';
+  String get topUpHistory => 'Premium Savings Activity';
 
   @override
-  String get topUpUniversalTouristSaverCredits =>
-      'Top-up Universal TouristSaver Credits';
+  String get topUpUniversalTouristSaverCredits => 'Premium Membership Options';
 
   @override
-  String get topUpUniversalTouristSaverCreditsToGetDiscountWithAnyOfOurMerchant =>
-      'Top-up Universal TouristSaver Credits to get discount with any of our merchant';
+  String
+      get topUpUniversalTouristSaverCreditsToGetDiscountWithAnyOfOurMerchant =>
+          'Unlock Premium Savings with participating TouristSaver merchants.';
 
   @override
   String get topUpYourUniversalTouristSaversToGainExtraCreditAndEnjoyMoreOffersFromYourFavouriteMerchants =>
-      'Top-up your Universal TouristSavers to gain extra credit and enjoy more offers from your favourite merchants';
+      'Unlock more Premium Savings and enjoy more offers from your favourite merchants.';
 
   @override
   String get transactionCode => 'Transaction Code*';
@@ -1350,7 +1350,7 @@ class SEn extends S {
   String get universal => 'Universal';
 
   @override
-  String get universalWallet => 'Universal Wallet';
+  String get universalWallet => 'Universal Premium Savings';
 
   @override
   String get update => 'Update';
@@ -1396,7 +1396,7 @@ class SEn extends S {
   String get viewOpeningHours => 'View Opening Hours';
 
   @override
-  String get wallet => 'Wallet';
+  String get wallet => 'Savings';
 
   @override
   String get weAreCurrentlyWorkingOnThisWeWillKeepYouUpdated =>
@@ -1431,10 +1431,10 @@ class SEn extends S {
 
   @override
   String get youDonTHaveAnyTouristSaverUniversalCreditRegisterYourMembershipOrLogInToAccessTheTouristSaverBenefits =>
-      'You don\'t have any TouristSaver Universal credit. Register your membership or log in to access the TouristSaver benefits';
+      'Register your Premium Membership or log in to access TouristSaver benefits.';
 
   @override
-  String get yourActiveMerchantWallets => 'Your Active Merchant Wallets';
+  String get yourActiveMerchantWallets => 'Your Merchant Premium Savings';
 
   @override
   String get yourEmailIsNotActivatedYet =>
@@ -1455,8 +1455,7 @@ class SEn extends S {
   String get yourQrCode => 'Your QR Code';
 
   @override
-  String get yourUniversalTouristSaverCredits =>
-      'Your Universal TouristSaver Credits';
+  String get yourUniversalTouristSaverCredits => 'Your Premium Savings';
 
   @override
   String get direction => 'Directions';

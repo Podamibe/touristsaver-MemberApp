@@ -2122,8 +2122,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
     if (res is CommonResModel) {
       if (res.status == 'Success') {
-        GlobalSnackBar.showSuccess(context, S.of(context).otpSentSuccessfully);
-        context.pushReplacementNamed('number-reg-otp', extra: {
+        context.pushNamed('number-reg-otp', extra: {
           'countryID': selectedCountryID,
           'stateID': selectedStateID,
           'charityID': selectedCharityID ?? 0,

@@ -126,17 +126,12 @@ class _MySplashScreenState extends State<MySplashScreen> {
       }
       String? token = await pref.readData(key: saveToken);
       bool isLoggedIn = token != null && token.isNotEmpty;
-      bool canGoHome = await checkWalletBalance();
 
       // Wait splash time before deciding where to go
       Timer(Duration(seconds: splashtime), () async {
         if (acc == 'true') {
           if (isLoggedIn) {
-            if (canGoHome) {
-              showBottomBar();
-            } else {
-              showPaidFreeScreen(); // redirect to top up / warning
-            }
+            showBottomBar();
           } else {
             showlogin();
           }
@@ -148,14 +143,6 @@ class _MySplashScreenState extends State<MySplashScreen> {
 
     getAppSign(); //Calling to auto the SMS OTP
     super.initState();
-  }
-
-  void showTopUpScreen() {
-    context.pushReplacementNamed('top-up'); // adjust route name
-  }
-
-  void showPaidFreeScreen() {
-    context.pushReplacementNamed('paid-free'); // adjust route name
   }
 
   // @override

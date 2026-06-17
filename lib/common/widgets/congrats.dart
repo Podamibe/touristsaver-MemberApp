@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 
 import '../app_variables.dart';
 
@@ -26,10 +25,6 @@ class _CongratsScreenState extends State<CongratsScreen> {
 
   double get _creditAmount =>
       double.tryParse(widget.piiinkCredit.replaceAll(',', '').trim()) ?? 0;
-
-  String get _formattedCredits =>
-      NumberFormat.currency(symbol: '\$', decimalDigits: 2)
-          .format(_creditAmount);
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +96,7 @@ class _CongratsScreenState extends State<CongratsScreen> {
       child: Column(
         children: [
           Text(
-            'Your membership is active',
+            'Your Premium Membership is now active',
             textAlign: TextAlign.center,
             style: GoogleFonts.nunito(
               color: _headingColor,
@@ -112,7 +107,7 @@ class _CongratsScreenState extends State<CongratsScreen> {
           ),
           SizedBox(height: 12.h),
           Text(
-            'Welcome to TouristSaver. You can now explore nearby experiences, dining, attractions and travel savings across Australia & New Zealand.',
+            'Welcome to TouristSaver. You can now explore nearby experiences, dining, attractions and travel savings across Australia.',
             textAlign: TextAlign.center,
             style: GoogleFonts.nunito(
               color: _bodyColor,
@@ -142,7 +137,7 @@ class _CongratsScreenState extends State<CongratsScreen> {
       child: Column(
         children: [
           Text(
-            'You’ve unlocked $_formattedCredits of TouristSaver Discount Credits',
+            'Premium Membership activated',
             textAlign: TextAlign.center,
             style: GoogleFonts.nunito(
               color: _headingColor,
@@ -153,7 +148,7 @@ class _CongratsScreenState extends State<CongratsScreen> {
           ),
           SizedBox(height: 8.h),
           Text(
-            'Use these Discount Credits toward eligible discounts and savings across participating merchants.',
+            'You can now unlock Premium Savings across participating merchants.',
             textAlign: TextAlign.center,
             style: GoogleFonts.nunito(
               color: _bodyColor,
@@ -164,7 +159,7 @@ class _CongratsScreenState extends State<CongratsScreen> {
           ),
           SizedBox(height: 8.h),
           Text(
-            'Discount Credits are a membership benefit for accessing offers. They are not cash and cannot be withdrawn.',
+            'Your membership gives you access to over \$10,000 in potential savings with participating TouristSaver merchants.',
             textAlign: TextAlign.center,
             style: GoogleFonts.nunito(
               color: _bodyColor,
@@ -206,7 +201,7 @@ class _CongratsScreenState extends State<CongratsScreen> {
             AppVariables.initNotifications = true;
             context.pushReplacementNamed(
               'bottom-bar',
-              pathParameters: {'page': '3'},
+              pathParameters: {'page': '0'},
             );
           },
           child: Center(

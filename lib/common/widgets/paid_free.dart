@@ -305,11 +305,7 @@ class _PaidFreeScreenState extends State<PaidFreeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final discountStr = premiumData?['discount'];
-    double discountPercent =
-        double.tryParse(discountStr?.toString() ?? "0") ?? 0;
-    String appBarTitle =
-        discountPercent == 100 ? "Free Membership" : "Join now";
+    String appBarTitle = "Premium Membership";
     const Color primaryBlue = Color(0xFF0009FE);
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -561,7 +557,9 @@ class _TopUpWidgetState extends State<TopUpWidget> {
           );
         } else {
           _dismissPaymentConfirmation(paymentContext);
-          context.pushReplacementNamed('top-up');
+          _navigateToActivationSuccess(
+            creditAmount: _selectedPackageCreditAmount(),
+          );
         }
         return;
       }
@@ -655,32 +653,35 @@ class _TopUpWidgetState extends State<TopUpWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final originalFee = widget.memPackAll!.data![widget.index!].packageFee!;
-    String currency = "\$";
+    final package = widget.memPackAll!.data![widget.index!];
+    final originalFee = package.packageFee ?? 0;
+    final currency = (package.packageCurrencySymbol?.trim().isNotEmpty ?? false)
+        ? package.packageCurrencySymbol!.trim()
+        : AppVariables.currency ?? "\$";
+    final currencyName = package.packageCurrencyName?.trim() ?? '';
 
     final discountStr = widget.premiumData?['discount'];
     debugPrint("====== CURRENT DISCOUNT PERCENT: $discountStr% ======");
 
     double discountPercent =
         double.tryParse(discountStr?.toString() ?? "0") ?? 0;
+    discountPercent = discountPercent.clamp(0, 100);
     debugPrint("====== CURRENT DISCOUNT PERCENT: $discountPercent% ======");
-    double finalFee = originalFee * (1 - (discountPercent / 100));
+    final double discountAmount = originalFee * (discountPercent / 100);
+    final double finalFee =
+        (originalFee - discountAmount).clamp(0, double.infinity);
 
-    String discountedPriceText = "$currency${finalFee.toStringAsFixed(2)}";
-
-    String originalPriceText =
-        "$currency${removeTrailingZero(numFormatter.format(originalFee))}";
-    String discountedPriceTextWithGst = _withIncGst(discountedPriceText);
-    String originalPriceTextWithGst = _withIncGst(originalPriceText);
+    final originalPriceText =
+        _formatMembershipAmount(originalFee, currency, currencyName);
+    final discountAmountText =
+        "-${_formatMembershipAmount(discountAmount, currency, currencyName)}";
+    final amountPayableText =
+        _formatMembershipAmount(finalFee, currency, currencyName);
 
     final bool isFreeMembership = discountPercent == 100;
     final bool hasPartialDiscount =
         discountPercent > 0 && discountPercent < 100;
-    final String paymentPriceText = hasPartialDiscount
-        ? discountedPriceTextWithGst
-        : originalPriceTextWithGst;
-    final String buttonLabel =
-        isFreeMembership ? "Activate my membership" : "Pay $paymentPriceText";
+    final String buttonLabel = "Continue";
     final bool showValueSections = widget.showHeader || isFreeMembership;
 
     return Padding(
@@ -704,24 +705,28 @@ class _TopUpWidgetState extends State<TopUpWidget> {
             SizedBox(height: 18.h),
           _membershipCard(
             originalPriceText: originalPriceText,
-            discountedPriceText: discountedPriceText,
+            discountAmountText: discountAmountText,
+            amountPayableText: amountPayableText,
             discountPercent: discountPercent,
             isFreeMembership: isFreeMembership,
             hasPartialDiscount: hasPartialDiscount,
             buttonLabel: buttonLabel,
             onPressed: isFreeMembership
                 ? _handleFreeMemberShip
-                : () => _showPaymentConfirmation(paymentPriceText),
+                : () => _showPaymentConfirmation(amountPayableText),
           ),
         ],
       ),
     );
   }
 
-  String _withIncGst(String priceText) {
-    return priceText.toLowerCase().contains('gst')
-        ? priceText
-        : '$priceText inc GST';
+  String _formatMembershipAmount(
+    double amount,
+    String currency,
+    String currencyName,
+  ) {
+    final amountText = "$currency${amount.toStringAsFixed(2)}";
+    return currencyName.isEmpty ? amountText : "$amountText $currencyName";
   }
 
   Widget _heroImage() {
@@ -793,7 +798,7 @@ class _TopUpWidgetState extends State<TopUpWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Save on thousands of experiences across Australia & New Zealand",
+            "Save on thousands of experiences across Australia",
             style: GoogleFonts.nunito(
               color: _headingColor,
               fontSize: 23.sp,
@@ -986,7 +991,8 @@ class _TopUpWidgetState extends State<TopUpWidget> {
 
   Widget _membershipCard({
     required String originalPriceText,
-    required String discountedPriceText,
+    required String discountAmountText,
+    required String amountPayableText,
     required double discountPercent,
     required bool isFreeMembership,
     required bool hasPartialDiscount,
@@ -998,9 +1004,7 @@ class _TopUpWidgetState extends State<TopUpWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isFreeMembership
-                ? "Your 12-month membership is included"
-                : "Premium 12-month membership",
+            "Premium Membership",
             style: GoogleFonts.nunito(
               color: _headingColor,
               fontSize: 20.sp,
@@ -1010,9 +1014,7 @@ class _TopUpWidgetState extends State<TopUpWidget> {
           ),
           SizedBox(height: 8.h),
           Text(
-            isFreeMembership
-                ? "No payment is required. Activate your membership to start exploring TouristSaver offers."
-                : "Enjoy member savings for 12 months across Australia & New Zealand.",
+            "Enjoy member savings for 12 months across Australia.",
             style: GoogleFonts.nunito(
               color: _bodyColor,
               fontSize: 14.sp,
@@ -1021,22 +1023,18 @@ class _TopUpWidgetState extends State<TopUpWidget> {
             ),
           ),
           SizedBox(height: 18.h),
-          if (isFreeMembership)
-            _includedMembershipBadge()
-          else if (hasPartialDiscount)
-            _discountPriceSummary(
-              originalPriceText: originalPriceText,
-              discountedPriceText: discountedPriceText,
-              discountPercent: discountPercent,
-            )
-          else
-            _standardPriceSummary(originalPriceText),
-          if (!isFreeMembership) ...[
-            SizedBox(height: 16.h),
-            _valueGuaranteePanel(),
-            SizedBox(height: 18.h),
-          ] else
-            SizedBox(height: 22.h),
+          _membershipPriceSummary(
+            originalPriceText: originalPriceText,
+            discountAmountText: discountAmountText,
+            amountPayableText: amountPayableText,
+            discountPercent: discountPercent,
+            showDiscount: hasPartialDiscount || isFreeMembership,
+          ),
+          SizedBox(height: 16.h),
+          _benefitSummary(),
+          SizedBox(height: 16.h),
+          _valueGuaranteePanel(),
+          SizedBox(height: 18.h),
           _GradientCheckoutButton(
             label: buttonLabel,
             isLoading: isLoading,
@@ -1047,42 +1045,12 @@ class _TopUpWidgetState extends State<TopUpWidget> {
     );
   }
 
-  Widget _standardPriceSummary(String priceText) {
-    return Center(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(
-            priceText,
-            style: GoogleFonts.nunito(
-              color: _headingColor,
-              fontSize: 34.sp,
-              fontWeight: FontWeight.w900,
-              height: 1,
-            ),
-          ),
-          SizedBox(width: 8.w),
-          Padding(
-            padding: EdgeInsets.only(bottom: 4.h),
-            child: Text(
-              "inc GST for 12 months",
-              style: GoogleFonts.nunito(
-                color: _bodyColor,
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _discountPriceSummary({
+  Widget _membershipPriceSummary({
     required String originalPriceText,
-    required String discountedPriceText,
+    required String discountAmountText,
+    required String amountPayableText,
     required double discountPercent,
+    required bool showDiscount,
   }) {
     return Container(
       padding: EdgeInsets.all(14.r),
@@ -1094,45 +1062,71 @@ class _TopUpWidgetState extends State<TopUpWidget> {
       child: Column(
         children: [
           _priceRow(
-            label: "Was",
-            value: _withIncGst(originalPriceText),
-            strikeThrough: true,
+            label: "Membership Price",
+            value: originalPriceText,
           ),
-          SizedBox(height: 8.h),
-          _priceRow(
-            label: "Promo saving applied",
-            value:
-                "${removeTrailingZero(numFormatter.format(discountPercent))}% off",
-            valueColor: _primaryBlue,
-          ),
-          SizedBox(height: 10.h),
+          if (showDiscount) ...[
+            SizedBox(height: 8.h),
+            _priceRow(
+              label:
+                  "Premium Code Discount (${removeTrailingZero(numFormatter.format(discountPercent))}% off)",
+              value: discountAmountText,
+              valueColor: _primaryBlue,
+            ),
+          ],
+          SizedBox(height: 12.h),
           Divider(height: 1, color: _borderColor),
-          SizedBox(height: 10.h),
-          Column(
-            children: [
-              Text(
-                "Today",
-                textAlign: TextAlign.center,
-                style: GoogleFonts.nunito(
-                  color: _bodyColor,
-                  fontSize: 13.5.sp,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                _withIncGst(discountedPriceText),
-                textAlign: TextAlign.center,
-                style: GoogleFonts.nunito(
-                  color: _headingColor,
-                  fontSize: 24.sp,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
+          SizedBox(height: 12.h),
+          _priceRow(
+            label: "Amount Payable",
+            value: amountPayableText,
+            valueColor: _headingColor,
+            isLarge: true,
           ),
         ],
       ),
+    );
+  }
+
+  Widget _benefitSummary() {
+    return Column(
+      children: [
+        _benefitLine(
+          Icons.savings_outlined,
+          "Over \$10,000 in potential savings",
+        ),
+        SizedBox(height: 10.h),
+        _benefitLine(
+          Icons.verified_outlined,
+          "Money Back Guarantee",
+        ),
+        SizedBox(height: 10.h),
+        _benefitLine(
+          Icons.public_outlined,
+          "Access to participating merchants across Australia",
+        ),
+      ],
+    );
+  }
+
+  Widget _benefitLine(IconData icon, String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: _primaryBlue, size: 20.sp),
+        SizedBox(width: 10.w),
+        Expanded(
+          child: Text(
+            text,
+            style: GoogleFonts.nunito(
+              color: _headingColor,
+              fontSize: 13.5.sp,
+              fontWeight: FontWeight.w800,
+              height: 1.3,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -1155,15 +1149,19 @@ class _TopUpWidgetState extends State<TopUpWidget> {
             ),
           ),
         ),
-        Text(
-          value,
-          style: GoogleFonts.nunito(
-            color: valueColor ?? _bodyColor,
-            fontSize: isLarge ? 22.sp : 14.sp,
-            fontWeight: isLarge ? FontWeight.w900 : FontWeight.w800,
-            decoration: strikeThrough
-                ? TextDecoration.lineThrough
-                : TextDecoration.none,
+        SizedBox(width: 12.w),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: GoogleFonts.nunito(
+              color: valueColor ?? _bodyColor,
+              fontSize: isLarge ? 22.sp : 14.sp,
+              fontWeight: isLarge ? FontWeight.w900 : FontWeight.w800,
+              decoration: strikeThrough
+                  ? TextDecoration.lineThrough
+                  : TextDecoration.none,
+            ),
           ),
         ),
       ],
@@ -1211,7 +1209,7 @@ class _TopUpWidgetState extends State<TopUpWidget> {
                 ),
                 SizedBox(height: 6.h),
                 Text(
-                  "We believe your TouristSaver membership should deliver real value throughout your membership journey.",
+                  "We are so confident that your TouristSaver membership will deliver real value throughout your membership journey.",
                   style: GoogleFonts.nunito(
                     color: _bodyColor,
                     fontSize: 12.5.sp,
@@ -1230,34 +1228,6 @@ class _TopUpWidgetState extends State<TopUpWidget> {
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _includedMembershipBadge() {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(14.r),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFF7FF),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: const Color(0xFFCCE8FF)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.verified_outlined, color: _primaryBlue, size: 24.sp),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: Text(
-              "Included today",
-              style: GoogleFonts.nunito(
-                color: _headingColor,
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w900,
-              ),
             ),
           ),
         ],
@@ -1451,7 +1421,7 @@ class _PaymentConfirmationScreenState
                       ),
                       _ConfirmationBenefit(
                         icon: Icons.public_outlined,
-                        text: "Savings across Australia & New Zealand",
+                        text: "Savings across Australia",
                       ),
                       _ConfirmationBenefit(
                         icon: Icons.restaurant_outlined,

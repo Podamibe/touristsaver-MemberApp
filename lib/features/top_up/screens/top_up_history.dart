@@ -28,7 +28,7 @@ class _TopUpHistoryScreenState extends State<TopUpHistoryScreen> {
           appBar: PreferredSize(
             preferredSize: const Size.fromHeight(kToolbarHeight * 1.6),
             child: CustomAppBar(
-              text: 'TouristSaver Discount Credits',
+              text: 'Premium Savings Activity',
               icon: Icons.arrow_back_ios,
               textColor: _historyNavy,
               fontSize: 17,
@@ -57,7 +57,7 @@ class _TopUpHistoryScreenState extends State<TopUpHistoryScreen> {
                     fontFamily: 'Sans',
                   ),
                   tabs: [
-                    const Tab(text: 'Added Discount Credits'),
+                    const Tab(text: 'Membership Value'),
                     const Tab(text: 'Promo Codes Used'),
                   ]),
             ),
