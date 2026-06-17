@@ -170,7 +170,7 @@ abstract class S {
   /// No description provided for @congratulationXTouristSaversHasBeenAddedToYourWallet.
   ///
   /// In en, this message translates to:
-  /// **'Congratulations! &X TouristSavers has been added to your wallet'**
+  /// **'Congratulations! Premium Savings has been added to your membership'**
   String get congratulationXTouristSaversHasBeenAddedToYourWallet;
 
   /// No description provided for @premiumCodeUseHistory.
@@ -394,7 +394,7 @@ abstract class S {
   /// No description provided for @noTopupPacakgeAvailableForNow.
   ///
   /// In en, this message translates to:
-  /// **'No top-up pacakge available for now'**
+  /// **'No membership package available for now'**
   String get noTopupPacakgeAvailableForNow;
 
   /// No description provided for @claimFreeTouristSavers.
@@ -563,7 +563,7 @@ abstract class S {
   /// No description provided for @touristSaversCreditAdded.
   ///
   /// In en, this message translates to:
-  /// **'TouristSaver Credits Added'**
+  /// **'Premium Savings Added'**
   String get touristSaversCreditAdded;
 
   /// No description provided for @congratulationNowYouHaveXTouristSavers.
@@ -575,7 +575,7 @@ abstract class S {
   /// No description provided for @topUpAndPayXY.
   ///
   /// In en, this message translates to:
-  /// **'Top-up and Pay &XY'**
+  /// **'Pay &XY'**
   String get topUpAndPayXY;
 
   /// No description provided for @iAgreeWithTheTermsAndCondition.
@@ -587,7 +587,7 @@ abstract class S {
   /// No description provided for @weWillDeductCPiinksFromYourCredit.
   ///
   /// In en, this message translates to:
-  /// **'We will deduct &C&X &CTouristSavers from Your Credit'**
+  /// **'We will apply &C&X &CTouristSavers toward your Premium Savings'**
   String get weWillDeductCPiinksFromYourCredit;
 
   /// No description provided for @noNotificationFrom.
@@ -605,7 +605,7 @@ abstract class S {
   /// No description provided for @youDoNotHaveAnyTopUpHistoryToViewBetweenXTOY.
   ///
   /// In en, this message translates to:
-  /// **'You do not have any TopUp history to view between @X to @Y'**
+  /// **'You do not have any Premium Savings activity to view between @X to @Y'**
   String get youDoNotHaveAnyTopUpHistoryToViewBetweenXTOY;
 
   /// No description provided for @upToXdiscount.
@@ -738,7 +738,7 @@ abstract class S {
   /// No description provided for @buyXUniversalTouristSaverCredits.
   ///
   /// In en, this message translates to:
-  /// **'Buy &X Universal TouristSaver Credits'**
+  /// **'Unlock &X Premium Savings'**
   String get buyXUniversalTouristSaverCredits;
 
   /// No description provided for @byClicking.
@@ -828,7 +828,7 @@ abstract class S {
   /// No description provided for @chooseWallet.
   ///
   /// In en, this message translates to:
-  /// **'Choose Wallet'**
+  /// **'Choose Savings Option'**
   String get chooseWallet;
 
   /// No description provided for @city.
@@ -870,7 +870,7 @@ abstract class S {
   /// No description provided for @confirmWallet.
   ///
   /// In en, this message translates to:
-  /// **'Confirm Wallet'**
+  /// **'Confirm Savings Option'**
   String get confirmWallet;
 
   /// No description provided for @congratulations.
@@ -882,7 +882,7 @@ abstract class S {
   /// No description provided for @congratulationsYouHaveSuccessfullyRegisteredUsingPremiumCodeNextYouCanEitherTopupOrAccountOrContinue.
   ///
   /// In en, this message translates to:
-  /// **'Congratulations! You have successfully registered using premium code. Next, you can either topup or account or continue'**
+  /// **'Congratulations! Your Premium Membership has been activated. You can continue exploring TouristSaver benefits.'**
   String
       get congratulationsYouHaveSuccessfullyRegisteredUsingPremiumCodeNextYouCanEitherTopupOrAccountOrContinue;
 
@@ -919,13 +919,13 @@ abstract class S {
   /// No description provided for @continueWithDefaultTouristSaverCredits.
   ///
   /// In en, this message translates to:
-  /// **'Continue with default TouristSaver credits'**
+  /// **'Continue with Premium Membership'**
   String get continueWithDefaultTouristSaverCredits;
 
   /// No description provided for @continueWithoutTopUp.
   ///
   /// In en, this message translates to:
-  /// **'Continue without Top-up'**
+  /// **'Continue'**
   String get continueWithoutTopUp;
 
   /// No description provided for @couldNotReceiveNotifications.
@@ -967,7 +967,7 @@ abstract class S {
   /// No description provided for @creditRemaning.
   ///
   /// In en, this message translates to:
-  /// **'Credit Remaning'**
+  /// **'Premium Savings Remaining'**
   String get creditRemaning;
 
   /// No description provided for @currentPassword.
@@ -1221,7 +1221,7 @@ abstract class S {
   /// No description provided for @insufficientTouristSaverCredits.
   ///
   /// In en, this message translates to:
-  /// **'Insufficient TouristSaver Credits'**
+  /// **'Premium Savings access unavailable'**
   String get insufficientTouristSaverCredits;
 
   /// No description provided for @invalidQrCode.
@@ -1365,7 +1365,7 @@ abstract class S {
   /// No description provided for @merchantWallet.
   ///
   /// In en, this message translates to:
-  /// **'Merchant Wallet'**
+  /// **'Merchant Premium Savings'**
   String get merchantWallet;
 
   /// No description provided for @merchants.
@@ -1437,7 +1437,7 @@ abstract class S {
   /// No description provided for @myWallet.
   ///
   /// In en, this message translates to:
-  /// **'My Wallet'**
+  /// **'My Savings'**
   String get myWallet;
 
   /// No description provided for @nearbyCharity.
@@ -1611,13 +1611,13 @@ abstract class S {
   /// No description provided for @noTopUpAvailable.
   ///
   /// In en, this message translates to:
-  /// **'No Top-up available'**
+  /// **'No membership package available'**
   String get noTopUpAvailable;
 
   /// No description provided for @noTopUpHasBeenDoneYet.
   ///
   /// In en, this message translates to:
-  /// **'No Top Up has been done yet'**
+  /// **'No Premium Savings activity yet'**
   String get noTopUpHasBeenDoneYet;
 
   /// No description provided for @noTransactionHasBeenCompletedYet.
@@ -1641,7 +1641,7 @@ abstract class S {
   /// No description provided for @notEnoughTouristSaverCredits.
   ///
   /// In en, this message translates to:
-  /// **'Not enough TouristSaver credits'**
+  /// **'Not enough Premium Savings access'**
   String get notEnoughTouristSaverCredits;
 
   /// No description provided for @notifications.
@@ -1785,19 +1785,19 @@ abstract class S {
   /// No description provided for @touristSaverCredits.
   ///
   /// In en, this message translates to:
-  /// **' TouristSaver Credits'**
+  /// **' Premium Savings'**
   String get touristSaverCredits;
 
   /// No description provided for @touristSaverCreditsInfo.
   ///
   /// In en, this message translates to:
-  /// **'TouristSaver Credits Info'**
+  /// **'Premium Savings Info'**
   String get touristSaverCreditsInfo;
 
   /// No description provided for @touristSaverCreditsInfoD.
   ///
   /// In en, this message translates to:
-  /// **'Universal TouristSaver Credits allow you to get a discount with any of our Merchants. Every time you use TouristSaver you will receive Merchant TouristSaver credits to spend back with the issuing Merchant'**
+  /// **'Premium Savings helps you access eligible discounts with participating TouristSaver merchants.'**
   String get touristSaverCreditsInfoD;
 
   /// No description provided for @touristSaverTransferredSuccessfully.
@@ -2248,7 +2248,7 @@ abstract class S {
   /// No description provided for @searchMerchantWallet.
   ///
   /// In en, this message translates to:
-  /// **'Search merchant Wallet'**
+  /// **'Search merchant savings'**
   String get searchMerchantWallet;
 
   /// No description provided for @searchOrChooseCountryStateRegionFromTheListBelowToFilterOffersAndMerchants.
@@ -2419,7 +2419,7 @@ abstract class S {
   /// No description provided for @sortByTouristSaverCredits.
   ///
   /// In en, this message translates to:
-  /// **'Sort by TouristSaver Credits'**
+  /// **'Sort by Premium Savings'**
   String get sortByTouristSaverCredits;
 
   /// No description provided for @stripePaymentFail.
@@ -2504,7 +2504,7 @@ abstract class S {
   /// No description provided for @toUseTopUpFunctionRegisterMembershipOrLogIn.
   ///
   /// In en, this message translates to:
-  /// **'To use top-up function register membership or log in'**
+  /// **'To access Premium Savings, register or log in'**
   String get toUseTopUpFunctionRegisterMembershipOrLogIn;
 
   /// No description provided for @toViewTheTransactionHistoryRegisterMembershipOrLogIn.
@@ -2522,37 +2522,37 @@ abstract class S {
   /// No description provided for @topUp.
   ///
   /// In en, this message translates to:
-  /// **'Top-up'**
+  /// **'Premium Membership'**
   String get topUp;
 
   /// No description provided for @topUpAmount.
   ///
   /// In en, this message translates to:
-  /// **'Top Up Amount'**
+  /// **'Membership Amount'**
   String get topUpAmount;
 
   /// No description provided for @topUpHistory.
   ///
   /// In en, this message translates to:
-  /// **'Top Up History'**
+  /// **'Premium Savings Activity'**
   String get topUpHistory;
 
   /// No description provided for @topUpUniversalTouristSaverCredits.
   ///
   /// In en, this message translates to:
-  /// **'Top-up Universal TouristSaver Credits'**
+  /// **'Premium Membership Options'**
   String get topUpUniversalTouristSaverCredits;
 
   /// No description provided for @topUpUniversalTouristSaverCreditsToGetDiscountWithAnyOfOurMerchant.
   ///
   /// In en, this message translates to:
-  /// **'Top-up Universal TouristSaver Credits to get discount with any of our merchant'**
+  /// **'Unlock Premium Savings with participating TouristSaver merchants.'**
   String get topUpUniversalTouristSaverCreditsToGetDiscountWithAnyOfOurMerchant;
 
   /// No description provided for @topUpYourUniversalTouristSaversToGainExtraCreditAndEnjoyMoreOffersFromYourFavouriteMerchants.
   ///
   /// In en, this message translates to:
-  /// **'Top-up your Universal TouristSavers to gain extra credit and enjoy more offers from your favourite merchants'**
+  /// **'Unlock more Premium Savings and enjoy more offers from your favourite merchants.'**
   String
       get topUpYourUniversalTouristSaversToGainExtraCreditAndEnjoyMoreOffersFromYourFavouriteMerchants;
 
@@ -2607,7 +2607,7 @@ abstract class S {
   /// No description provided for @universalWallet.
   ///
   /// In en, this message translates to:
-  /// **'Universal Wallet'**
+  /// **'Universal Premium Savings'**
   String get universalWallet;
 
   /// No description provided for @update.
@@ -2697,7 +2697,7 @@ abstract class S {
   /// No description provided for @wallet.
   ///
   /// In en, this message translates to:
-  /// **'Wallet'**
+  /// **'Savings'**
   String get wallet;
 
   /// No description provided for @weAreCurrentlyWorkingOnThisWeWillKeepYouUpdated.
@@ -2757,14 +2757,14 @@ abstract class S {
   /// No description provided for @youDonTHaveAnyTouristSaverUniversalCreditRegisterYourMembershipOrLogInToAccessTheTouristSaverBenefits.
   ///
   /// In en, this message translates to:
-  /// **'You don\'t have any TouristSaver Universal credit. Register your membership or log in to access the TouristSaver benefits'**
+  /// **'Register your Premium Membership or log in to access TouristSaver benefits.'**
   String
       get youDonTHaveAnyTouristSaverUniversalCreditRegisterYourMembershipOrLogInToAccessTheTouristSaverBenefits;
 
   /// No description provided for @yourActiveMerchantWallets.
   ///
   /// In en, this message translates to:
-  /// **'Your Active Merchant Wallets'**
+  /// **'Your Merchant Premium Savings'**
   String get yourActiveMerchantWallets;
 
   /// No description provided for @yourEmailIsNotActivatedYet.
@@ -2802,7 +2802,7 @@ abstract class S {
   /// No description provided for @yourUniversalTouristSaverCredits.
   ///
   /// In en, this message translates to:
-  /// **'Your Universal TouristSaver Credits'**
+  /// **'Your Premium Savings'**
   String get yourUniversalTouristSaverCredits;
 
   /// No description provided for @direction.

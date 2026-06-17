@@ -53,6 +53,7 @@ class _PayScreenState extends State<PayScreen> {
   static const Color _borderColor = Color(0xFFE2E8F3);
 
   TextEditingController amountController = TextEditingController();
+  late final VoidCallback _payAmountResetListener;
   bool? hideMerchantPaymentCode;
 
   //Flutter BarCode Scanner for QR Code
@@ -381,6 +382,8 @@ class _PayScreenState extends State<PayScreen> {
 
   @override
   void initState() {
+    _payAmountResetListener = _resetPaymentEntry;
+    AppVariables.payAmountResetSignal.addListener(_payAmountResetListener);
     getPiiinkInfo();
     payE = payEnabled();
     // log(AppVariables.currency!);
@@ -389,9 +392,21 @@ class _PayScreenState extends State<PayScreen> {
 
   @override
   void dispose() {
+    AppVariables.payAmountResetSignal.removeListener(_payAmountResetListener);
     amountController.dispose();
     ConnectivityCubit().close();
     super.dispose();
+  }
+
+  void _resetPaymentEntry() {
+    amountController.clear();
+    manualQrCode = '';
+    merchantQrCode = '';
+    if (!mounted) return;
+    setState(() {
+      isLoading = false;
+      isMerchantQrLoading = false;
+    });
   }
 
   @override

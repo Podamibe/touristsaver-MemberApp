@@ -34,7 +34,7 @@ class _MerchantWalletScreenState extends State<MerchantWalletScreen> {
   TextEditingController searchController = TextEditingController();
   bool isSearching = false;
   //For Sorting
-  List<String> sort = ['Sort by Alphabetical', 'Sort by Discount Credits'];
+  List<String> sort = ['Sort by Alphabetical', 'Sort by Premium Savings'];
   String selectedWalletType = 'Merchant';
   String sortBy = 'Sort by Alphabetical';
 
@@ -224,7 +224,7 @@ class _MerchantWalletScreenState extends State<MerchantWalletScreen> {
                       Padding(
                         padding: EdgeInsets.fromLTRB(16.w, 6.h, 16.w, 2.h),
                         child: AutoSizeText(
-                          'Merchant Discount Credits are merchant-specific credits you can use toward eligible future purchases with that merchant.',
+                          'Premium Savings by merchant helps you track the value unlocked through your membership.',
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -261,7 +261,7 @@ class _MerchantWalletScreenState extends State<MerchantWalletScreen> {
                                   child: AutoSizeText(
                                     e == 'Sort by Alphabetical'
                                         ? S.of(context).sortByAlphabetical
-                                        : 'Sort by Discount Credits',
+                                        : 'Sort by Premium Savings',
                                     style: _dropdownTextStyle(),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -336,7 +336,7 @@ class _MerchantWalletScreenState extends State<MerchantWalletScreen> {
       title: const Padding(
         padding: EdgeInsets.symmetric(horizontal: 4),
         child: AutoSizeText(
-          'Merchant Discount Credits',
+          'Merchant Premium Savings',
           maxLines: 1,
           minFontSize: 14,
           textAlign: TextAlign.center,
@@ -580,7 +580,7 @@ class _MerchantWalletScreenState extends State<MerchantWalletScreen> {
             child: Column(
               children: [
                 AutoSizeText(
-                  '${_formatAvailableCredits(merchantWallet.balance)} available',
+                  'Your Savings ${_formatSavings(merchantWallet.balance)}',
                   maxLines: 1,
                   minFontSize: 11,
                   textAlign: TextAlign.center,
@@ -593,7 +593,7 @@ class _MerchantWalletScreenState extends State<MerchantWalletScreen> {
                 ),
                 const SizedBox(height: 2),
                 AutoSizeText(
-                  'Usable here',
+                  'Premium Savings',
                   maxLines: 1,
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -629,7 +629,7 @@ class _MerchantWalletScreenState extends State<MerchantWalletScreen> {
         AppImageString.appNoImageURL;
   }
 
-  String _formatAvailableCredits(num? balance) {
+  String _formatSavings(num? balance) {
     return '\$${(balance ?? 0).toDouble().toStringAsFixed(2)}';
   }
 
@@ -669,7 +669,7 @@ class _MerchantCreditsLoadingState extends StatelessWidget {
           ),
           SizedBox(height: 14.h),
           Text(
-            'Loading merchant credits...',
+            'Loading merchant savings...',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: _walletMuted,
@@ -731,7 +731,7 @@ class _MerchantCreditsEmptyState extends StatelessWidget {
           ),
           SizedBox(height: 16.h),
           Text(
-            'Merchant Discount Credits not available',
+            'Merchant Premium Savings not available',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: _walletNavy,
@@ -743,7 +743,7 @@ class _MerchantCreditsEmptyState extends StatelessWidget {
           ),
           SizedBox(height: 10.h),
           Text(
-            'Shop with participating merchants to earn or use merchant-specific Discount Credits.',
+            'Shop with participating merchants to start building merchant-specific Premium Savings.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: _walletMuted,

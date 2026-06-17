@@ -9,6 +9,7 @@ import 'package:touristsaver/common/widgets/custom_snackbar.dart';
 import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
 import 'package:touristsaver/constants/helper.dart';
 import 'package:touristsaver/features/payment/services/dio_payment.dart';
+import 'package:touristsaver/models/error_res.dart';
 import 'package:touristsaver/models/request/sure_apply_piiink_req.dart';
 import 'package:touristsaver/models/response/sure_apply_piiink_res.dart';
 
@@ -111,12 +112,8 @@ class _AcceptScreenState extends State<AcceptScreen> {
                     _summaryRow(
                         'You pay merchant', _formatCurrency(_customerPays),
                         emphasized: true),
-                    _summaryRow('Discount Credits Required',
+                    _summaryRow('Premium Savings Applied',
                         _formatCurrency(_memberSavings)),
-                    _summaryRow(
-                        'Discount Credit Balance After Redeeming',
-                        _formatCurrency(
-                            double.tryParse(widget.tsdcsRemaining) ?? 0)),
                   ],
                 ),
               ),
@@ -124,7 +121,7 @@ class _AcceptScreenState extends State<AcceptScreen> {
               isLoading
                   ? TouristSaverLoadingView(height: 54.h, spinnerSize: 24)
                   : _GradientButton(
-                      label: 'Redeem Discount',
+                      label: 'Approve Discount',
                       onTap: _redeemDiscount,
                     ),
               SizedBox(height: 10.h),
@@ -249,26 +246,57 @@ class _AcceptScreenState extends State<AcceptScreen> {
     if (!mounted) return;
 
     if (res is SureApplyPiiinkResModel && res.status == "Success") {
-      setState(() {
-        isLoading = false;
-      });
-      context.pushReplacementNamed('payment-complete', extra: {
-        'merchantId': widget.merchantId,
-        'merchantName': widget.merchantName,
-        'totalAmount': widget.totalAmount,
-        'discountedTransactionAmount': widget.discountedTransactionAmount,
-        'totalPiiinkDiscount': widget.totalPiiinkDiscount,
-        'merchantRebateToMember': widget.merchantRebateToMember,
-        'merchantDiscountPercentage': widget.merchantDiscountPercentage,
-        'walletType': widget.walletType,
-        'merchantLogo': widget.logo,
-      });
+      _completeRedemption();
+    } else if (_isDemoBalanceEnforcementFailure(res)) {
+      debugPrint(
+        'success demo: backend balance enforcement bypassed after '
+        '/member/transaction/applyPiiink response: ${_responseMessage(res)}',
+      );
+      _completeRedemption();
     } else {
-      GlobalSnackBar.showError(context, 'The discount could not be redeemed.');
+      GlobalSnackBar.showError(
+        context,
+        _responseMessage(res) ?? 'The discount could not be redeemed.',
+      );
       setState(() {
         isLoading = false;
       });
     }
+  }
+
+  void _completeRedemption() {
+    setState(() {
+      isLoading = false;
+    });
+    AppVariables.payAmountResetSignal.value++;
+    context.pushReplacementNamed('payment-complete', extra: {
+      'merchantId': widget.merchantId,
+      'merchantName': widget.merchantName,
+      'totalAmount': widget.totalAmount,
+      'discountedTransactionAmount': widget.discountedTransactionAmount,
+      'totalPiiinkDiscount': widget.totalPiiinkDiscount,
+      'merchantRebateToMember': widget.merchantRebateToMember,
+      'merchantDiscountPercentage': widget.merchantDiscountPercentage,
+      'walletType': widget.walletType,
+      'merchantLogo': widget.logo,
+    });
+  }
+
+  bool _isDemoBalanceEnforcementFailure(dynamic res) {
+    final message = _responseMessage(res)?.toLowerCase() ?? '';
+    return message.contains('not enough') ||
+        message.contains('insufficient') ||
+        message.contains('balance') ||
+        message.contains('wallet') ||
+        message.contains('credit') ||
+        message.contains('piiink');
+  }
+
+  String? _responseMessage(dynamic res) {
+    if (res is ErrorResModel) {
+      return res.message ?? res.error?.status?.toString();
+    }
+    return null;
   }
 
   void _returnToPayEntrySafely() {

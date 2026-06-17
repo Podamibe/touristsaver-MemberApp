@@ -104,9 +104,8 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
       return;
     }
 
-    context.pushNamed('qr_screen', extra: {
-      'title': 'Share Merchant Discount Credits'
-    }).then((result) async {
+    context.pushNamed('qr_screen',
+        extra: {'title': 'Share Merchant Savings Access'}).then((result) async {
       if (result == null || result.toString().isEmpty) return;
       memberQrCode = result.toString().split('=').last;
       setState(() {
@@ -211,12 +210,12 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Share unused Merchant Discount Credits with another TouristSaver member.',
+                              'Share merchant savings access with another TouristSaver member.',
                               style: _headingStyle(),
                             ),
                             SizedBox(height: 8.h),
                             Text(
-                              'For example, you can share leftover merchant credits with a friend so they can save on their next visit.',
+                              'For example, you can help a friend unlock Premium Savings on their next visit.',
                               style: _helperStyle(),
                             ),
                           ],
@@ -227,12 +226,13 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Merchant credits', style: _labelStyle()),
+                            Text('Merchant savings access',
+                                style: _labelStyle()),
                             SizedBox(height: 8.h),
                             merchantPiiink(totalMerchantWallets),
                             SizedBox(height: 16.h),
                             Text(
-                              'Enter the TouristSaver Discount Credits you would like to transfer.',
+                              'Enter the Premium Savings amount you would like to share.',
                               style: _helperStyle(),
                             ),
                             SizedBox(height: 8.h),
@@ -331,7 +331,7 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
       title: const Padding(
         padding: EdgeInsets.symmetric(horizontal: 4),
         child: AutoSizeText(
-          'Share Merchant Discount Credits',
+          'Share Merchant Savings Access',
           maxLines: 1,
           minFontSize: 13,
           textAlign: TextAlign.center,
@@ -438,7 +438,7 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
       children: [
         Expanded(
           child: Text(
-            'Discount Credits \$',
+            'Savings Access \$',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: _labelStyle(),
@@ -499,7 +499,7 @@ class _TransferPiiinksState extends State<TransferPiiinks> {
   // select merchant piiink dropDown
   merchantPiiink(List<MerchantWallet> totalMerchantWallets) {
     return DropdownButtonWidget(
-      label: 'Choose merchant credits',
+      label: 'Choose merchant savings',
       searchController: searchController,
       value: selectedMerchantPiiinks,
       lPadding: 15,

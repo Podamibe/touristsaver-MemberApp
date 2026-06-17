@@ -6,6 +6,7 @@ class AppVariables {
   static String? selectedLanguageNow = 'en';
   static bool initNotifications = false;
   static ValueNotifier<int> notificationLabel = ValueNotifier(0);
+  static ValueNotifier<int> payAmountResetSignal = ValueNotifier(0);
   static bool? notificationReceived;
   static String deviceId = '';
   static String? accessToken;

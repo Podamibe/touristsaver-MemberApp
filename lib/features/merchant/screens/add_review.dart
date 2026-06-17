@@ -3,6 +3,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:touristsaver/common/app_variables.dart';
 import 'package:touristsaver/common/widgets/custom_button.dart';
 import 'package:touristsaver/common/widgets/custom_container_box.dart';
 import 'package:touristsaver/constants/helper.dart';
@@ -55,9 +56,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     'Not As Expected',
     'Could Be Better',
   ];
-  static const String _reviewSuccessMessage =
-      '⭐ Thank you for your review\n\nYour feedback helps other TouristSaver members discover great merchants.';
-
   late double _rating;
   final int _ratingBarMode = 0;
   final double _initialRating = 0;
@@ -65,6 +63,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   IconData? _selectedIcon;
   final Set<String> _selectedFeedbackOptions = <String>{};
   bool reviewLoading = false;
+  bool reviewSubmitted = false;
 
   @override
   void initState() {
@@ -85,76 +84,146 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         : 'this merchant';
     final String? merchantLogo = _normalizedMerchantLogo(widget.merchantLogo);
 
-    return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: CustomAppBar(
-          text: S.of(context).addReview,
-          icon: Icons.arrow_back_ios,
-          onPressed: (() {
-            context.pop();
-          }),
+    return PopScope(
+      canPop: !reviewSubmitted,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && reviewSubmitted) {
+          _finishReviewSequenceToHome();
+        }
+      },
+      child: Scaffold(
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: CustomAppBar(
+            text: reviewSubmitted ? 'Thank you' : S.of(context).addReview,
+            icon: Icons.arrow_back_ios,
+            onPressed: (() {
+              if (reviewSubmitted) {
+                _finishReviewSequenceToHome();
+                return;
+              }
+              context.pop();
+            }),
+          ),
         ),
+        body: reviewSubmitted
+            ? _reviewSubmittedView()
+            : Column(
+                children: [
+                  Expanded(
+                    child: CustomContainerBox(
+                      padVer: 10.h,
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.only(bottom: 18.h),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _merchantHeader(merchantName, merchantLogo),
+                            SizedBox(height: 8.h),
+                            Text(
+                              S.of(context).rateThisMerchant,
+                              style: topicStyle.copyWith(
+                                color: _headingColor,
+                                fontSize: 18.sp,
+                              ),
+                            ),
+                            SizedBox(height: 6.h),
+                            Center(child: _ratingBar(_ratingBarMode)),
+                            SizedBox(height: 7.h),
+                            const Divider(thickness: 1, color: _borderColor),
+                            SizedBox(height: 7.h),
+                            Text(
+                              S.of(context).yourFeedback,
+                              style: topicStyle.copyWith(
+                                color: _headingColor,
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 3.h),
+                            Text(
+                              'Choose any that describe your experience.',
+                              style: TextStyle(
+                                color: _bodyColor,
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Sans',
+                              ),
+                            ),
+                            SizedBox(height: 8.h),
+                            _choiceChips(),
+                            SizedBox(height: 10.h),
+                            _optionalCommentField(),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  _StickySubmitBar(
+                    isLoading: reviewLoading,
+                    child: _GradientReviewButton(
+                      text: S.of(context).sendReview,
+                      onPressed: onSendReview,
+                    ),
+                  ),
+                ],
+              ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: CustomContainerBox(
-              padVer: 10.h,
-              child: SingleChildScrollView(
-                padding: EdgeInsets.only(bottom: 18.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _merchantHeader(merchantName, merchantLogo),
-                    SizedBox(height: 8.h),
-                    Text(
-                      S.of(context).rateThisMerchant,
-                      style: topicStyle.copyWith(
-                        color: _headingColor,
-                        fontSize: 18.sp,
-                      ),
-                    ),
-                    SizedBox(height: 6.h),
-                    Center(child: _ratingBar(_ratingBarMode)),
-                    SizedBox(height: 7.h),
-                    const Divider(thickness: 1, color: _borderColor),
-                    SizedBox(height: 7.h),
-                    Text(
-                      S.of(context).yourFeedback,
-                      style: topicStyle.copyWith(
-                        color: _headingColor,
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 3.h),
-                    Text(
-                      'Choose any that describe your experience.',
-                      style: TextStyle(
-                        color: _bodyColor,
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Sans',
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    _choiceChips(),
-                    SizedBox(height: 10.h),
-                    _optionalCommentField(),
-                  ],
-                ),
+    );
+  }
+
+  void _finishReviewSequenceToHome() {
+    AppVariables.payAmountResetSignal.value++;
+    context.goNamed(
+      'bottom-bar',
+      pathParameters: {'page': '0'},
+    );
+  }
+
+  Widget _reviewSubmittedView() {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(24.w, 26.h, 24.w, 20.h),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Icon(
+              Icons.check_circle_rounded,
+              color: _primaryBlue,
+              size: 58.sp,
+            ),
+            SizedBox(height: 18.h),
+            Text(
+              'Thank you for your review',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _headingColor,
+                fontSize: 24.sp,
+                fontWeight: FontWeight.w900,
+                fontFamily: 'Sans',
               ),
             ),
-          ),
-          _StickySubmitBar(
-            isLoading: reviewLoading,
-            child: _GradientReviewButton(
-              text: S.of(context).sendReview,
-              onPressed: onSendReview,
+            SizedBox(height: 10.h),
+            Text(
+              'Your feedback helps other TouristSaver members discover great merchants.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _bodyColor,
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w600,
+                height: 1.4,
+                fontFamily: 'Sans',
+              ),
             ),
-          ),
-        ],
+            SizedBox(height: 28.h),
+            _GradientReviewButton(
+              text: 'Done',
+              onPressed: _finishReviewSequenceToHome,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -428,11 +497,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         return;
       }, (r) {
         if (r.status == 'Success') {
-          _showReviewSuccess();
           setState(() {
             reviewLoading = false;
+            reviewSubmitted = true;
           });
-          context.pop();
         }
       });
     }
@@ -466,39 +534,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     if (note.isEmpty) return feedbackText;
     if (feedbackText.isEmpty) return 'Note: $note';
     return '$feedbackText | Note: $note';
-  }
-
-  void _showReviewSuccess() {
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          elevation: 0,
-          behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 18.h),
-          duration: const Duration(seconds: 4),
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.r),
-            side: const BorderSide(color: _borderColor),
-          ),
-          content: Text(
-            _reviewSuccessMessage,
-            style: TextStyle(
-              color: _headingColor,
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w700,
-              height: 1.3,
-              fontFamily: 'Sans',
-            ),
-          ),
-          action: SnackBarAction(
-            textColor: _primaryBlue,
-            label: S.of(context).ok,
-            onPressed: () {},
-          ),
-        ),
-      );
   }
 }
 

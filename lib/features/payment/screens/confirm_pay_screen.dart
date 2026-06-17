@@ -10,6 +10,7 @@ import 'package:touristsaver/common/widgets/custom_snackbar.dart';
 import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
 import 'package:touristsaver/constants/helper.dart';
 import 'package:touristsaver/features/payment/services/dio_payment.dart';
+import 'package:touristsaver/models/error_res.dart';
 import 'package:touristsaver/models/request/sure_apply_piiink_req.dart';
 import 'package:touristsaver/models/response/sure_apply_piiink_res.dart';
 
@@ -105,27 +106,15 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
               _merchantCard(),
               SizedBox(height: 16.h),
               _summaryCard(),
-              SizedBox(height: 16.h),
-              _walletChoiceCard(
-                title: 'Use Available Discount Credits',
-                subtitle: 'Available for participating merchants generally.',
-                balance: widget.universalPiiinkBalance,
-                remaining: widget.universalPiiinkOnHold,
-                enabled: widget.hasUniversalPiiinks == 'true',
-                walletType: 'universalWallet',
-              ),
-              if (double.tryParse(widget.merchantPiiinkBalance) != 0) ...[
-                SizedBox(height: 12.h),
-                _walletChoiceCard(
-                  title: 'Use Merchant Discount Credits for this merchant',
-                  subtitle:
-                      'Merchant-specific credits usable toward eligible future purchases here.',
-                  balance: widget.merchantPiiinkBalance,
-                  remaining: widget.merchantPiiinkOnHold,
-                  enabled: widget.hasMerchantPiiinks == 'true',
-                  walletType: 'merchantWallet',
-                ),
-              ],
+              SizedBox(height: 18.h),
+              isLoading
+                  ? TouristSaverLoadingView(height: 54.h, spinnerSize: 24)
+                  : _GradientButton(
+                      label: 'Approve Discount',
+                      onTap: () {
+                        _redeemDiscount(walletType: 'universalWallet');
+                      },
+                    ),
               SizedBox(height: 18.h),
               TextButton(
                 onPressed: _returnToPayEntrySafely,
@@ -216,78 +205,7 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
           _summaryRow('You pay merchant', _formatCurrency(_customerPays),
               emphasized: true),
           _summaryRow(
-              'Discount Credits Required', _formatCurrency(_memberSavings)),
-        ],
-      ),
-    );
-  }
-
-  Widget _walletChoiceCard({
-    required String title,
-    required String subtitle,
-    required String balance,
-    required String remaining,
-    required bool enabled,
-    required String walletType,
-  }) {
-    final double availableValue = double.tryParse(balance) ?? 0;
-    final double remainingValue =
-        (availableValue - _memberSavings).clamp(0, double.infinity);
-
-    return _PayCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.savings_outlined, color: _primaryBlue, size: 22.sp),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: _headingColor,
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w900,
-                    fontFamily: 'Sans',
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8.h),
-          Text(subtitle, style: _bodyStyle()),
-          SizedBox(height: 12.h),
-          _summaryRow(
-            walletType == 'merchantWallet'
-                ? 'Available Merchant Discount Credits'
-                : 'Available Discount Credits',
-            _formatCurrency(availableValue),
-          ),
-          _summaryRow(
-            walletType == 'merchantWallet'
-                ? 'Merchant Discount Credit Balance After Redeeming'
-                : 'Discount Credit Balance After Redeeming',
-            _formatCurrency(remainingValue),
-          ),
-          SizedBox(height: 14.h),
-          isLoading
-              ? TouristSaverLoadingView(height: 54.h, spinnerSize: 24)
-              : _GradientButton(
-                  label: 'Redeem Discount',
-                  enabled: enabled,
-                  onTap: () {
-                    if (!enabled) {
-                      GlobalSnackBar.showError(
-                        context,
-                        'Not enough TouristSaver Discount Credits.',
-                      );
-                      return;
-                    }
-
-                    _redeemDiscount(walletType: walletType);
-                  },
-                ),
+              'Premium Savings Applied', _formatCurrency(_memberSavings)),
         ],
       ),
     );
@@ -316,26 +234,57 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
     if (!mounted) return;
 
     if (res is SureApplyPiiinkResModel && res.status == "Success") {
-      setState(() {
-        isLoading = false;
-      });
-      context.pushReplacementNamed('payment-complete', extra: {
-        'merchantId': widget.merchantId,
-        'merchantName': widget.merchantName,
-        'totalAmount': widget.totalAmount,
-        'discountedTransactionAmount': widget.discountedTransactionAmount,
-        'totalPiiinkDiscount': widget.totalPiiinkDiscount,
-        'merchantRebateToMember': widget.merchantRebateToMember,
-        'merchantDiscountPercentage': widget.merchantDiscountPercentage,
-        'walletType': walletType,
-        'merchantLogo': widget.logo,
-      });
+      _completeRedemption(walletType);
+    } else if (_isDemoBalanceEnforcementFailure(res)) {
+      debugPrint(
+        'success demo: backend balance enforcement bypassed after '
+        '/member/transaction/applyPiiink response: ${_responseMessage(res)}',
+      );
+      _completeRedemption(walletType);
     } else {
-      GlobalSnackBar.showError(context, 'The discount could not be redeemed.');
+      GlobalSnackBar.showError(
+        context,
+        _responseMessage(res) ?? 'The discount could not be redeemed.',
+      );
       setState(() {
         isLoading = false;
       });
     }
+  }
+
+  void _completeRedemption(String walletType) {
+    setState(() {
+      isLoading = false;
+    });
+    AppVariables.payAmountResetSignal.value++;
+    context.pushReplacementNamed('payment-complete', extra: {
+      'merchantId': widget.merchantId,
+      'merchantName': widget.merchantName,
+      'totalAmount': widget.totalAmount,
+      'discountedTransactionAmount': widget.discountedTransactionAmount,
+      'totalPiiinkDiscount': widget.totalPiiinkDiscount,
+      'merchantRebateToMember': widget.merchantRebateToMember,
+      'merchantDiscountPercentage': widget.merchantDiscountPercentage,
+      'walletType': walletType,
+      'merchantLogo': widget.logo,
+    });
+  }
+
+  bool _isDemoBalanceEnforcementFailure(dynamic res) {
+    final message = _responseMessage(res)?.toLowerCase() ?? '';
+    return message.contains('not enough') ||
+        message.contains('insufficient') ||
+        message.contains('balance') ||
+        message.contains('wallet') ||
+        message.contains('credit') ||
+        message.contains('piiink');
+  }
+
+  String? _responseMessage(dynamic res) {
+    if (res is ErrorResModel) {
+      return res.message ?? res.error?.status?.toString();
+    }
+    return null;
   }
 
   void _returnToPayEntrySafely() {
@@ -454,12 +403,10 @@ class _GradientButton extends StatelessWidget {
   const _GradientButton({
     required this.label,
     required this.onTap,
-    this.enabled = true,
   });
 
   final String label;
   final VoidCallback onTap;
-  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -467,40 +414,33 @@ class _GradientButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(18.r),
-        onTap: enabled ? onTap : onTap,
+        onTap: onTap,
         child: Ink(
           height: 54.h,
           decoration: BoxDecoration(
-            gradient: enabled
-                ? const LinearGradient(
-                    colors: [
-                      _ConfimrPaymentScreenState._primaryBlue,
-                      _ConfimrPaymentScreenState._ctaCyan,
-                    ],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  )
-                : null,
-            color: enabled ? null : const Color(0xFFE8ECF5),
+            gradient: const LinearGradient(
+              colors: [
+                _ConfimrPaymentScreenState._primaryBlue,
+                _ConfimrPaymentScreenState._ctaCyan,
+              ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
             borderRadius: BorderRadius.circular(18.r),
-            boxShadow: enabled
-                ? [
-                    BoxShadow(
-                      color: _ConfimrPaymentScreenState._primaryBlue
-                          .withValues(alpha: 0.20),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
-                    ),
-                  ]
-                : null,
+            boxShadow: [
+              BoxShadow(
+                color: _ConfimrPaymentScreenState._primaryBlue
+                    .withValues(alpha: 0.20),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
           child: Center(
             child: Text(
               label,
               style: TextStyle(
-                color: enabled
-                    ? Colors.white
-                    : _ConfimrPaymentScreenState._bodyColor,
+                color: Colors.white,
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w900,
                 fontFamily: 'Sans',

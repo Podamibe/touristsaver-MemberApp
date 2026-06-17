@@ -124,7 +124,7 @@ class _PremiumTopUpHistoryState extends State<PremiumTopUpHistory> {
                                           padding: const EdgeInsets.fromLTRB(
                                               14, 12, 14, 0),
                                           child: AutoSizeText(
-                                            'Promo or voucher codes used to add Discount Credits to your account.',
+                                            'Promo or voucher codes used for Premium Membership value.',
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
@@ -436,7 +436,7 @@ class _PremiumTopUpHistoryState extends State<PremiumTopUpHistory> {
       child: _PromoCodesEmptyState(
         title: 'No promo codes used yet',
         body:
-            'Promo or voucher codes used to add Discount Credits will appear here.',
+            'Promo or voucher codes used for Premium Membership value will appear here.',
       ),
     );
   }

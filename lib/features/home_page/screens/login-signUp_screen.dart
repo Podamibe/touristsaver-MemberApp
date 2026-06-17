@@ -42,7 +42,6 @@ import 'package:touristsaver/models/response/location_get_all.dart';
 import 'package:touristsaver/models/response/login_res.dart';
 import 'package:touristsaver/models/response/stripe_key_res.dart';
 import 'package:touristsaver/models/response/user_detail_res.dart';
-import 'package:touristsaver/splash_screen.dart';
 
 import '../../../common/app_variables.dart';
 import '../../../models/response/country_wise_prefix_res_model.dart'
@@ -159,10 +158,6 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
   void dispose() {
     ConnectivityCubit().close();
     super.dispose();
-  }
-
-  void showTopUpScreen() {
-    context.pushReplacementNamed('top-up'); // adjust route name
   }
 
   void registerLogin() async {
@@ -569,13 +564,8 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
         checkSavedCredentials(res.data!.accessToken!);
         // Navigating to the Next Screen after successful login
         if (!mounted) return;
-        bool canGoHome = await checkWalletBalance();
-        if (canGoHome) {
-          context.pushReplacementNamed('bottom-bar',
-              pathParameters: {'page': '4'});
-        } else {
-          showTopUpScreen(); // redirect to top up / warning
-        }
+        context
+            .pushReplacementNamed('bottom-bar', pathParameters: {'page': '4'});
       }
     } else if (res is ErrorResModel) {
       if (!mounted) return;

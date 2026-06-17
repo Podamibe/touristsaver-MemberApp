@@ -56,79 +56,90 @@ class _PaymentCompletedState extends State<PaymentCompleted> {
   bool get _canLeaveReview =>
       widget.merchantId != null && widget.merchantName.trim().isNotEmpty;
 
+  void _finishPaymentFlowToHome() {
+    AppVariables.payAmountResetSignal.value++;
+    context.goNamed(
+      'bottom-bar',
+      pathParameters: {'page': '0'},
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _screenBackground,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: CustomAppBar(text: 'Discount Approved'),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _ProofCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _merchantApprovalHeader(),
-                    SizedBox(height: 16.h),
-                    _approvalTitle(),
-                    SizedBox(height: 8.h),
-                    Center(
-                      child: Text(
-                        'Show this screen to the merchant. Customer pays merchant ${_formatCurrency(_customerPays)} directly.',
-                        textAlign: TextAlign.center,
-                        style: _bodyStyle(),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          _finishPaymentFlowToHome();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: _screenBackground,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: CustomAppBar(text: 'Discount Approved'),
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 28.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _ProofCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _merchantApprovalHeader(),
+                      SizedBox(height: 16.h),
+                      _approvalTitle(),
+                      SizedBox(height: 8.h),
+                      Center(
+                        child: Text(
+                          'Show this screen to the merchant. Customer pays merchant ${_formatCurrency(_customerPays)} directly.',
+                          textAlign: TextAlign.center,
+                          style: _bodyStyle(),
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 22.h),
-                    _summaryRow('Bill amount', _formatCurrency(_billAmount)),
-                    _summaryRow(
-                        'Member savings', _formatCurrency(_memberSavings)),
-                    _summaryRow('Customer pays merchant',
-                        _formatCurrency(_customerPays),
-                        emphasized: true),
-                    _summaryRow('Discount Credits Redeemed',
-                        _formatCurrency(_memberSavings)),
-                    if (_merchantTsdcsEarned > 0)
+                      SizedBox(height: 22.h),
+                      _summaryRow('Bill amount', _formatCurrency(_billAmount)),
                       _summaryRow(
-                        'Merchant Credits Earned',
-                        '+${_formatCurrency(_merchantTsdcsEarned)}',
-                      ),
-                  ],
+                          'Member savings', _formatCurrency(_memberSavings)),
+                      _summaryRow('Customer pays merchant',
+                          _formatCurrency(_customerPays),
+                          emphasized: true),
+                      _summaryRow('Premium Savings Applied',
+                          _formatCurrency(_memberSavings)),
+                      if (_merchantTsdcsEarned > 0)
+                        _summaryRow(
+                          'Merchant Savings Earned',
+                          '+${_formatCurrency(_merchantTsdcsEarned)}',
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              SizedBox(height: 18.h),
-              _GradientButton(
-                label: 'Done',
-                onTap: () {
-                  context.goNamed(
-                    'bottom-bar',
-                    pathParameters: {'page': '3'},
-                  );
-                },
-              ),
-              if (_canLeaveReview) ...[
-                SizedBox(height: 12.h),
-                _SecondaryButton(
-                  label: 'Leave a Review',
-                  onTap: () {
-                    context.pushNamed(
-                      'feedback-screen',
-                      extra: {
-                        'merchantId': widget.merchantId.toString(),
-                        'merchantName': widget.merchantName,
-                        'merchantLogo': widget.merchantLogo,
-                      },
-                    );
-                  },
+                SizedBox(height: 18.h),
+                _GradientButton(
+                  label: 'Done',
+                  onTap: _finishPaymentFlowToHome,
                 ),
+                if (_canLeaveReview) ...[
+                  SizedBox(height: 12.h),
+                  _SecondaryButton(
+                    label: 'Leave a Review',
+                    onTap: () {
+                      context.pushNamed(
+                        'feedback-screen',
+                        extra: {
+                          'merchantId': widget.merchantId.toString(),
+                          'merchantName': widget.merchantName,
+                          'merchantLogo': widget.merchantLogo,
+                        },
+                      );
+                    },
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

@@ -8,6 +8,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:touristsaver/common/app_variables.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/common/widgets/error.dart';
 import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
@@ -56,9 +57,6 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
     'Clean Venue',
     'Would Visit Again',
   ];
-  static const String _reviewSuccessMessage =
-      '⭐ Thank you for your review\n\nYour feedback helps other TouristSaver members discover great merchants.';
-
   bool? isTopUpEnabled;
   bool? canClaimFreePiiinks;
   bool? isFreePiiinksProvided;
@@ -119,8 +117,17 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
   var _defaultChoiceIndex;
   String? selectedString;
   bool reviewLoading = false;
+  bool reviewSubmitted = false;
   bool isSelected = false;
   final Map<int, Future<String?>> _merchantImageLoads = {};
+
+  void _finishReviewSequenceToHome() {
+    AppVariables.payAmountResetSignal.value++;
+    context.goNamed(
+      'bottom-bar',
+      pathParameters: {'page': '0'},
+    );
+  }
 
   @override
   void initState() {
@@ -197,13 +204,13 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _mainBalanceCard(wallet),
+            _premiumSavingsHeroCard(),
             SizedBox(height: 16.h),
             _recentSavingsSection(),
             SizedBox(height: 16.h),
-            _howDiscountCreditsWorkCard(),
+            _premiumMembershipValueCard(),
             SizedBox(height: 16.h),
-            _merchantDiscountCreditsSection(),
+            _merchantSavingsSection(),
             SizedBox(height: 16.h),
             _moreOptionsSection(),
           ],
@@ -212,99 +219,108 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
     );
   }
 
-  Widget _mainBalanceCard(UniversalGetMyWallet universalWallet) {
-    final String balance = _formatCurrency(universalWallet.data?.balance ?? 0);
+  Widget _premiumSavingsHeroCard() {
+    return FutureBuilder<transaction.TransactionResModel?>(
+      future: recentSavingsLoad,
+      builder: (context, snapshot) {
+        final double? totalSavings = snapshot.hasData
+            ? _totalMemberSavings(_latestSavings(snapshot.data!))
+            : null;
 
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(20.r),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Colors.white, Color(0xFFEFF7FF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(color: _borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0A236B).withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Align(
-            alignment: Alignment.center,
-            child: Container(
-              width: 44.w,
-              height: 44.w,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE6F3FF),
-                borderRadius: BorderRadius.circular(14.r),
+        return Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(20.r),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Colors.white, Color(0xFFEFF7FF)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24.r),
+            border: Border.all(color: _borderColor),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0A236B).withValues(alpha: 0.08),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
               ),
-              child: Icon(
-                Icons.savings_outlined,
-                color: _primaryBlue,
-                size: 25.sp,
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Align(
+                alignment: Alignment.center,
+                child: Container(
+                  width: 44.w,
+                  height: 44.w,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE6F3FF),
+                    borderRadius: BorderRadius.circular(14.r),
+                  ),
+                  child: Icon(
+                    Icons.savings_outlined,
+                    color: _primaryBlue,
+                    size: 25.sp,
+                  ),
+                ),
               ),
-            ),
+              SizedBox(height: 12.h),
+              Text(
+                'Premium Savings',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: _headingColor,
+                  fontSize: 17.sp,
+                  fontWeight: FontWeight.w900,
+                  fontFamily: 'Sans',
+                ),
+              ),
+              SizedBox(height: 14.h),
+              Text(
+                totalSavings == null
+                    ? 'Loading...'
+                    : _formatCurrency(totalSavings),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: _primaryBlue,
+                  fontSize: 34.sp,
+                  fontWeight: FontWeight.w900,
+                  height: 1.12,
+                  fontFamily: 'Sans',
+                ),
+              ),
+              SizedBox(height: 10.h),
+              Text(
+                'Your TouristSaver Premium Membership savings achieved so far.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: _bodyColor,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  height: 1.4,
+                  fontFamily: 'Sans',
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 12.h),
-          Text(
-            'Available Discount Credits',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: _headingColor,
-              fontSize: 17.sp,
-              fontWeight: FontWeight.w900,
-              fontFamily: 'Sans',
-            ),
-          ),
-          SizedBox(height: 14.h),
-          Text(
-            balance,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: _primaryBlue,
-              fontSize: 34.sp,
-              fontWeight: FontWeight.w900,
-              height: 1.12,
-              fontFamily: 'Sans',
-            ),
-          ),
-          SizedBox(height: 10.h),
-          Text(
-            'Use your Discount Credits to access participating merchant offers.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: _bodyColor,
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              height: 1.4,
-              fontFamily: 'Sans',
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _howDiscountCreditsWorkCard() {
+  Widget _premiumMembershipValueCard() {
     return _SavingsCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _sectionHeader(
             icon: Icons.info_outline,
-            title: 'How Discount Credits work',
+            title: 'Premium Membership value',
           ),
           SizedBox(height: 12.h),
           Text(
-            'TouristSaver Discount Credits are used to access eligible merchant discounts. When a participating merchant applies a discount, only the discount amount is deducted from your available Discount Credits.',
+            'Premium Savings tracks the value you unlock when participating merchants approve TouristSaver discounts.',
             style: _bodyTextStyle(),
           ),
           SizedBox(height: 14.h),
@@ -313,12 +329,12 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
           _exampleRow('Bill total', '\$100'),
           _exampleRow('Member discount', '10%'),
           _exampleRow('You pay merchant', '\$90'),
-          _exampleRow('Discount Credits used', '\$10.00'),
+          _exampleRow('You saved', '\$10.00'),
           SizedBox(height: 10.h),
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton(
-              onPressed: _showDiscountCreditsExplainer,
+              onPressed: _showPremiumSavingsExplainer,
               style: TextButton.styleFrom(
                 foregroundColor: _primaryBlue,
                 padding: EdgeInsets.zero,
@@ -366,15 +382,12 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
               final List<transaction.Datum> allSavings =
                   _latestSavings(snapshot.data!);
               final List<transaction.Datum> transactions = allSavings;
-              final double totalSavings = _totalMemberSavings(allSavings);
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _recentSavingsHeader(transactionCount: transactions.length),
                   SizedBox(height: 10.h),
-                  _totalMemberSavingsBlock(totalSavings),
-                  SizedBox(height: 12.h),
                   if (transactions.isEmpty)
                     Text(
                       'Your recent savings will appear here after you use TouristSaver with participating merchants.',
@@ -671,23 +684,23 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
     return null;
   }
 
-  Widget _merchantDiscountCreditsSection() {
+  Widget _merchantSavingsSection() {
     return _SavingsCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _sectionHeader(
             icon: Icons.storefront_outlined,
-            title: 'Merchant Discount Credits',
+            title: 'Merchant Premium Savings',
           ),
           SizedBox(height: 10.h),
           Text(
-            'Merchant Discount Credits are merchant-specific credits that can be used toward eligible future purchases with that merchant.',
+            'See the Premium Savings connected to participating merchants.',
             style: _bodyTextStyle(),
           ),
           SizedBox(height: 14.h),
           _outlineLinkButton(
-            label: 'View merchant Discount Credits',
+            label: 'View merchant savings',
             icon: Icons.arrow_forward_rounded,
             onTap: () => context.pushNamed('merchant-wallet'),
           ),
@@ -717,17 +730,6 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
           ),
           children: [
             _moreOptionTile(
-              icon: Icons.add_card_outlined,
-              label: 'Add Discount Credits',
-              onTap: isTopUpEnabled == false
-                  ? null
-                  : () {
-                      context.pushNamed('top-up').then((value) {
-                        _refreshSavings();
-                      });
-                    },
-            ),
-            _moreOptionTile(
               icon: Icons.public_outlined,
               label: 'Change Country',
               onTap: () {
@@ -737,17 +739,8 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
               },
             ),
             _moreOptionTile(
-              icon: Icons.swap_horiz_rounded,
-              label: 'Share Merchant Credits',
-              onTap: () {
-                context.pushNamed('transfer-piiinks').then((value) {
-                  _refreshSavings();
-                });
-              },
-            ),
-            _moreOptionTile(
               icon: Icons.savings_outlined,
-              label: 'TouristSaver Discount Credits',
+              label: 'Premium Savings activity',
               onTap: () => context.pushNamed('top_up_history'),
             ),
           ],
@@ -787,43 +780,6 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
         size: 16.sp,
       ),
       onTap: onTap,
-    );
-  }
-
-  Widget _totalMemberSavingsBlock(double totalSavings) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16.r),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7FAFF),
-        borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(color: _borderColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Total Member Savings',
-            style: TextStyle(
-              color: _headingColor,
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w900,
-              fontFamily: 'Sans',
-            ),
-          ),
-          SizedBox(height: 6.h),
-          Text(
-            _formatCurrency(totalSavings),
-            style: TextStyle(
-              color: _primaryBlue,
-              fontSize: 28.sp,
-              fontWeight: FontWeight.w900,
-              height: 1,
-              fontFamily: 'Sans',
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -982,7 +938,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
     });
   }
 
-  void _showDiscountCreditsExplainer() {
+  void _showPremiumSavingsExplainer() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1002,21 +958,21 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
               children: [
                 _sectionHeader(
                   icon: Icons.info_outline,
-                  title: 'TouristSaver Discount Credits',
+                  title: 'Premium Savings',
                 ),
                 SizedBox(height: 14.h),
                 Text(
-                  'Discount Credits help access discounts with participating merchants. They are not cash, tokens or a currency balance.',
+                  'Premium Savings shows the total value you have saved with TouristSaver participating merchants.',
                   style: _bodyTextStyle(),
                 ),
                 SizedBox(height: 12.h),
                 Text(
-                  'When you use TouristSaver, the merchant discount amount is deducted from your available Discount Credits. You then pay the merchant the discounted total.',
+                  'When a discount is approved, the saved amount contributes to your Premium Savings total.',
                   style: _bodyTextStyle(),
                 ),
                 SizedBox(height: 12.h),
                 Text(
-                  'Merchant Discount Credits are merchant-specific credits that can be used toward eligible future purchases with that merchant.',
+                  'This is a membership success metric, not cash and not a withdrawable balance.',
                   style: _bodyTextStyle(),
                 ),
                 SizedBox(height: 18.h),
@@ -1035,58 +991,97 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
 
   void _showAddReviewDialog() {
     Pref().setBool(key: showReview, value: false);
+    reviewSubmitted = false;
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(S.of(context).addReview),
-          content: StatefulBuilder(builder: (context, stateMode) {
-            return SingleChildScrollView(
-              child: SizedBox(
-                height: 320,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      S.of(context).rateThisMerchant,
-                      style: topicStyle.copyWith(fontSize: 20),
-                    ),
-                    const SizedBox(height: 15),
-                    Center(child: _ratingBar(_ratingBarMode)),
-                    const SizedBox(height: 15),
-                    const Divider(
-                      thickness: 2,
-                    ),
-                    const SizedBox(height: 15),
-                    Text(S.of(context).yourFeedback,
-                        style: topicStyle.copyWith(
-                            fontSize: 15, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 15),
-                    choiceChips(stateMode),
-                  ],
+        return StatefulBuilder(
+          builder: (context, stateMode) {
+            return AlertDialog(
+              title: Text(reviewSubmitted
+                  ? 'Thank you for your review'
+                  : S.of(context).addReview),
+              content: SingleChildScrollView(
+                child: SizedBox(
+                  height: reviewSubmitted ? 170 : 320,
+                  child: reviewSubmitted
+                      ? _reviewSubmittedContent()
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              S.of(context).rateThisMerchant,
+                              style: topicStyle.copyWith(fontSize: 20),
+                            ),
+                            const SizedBox(height: 15),
+                            Center(child: _ratingBar(_ratingBarMode)),
+                            const SizedBox(height: 15),
+                            const Divider(
+                              thickness: 2,
+                            ),
+                            const SizedBox(height: 15),
+                            Text(S.of(context).yourFeedback,
+                                style: topicStyle.copyWith(
+                                    fontSize: 15, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 15),
+                            choiceChips(stateMode),
+                          ],
+                        ),
                 ),
               ),
-            );
-          }),
-          actions: [
-            reviewLoading == true
-                ? Padding(
+              actions: [
+                if (reviewSubmitted)
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        right: 15.0, left: 15.0, bottom: 7.0),
+                    child: CustomButton(
+                      onPressed: () {
+                        _finishReviewSequenceToHome();
+                      },
+                      text: 'Done',
+                    ),
+                  )
+                else if (reviewLoading == true)
+                  Padding(
                     padding: const EdgeInsets.only(
                         right: 15.0, left: 15.0, bottom: 7.0),
                     child: const CustomButtonWithCircular(),
                   )
-                : Padding(
+                else
+                  Padding(
                     padding: const EdgeInsets.only(
                         right: 15.0, left: 15.0, bottom: 7.0),
                     child: CustomButton(
                         onPressed: () {
-                          onSendReview();
+                          onSendReview(onSuccess: () {
+                            stateMode(() {
+                              reviewSubmitted = true;
+                            });
+                          });
                         },
                         text: S.of(context).sendReview),
                   ),
-          ],
+              ],
+            );
+          },
         );
       },
+    );
+  }
+
+  Widget _reviewSubmittedContent() {
+    return Center(
+      child: Text(
+        'Your feedback helps other TouristSaver members discover great merchants.',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: _bodyColor,
+          fontSize: 15.sp,
+          fontWeight: FontWeight.w600,
+          height: 1.4,
+          fontFamily: 'Sans',
+        ),
+      ),
     );
   }
 
@@ -1154,7 +1149,7 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
     );
   }
 
-  onSendReview() async {
+  onSendReview({VoidCallback? onSuccess}) async {
     setState(() {
       reviewLoading = true;
     });
@@ -1177,47 +1172,14 @@ class _LogWalletScreenState extends State<LogWalletScreen> {
         return;
       }, (r) {
         if (r.status == 'Success') {
-          _showReviewSuccess();
           setState(() {
             reviewLoading = false;
+            reviewSubmitted = true;
           });
-          context.pop();
+          onSuccess?.call();
         }
       });
     }
-  }
-
-  void _showReviewSuccess() {
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          elevation: 0,
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 18),
-          duration: const Duration(seconds: 4),
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: _borderColor),
-          ),
-          content: Text(
-            _reviewSuccessMessage,
-            style: const TextStyle(
-              color: _headingColor,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              height: 1.3,
-              fontFamily: 'Sans',
-            ),
-          ),
-          action: SnackBarAction(
-            textColor: _primaryBlue,
-            label: S.of(context).ok,
-            onPressed: () {},
-          ),
-        ),
-      );
   }
 }
 

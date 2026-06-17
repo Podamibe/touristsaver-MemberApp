@@ -385,10 +385,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     if (bannerData == null) return const SizedBox();
-    final String bannerInformation = (bannerData?['information'] ?? '')
-        .toString()
-        .replaceAll('4000+', '4500+')
-        .replaceAll('4,000+', '4,500+');
+    const String bannerInformation = 'Discover 4500+ Experiences';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
@@ -430,12 +427,12 @@ class _HomeScreenState extends State<HomeScreen>
               ),
               SizedBox(height: 2.h),
               Text(
-                bannerData?['country'] ?? "",
+                'Across Australia',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white,
                   fontFamily: 'Montserrat',
-                  // ✅ Thinner, slightly smaller font for "Australia & New Zealand"
+                  // Slightly smaller country label.
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w500, // Medium weight
                   letterSpacing: 0.2,
