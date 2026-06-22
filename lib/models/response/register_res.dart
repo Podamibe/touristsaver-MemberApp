@@ -64,7 +64,7 @@ class Data {
         premiumCodeIsApplied: json["premiumCodeIsApplied"],
         premiumCodeIsPaid: json["premiumCodeIsPaid"],
         packageId: json["packageId"],
-        discount: json["discount"],
+        discount: json["discount"]?.toString(),
       );
 
   Map<String, dynamic> toJson() => {

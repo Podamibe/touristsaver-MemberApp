@@ -32,7 +32,7 @@ class RegisterReqModel {
   final int? charityId;
   final String phoneVerifiedBy;
   final int countryId;
-  final int stateId;
+  final int? stateId;
   final dynamic issuerCode;
   final String password;
   final String confirmPassword;
@@ -49,7 +49,7 @@ class RegisterReqModel {
         "postalCode": postalCode,
         "phoneNumber": phoneNumber,
         "countryId": countryId,
-        "stateId": stateId,
+        if (stateId != null) "stateId": stateId,
         "charityId": charityId,
         "issuerCode": issuerCode == 'null' ? null : issuerCode,
         "password": password,

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:touristsaver/common/services/dio_common.dart';
 import 'package:touristsaver/common/utils.dart';
@@ -28,6 +29,7 @@ import 'package:touristsaver/models/response/piiink_info_res.dart';
 import 'package:touristsaver/models/response/user_delete_res.dart';
 import 'package:touristsaver/models/response/user_detail_res.dart';
 import 'package:touristsaver/splash_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../common/app_variables.dart';
 import '../../../common/services/device_info.dart';
@@ -95,8 +97,6 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
   bool? hideRecommendOption;
   bool? hideRemoveAccountButton;
   bool _isBiometricsSupported = true;
-  String? _selectedStayLocation;
-  String? _selectedCountryStateLocation;
 
   bool isHidden = true;
   bool isHidden1 = true;
@@ -116,7 +116,6 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
     super.initState();
     fetchShowCharity();
     getPiiinkInfo();
-    _loadStayLocationPrefs();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       localAuth.isDeviceSupported().then((bool isSupported) {
@@ -126,26 +125,6 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
         });
       });
     });
-  }
-
-  Future<void> _loadStayLocationPrefs() async {
-    final String? stayLocation =
-        await Pref().readData(key: userChosenLocationName);
-    final String? countryStateLocation =
-        await Pref().readData(key: userChosenCountryStateName);
-    if (!mounted) return;
-    setState(() {
-      _selectedStayLocation = _cleanPrefValue(stayLocation);
-      _selectedCountryStateLocation = _cleanPrefValue(countryStateLocation);
-    });
-  }
-
-  String? _cleanPrefValue(String? value) {
-    final String cleanValue = value?.trim() ?? '';
-    if (cleanValue.isEmpty || cleanValue == 'null' || cleanValue == '0') {
-      return null;
-    }
-    return cleanValue;
   }
 
   String? _firstNotEmpty(List<String?> values) {
@@ -162,25 +141,13 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
     return _firstNotEmpty([value]) ?? 'Not set';
   }
 
-  List<_ProfileActionItem> _helpfulActions() {
+  List<_ProfileActionItem> _helpfulActions({required bool isEmailVerified}) {
     final List<_ProfileActionItem> actions = [
       _ProfileActionItem(
-        title: S.of(context).changeCountry,
-        subtitle: 'Update your country or stay location',
-        icon: Icons.public_rounded,
-        onTap: () => context.pushNamed('change-country'),
-      ),
-      _ProfileActionItem(
-        title: S.of(context).editProfile,
-        subtitle: 'Name, email and phone details',
-        icon: Icons.edit_outlined,
-        onTap: () => context.pushNamed('edit-profile'),
-      ),
-      _ProfileActionItem(
-        title: S.of(context).changePassword,
-        subtitle: 'Keep your account secure',
-        icon: Icons.lock_outline_rounded,
-        onTap: changePopUpPassword,
+        title: 'Visit TouristSaver Website',
+        subtitle: 'Discover more member benefits',
+        icon: Icons.language_rounded,
+        onTap: _openTouristSaverWebsite,
       ),
     ];
 
@@ -201,6 +168,25 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
         subtitle: 'Share TouristSaver with someone',
         icon: Icons.group_add_outlined,
         onTap: () => context.pushNamed('memberReferral'),
+      ),
+      _ProfileActionItem(
+        title: S.of(context).editProfile,
+        subtitle: 'Update your personal details',
+        icon: Icons.edit_outlined,
+        onTap: () => context.pushNamed('edit-profile'),
+      ),
+      if (!isEmailVerified)
+        _ProfileActionItem(
+          title: S.of(context).verifyEmail,
+          subtitle: 'Confirm your email address',
+          icon: Icons.mark_email_unread_outlined,
+          onTap: () => showVerifyEmailBottomSheet(context),
+        ),
+      _ProfileActionItem(
+        title: S.of(context).changePassword,
+        subtitle: 'Keep your account secure',
+        icon: Icons.lock_outline_rounded,
+        onTap: changePopUpPassword,
       ),
       if (_isBiometricsSupported)
         _ProfileActionItem(
@@ -224,8 +210,7 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
     ]);
 
     if (showCharity is Map && showCharity['show'] == true) {
-      actions.insert(
-        0,
+      actions.add(
         _ProfileActionItem(
           title: S.of(context).charity,
           subtitle: 'Choose or view supported charities',
@@ -235,6 +220,16 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
       );
     }
     return actions;
+  }
+
+  Future<void> _openTouristSaverWebsite() async {
+    final launched = await launchUrl(
+      Uri.parse('https://touristsaver.org'),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!launched && mounted) {
+      GlobalSnackBar.showError(context, 'Could not open TouristSaver website.');
+    }
   }
 
   List<_ProfileActionItem> _savingsActions() {
@@ -322,7 +317,6 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
       onRefresh: () async {
         await Future.delayed(const Duration(seconds: 2));
         getPiiinkInfo();
-        _loadStayLocationPrefs();
       },
       child: Scaffold(
         appBar: PreferredSize(
@@ -410,17 +404,15 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
           results?.email,
         ]) ??
         'TouristSaver Member';
-    final String profileLocation = _firstNotEmpty([
-          results?.state?.stateName,
-          results?.country?.countryName,
-        ]) ??
-        'Not set';
-    final String stayLocation = _firstNotEmpty([
-          _selectedStayLocation,
-          _selectedCountryStateLocation,
-        ]) ??
-        'Not selected';
     final bool isEmailVerified = results?.isEmailVerified == true;
+    final String? phone = _firstNotEmpty([
+      '${results?.phoneNumberPrefix ?? ''} ${results?.phoneNumber ?? ''}'
+          .trim(),
+    ]);
+    final String? membershipStatus = _firstNotEmpty([results?.memberType]);
+    final String? memberSince = results?.createdAt == null
+        ? null
+        : DateFormat('MMMM yyyy').format(results!.createdAt!);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -429,11 +421,10 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
           child: _memberIdentityCard(
             name: memberName,
-            stayLocation: stayLocation,
-            profileLocation: profileLocation,
-            memberCode: _displayValue(results?.uniqueMemberCode),
-            issuerCode: _displayValue(userProfile.data?.issuerCode),
             email: _displayValue(results?.email),
+            phone: phone,
+            membershipStatus: membershipStatus,
+            memberSince: memberSince,
             isEmailVerified: isEmailVerified,
           ),
         ),
@@ -461,7 +452,9 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
         _ProfileSection(
           title: 'Helpful Actions',
           child: Column(
-            children: _helpfulActions().map(_actionTile).toList(),
+            children: _helpfulActions(isEmailVerified: isEmailVerified)
+                .map(_actionTile)
+                .toList(),
           ),
         ),
         if (hideRemoveAccountButton == false)
@@ -487,11 +480,10 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
 
   Widget _memberIdentityCard({
     required String name,
-    required String stayLocation,
-    required String profileLocation,
-    required String memberCode,
-    required String issuerCode,
     required String email,
+    required String? phone,
+    required String? membershipStatus,
+    required String? memberSince,
     required bool isEmailVerified,
   }) {
     return _ProfileCard(
@@ -555,54 +547,42 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
           ),
           const SizedBox(height: 16),
           _identityRow(
-            icon: Icons.near_me_outlined,
-            label: 'Stay location',
-            value: stayLocation,
-          ),
-          _identityRow(
             icon: Icons.public_rounded,
-            label: 'Profile country/state',
-            value: profileLocation,
-          ),
-          _identityRow(
-            icon: Icons.confirmation_number_outlined,
-            label: 'Member code',
-            value: memberCode,
-          ),
-          _identityRow(
-            icon: Icons.badge_outlined,
-            label: 'Issuer code',
-            value: issuerCode,
+            label: 'Membership valid in',
+            value: 'Australia',
           ),
           _identityRow(
             icon: Icons.email_outlined,
             label: 'Email',
             value: email,
           ),
-          if (!isEmailVerified) ...[
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF0009FE),
-                  padding: EdgeInsets.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                onPressed: () {
-                  showVerifyEmailBottomSheet(context);
-                },
-                icon: const Icon(Icons.email_outlined, size: 18),
-                label: Text(
-                  S.of(context).verifyEmail,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-              ),
+          if (phone != null)
+            _identityRow(
+              icon: Icons.phone_outlined,
+              label: 'Phone number',
+              value: phone,
             ),
-          ],
+          if (membershipStatus != null)
+            _identityRow(
+              icon: Icons.workspace_premium_outlined,
+              label: 'Membership status',
+              value: _friendlyStatus(membershipStatus),
+            ),
+          if (memberSince != null)
+            _identityRow(
+              icon: Icons.calendar_month_outlined,
+              label: 'Member Since',
+              value: memberSince,
+            ),
         ],
       ),
     );
+  }
+
+  String _friendlyStatus(String status) {
+    final cleanStatus = status.trim();
+    if (cleanStatus.isEmpty) return cleanStatus;
+    return '${cleanStatus[0].toUpperCase()}${cleanStatus.substring(1).toLowerCase()}';
   }
 
   Widget _identityRow({

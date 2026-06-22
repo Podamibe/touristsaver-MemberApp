@@ -141,6 +141,8 @@ class _TopUpScreenState extends State<TopUpScreen> {
                               ),
                             ),
                             SizedBox(height: 20.h),
+                            _membershipTerritoryCard(),
+                            SizedBox(height: 20.h),
                             piiinkLoaded(memPackAll, countryId),
                           ],
                         ),
@@ -153,6 +155,65 @@ class _TopUpScreenState extends State<TopUpScreen> {
             }),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _membershipTerritoryCard() {
+    return Container(
+      padding: EdgeInsets.all(18.r),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF7FF),
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: const Color(0xFFD9E9FF)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44.w,
+            height: 44.w,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(13.r),
+            ),
+            child: const Icon(Icons.public_rounded, color: Color(0xFF0009FE)),
+          ),
+          SizedBox(width: 13.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Your Membership',
+                  style: TextStyle(
+                    color: _bodyColor,
+                    fontSize: 12.5.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: 3.h),
+                Text(
+                  'TouristSaver Australia',
+                  style: TextStyle(
+                    color: _headingColor,
+                    fontSize: 17.sp,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                SizedBox(height: 3.h),
+                Text(
+                  'AUD \$99 per year',
+                  style: TextStyle(
+                    color: const Color(0xFF0009FE),
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.lock_outline_rounded, color: Color(0xFF61708A)),
+        ],
       ),
     );
   }

@@ -183,7 +183,19 @@ class DioRegister {
       // log(response.data!);
       return registerResModelFromJson(response.data!);
     } on DioException catch (e) {
-      return errorResModelFromJson(e.response?.data);
+      final data = e.response?.data;
+      if (data is String && data.isNotEmpty) {
+        try {
+          return errorResModelFromJson(data);
+        } catch (_) {}
+      }
+      if (data is Map) {
+        return ErrorResModel.fromJson(Map<String, dynamic>.from(data));
+      }
+      return ErrorResModel(
+        status: e.response?.statusCode,
+        message: e.message ?? 'Registration could not be completed.',
+      );
     } catch (err) {
       return null;
     }
