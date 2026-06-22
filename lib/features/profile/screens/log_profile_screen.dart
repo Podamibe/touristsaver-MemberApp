@@ -141,7 +141,10 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
     return _firstNotEmpty([value]) ?? 'Not set';
   }
 
-  List<_ProfileActionItem> _helpfulActions({required bool isEmailVerified}) {
+  List<_ProfileActionItem> _helpfulActions({
+    required bool isEmailVerified,
+    required String? email,
+  }) {
     final List<_ProfileActionItem> actions = [
       _ProfileActionItem(
         title: 'Visit TouristSaver Website',
@@ -180,7 +183,7 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
           title: S.of(context).verifyEmail,
           subtitle: 'Confirm your email address',
           icon: Icons.mark_email_unread_outlined,
-          onTap: () => showVerifyEmailBottomSheet(context),
+          onTap: () => showVerifyEmailBottomSheet(context, email: email),
         ),
       _ProfileActionItem(
         title: S.of(context).changePassword,
@@ -452,7 +455,8 @@ class _LogProfileScreenState extends State<LogProfileScreen> {
         _ProfileSection(
           title: 'Helpful Actions',
           child: Column(
-            children: _helpfulActions(isEmailVerified: isEmailVerified)
+            children: _helpfulActions(
+                    isEmailVerified: isEmailVerified, email: results?.email)
                 .map(_actionTile)
                 .toList(),
           ),
