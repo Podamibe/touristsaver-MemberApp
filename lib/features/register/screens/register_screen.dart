@@ -30,7 +30,6 @@ import 'package:touristsaver/models/response/common_res.dart';
 import 'package:touristsaver/models/response/get_app_slugs_res_model.dart';
 import 'package:touristsaver/models/response/location_get_all.dart';
 import 'package:touristsaver/models/response/nearby_charity_res.dart';
-import 'package:touristsaver/models/response/state_get_all.dart';
 
 import '../../../common/app_variables.dart';
 import '../../../common/widgets/dropdown_button_widget.dart';
@@ -55,9 +54,7 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final TextEditingController countrySearchController = TextEditingController();
   final TextEditingController charitySearchController = TextEditingController();
-  final TextEditingController stateSearchController = TextEditingController();
   final TextEditingController providerController = TextEditingController();
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
@@ -65,7 +62,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPassowrdController =
       TextEditingController();
-  final TextEditingController postalCodeController = TextEditingController();
   final TextEditingController mobileNumberController = TextEditingController();
   final TextEditingController premiumController = TextEditingController();
   final TextEditingController referralCodeController = TextEditingController();
@@ -87,8 +83,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isHidden = true;
   bool _isHidden1 = true;
 
-  //For stopping selection of state when country is changed
-  bool iscountryChanged = false;
   bool _isPromoExpanded = false;
 
   static const Color _primaryBlue = Color(0xFF0009FE);
@@ -97,10 +91,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   static const Color _softText = Color(0xFF65708D);
   static const double _inputHeight = 55;
   static const String _defaultAustraliaIssuerCode = 'AU0000000001';
+  static const String _defaultAustraliaPostalCode = '4000';
 
   // For dropDown of selecting country
   String? selectedCountry;
   int? selectedCountryID;
+  int? selectedStateID;
   String? selectedPhonePrefix;
   String? selectedPhonePrefixKey;
   String? previousPhonePrefix;
@@ -118,16 +114,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isAutoCapitalisingName = false;
   String _previousFirstNameText = '';
   String _previousLastNameText = '';
-
-  Future<StateGetAllResModel?>? stateList;
-  Future<StateGetAllResModel?> getState() async {
-    StateGetAllResModel? stateGetAllResModel =
-        await DioLocation().getAllState(countryID: selectedCountryID!);
-    setState(() {
-      iscountryChanged = false;
-    });
-    return stateGetAllResModel;
-  }
 
   Future<CountryWisePrefixResModel?>? phonePrefixList;
   Future<CountryWisePrefixResModel?> getPhonePrefix() async {
@@ -176,10 +162,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       isSlugLoading1 = false;
     });
   }
-
-  // For dropDown of selecting state
-  String? selectedState;
-  int? selectedStateID;
 
   //For checking the phone number is valid with its country code or not
   String? selectedCountryShortName;
@@ -283,16 +265,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _locationAllBloc.close();
     firstNameController.removeListener(_handleFirstNameChanged);
     lastNameController.removeListener(_handleLastNameChanged);
-    countrySearchController.dispose();
     charitySearchController.dispose();
-    stateSearchController.dispose();
     providerController.dispose();
     firstNameController.dispose();
     lastNameController.dispose();
     emailController.dispose();
     passwordController.dispose();
     confirmPassowrdController.dispose();
-    postalCodeController.dispose();
     mobileNumberController.dispose();
     premiumController.dispose();
     referralCodeController.dispose();
@@ -869,137 +848,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return defaultIssuer;
   }
 
-  Widget _postalCodeField() {
-    return TextFormField(
-      controller: postalCodeController,
-      cursorColor: _primaryBlue,
-      decoration: _modernInputDecoration(
-        hintText: 'Postal/Zip Code (optional)',
-        icon: Icons.location_on_outlined,
-      ),
-    );
+  bool _applyAustraliaMembershipDefaults(LocationGetAllResModel locations) {
+    for (final country in locations.data ?? const []) {
+      final code = country.countryShortName?.trim().toUpperCase();
+      final name = country.countryName?.trim().toLowerCase();
+      if (code == 'AU' || code == 'AUS' || name == 'australia') {
+        selectedCountry = country.countryName ?? 'Australia';
+        selectedCountryID = country.id;
+        selectedCountryShortName = country.countryShortName ?? 'AU';
+        previousPhonePrefix = country.phonePrefix;
+        selectedPhonePrefix ??= country.phonePrefix;
+        if (providerController.text.trim().isEmpty) {
+          providerController.text = _defaultAustraliaIssuerCode;
+        }
+        return selectedCountryID != null;
+      }
+    }
+    return false;
   }
 
-  Widget _countryStateFields(LocationGetAllResModel locationList) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final double fieldWidth = (constraints.maxWidth - 12.w) / 2;
+  Future<bool> _loadAustraliaBackendDefaults() async {
+    final countryId = selectedCountryID;
+    if (countryId == null) return false;
+    if (selectedStateID != null) return true;
 
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: fieldWidth,
-              child: DropdownButtonWidget(
-                label: 'Country',
-                bWidth: fieldWidth,
-                dropWidth: fieldWidth,
-                lPadding: 8,
-                fillColor: Colors.white,
-                borderColor: _fieldBorder,
-                borderRadius: 12.r,
-                iconColor: _primaryBlue,
-                hintStyle: _dropdownHintStyle,
-                searchController: countrySearchController,
-                items: locationList.data!.map((e) {
-                  return DropdownMenuItem(
-                    value: e.countryName,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 10),
-                      child: AutoSizeText(
-                        e.countryName!,
-                        maxLines: 1,
-                        style: dopdownTextStyle,
-                      ),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (newVal) async {
-                  setState(() {
-                    selectedCountry = newVal as String;
-                    iscountryChanged = true;
-                    countrySearchController.clear();
-                  });
-                  final locationID = locationList.data!.firstWhere(
-                      (element) => element.countryName == selectedCountry);
-                  previousPhonePrefix = locationID.phonePrefix;
-                  selectedPhonePrefix = locationID.phonePrefix;
-                  selectedPhonePrefixKey = null;
-                  selectedCountryID = locationID.id!;
-                  selectedCountryShortName = locationID.countryShortName;
-                  setState(() {
-                    selectedState = null;
-                    stateList = getState();
-                    if (AppVariables.locationEnabledStatus.value >= 2) {
-                      setState(() {
-                        nearByCharityForReg =
-                            getNearByCharityForReg(selectedCountryID!);
-                      });
-                    }
-                  });
-                },
-                value: selectedCountry,
-              ),
-            ),
-            SizedBox(width: 12.w),
-            SizedBox(
-              width: fieldWidth,
-              child: FutureBuilder<StateGetAllResModel?>(
-                future: stateList,
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return _placeholderField('State/Province');
-                  }
+    final states = await DioLocation().getAllState(countryID: countryId);
+    final availableStates = states?.data ?? const [];
+    if (availableStates.isEmpty) return false;
 
-                  if (snapshot.data!.data!.isEmpty) {
-                    return _placeholderField(S.of(context).noStateAvailable);
-                  }
-
-                  if (iscountryChanged == true) {
-                    return _placeholderField(S.of(context).pleaseWait);
-                  }
-
-                  return DropdownButtonWidget(
-                    label: 'State/Province',
-                    searchController: stateSearchController,
-                    bWidth: fieldWidth,
-                    dropWidth: fieldWidth,
-                    lPadding: 8,
-                    fillColor: Colors.white,
-                    borderColor: _fieldBorder,
-                    borderRadius: 12.r,
-                    iconColor: _primaryBlue,
-                    hintStyle: _dropdownHintStyle,
-                    items: snapshot.data!.data!.map((e) {
-                      return DropdownMenuItem(
-                        value: e.stateName,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 10),
-                          child: AutoSizeText(
-                            e.stateName!,
-                            maxLines: 1,
-                            style: dopdownTextStyle,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (newVal) async {
-                      setState(() {
-                        selectedState = newVal as String;
-                      });
-                      final stateID = snapshot.data!.data!.firstWhere(
-                          (element) => element.stateName == selectedState);
-                      selectedStateID = stateID.id;
-                    },
-                    value: selectedState,
-                  );
-                },
-              ),
-            ),
-          ],
-        );
-      },
-    );
+    final queensland = availableStates.where((state) {
+      final name = state.stateName?.trim().toLowerCase();
+      final code = state.stateShortName?.trim().toUpperCase();
+      return name == 'queensland' || code == 'QLD';
+    });
+    selectedStateID =
+        (queensland.isNotEmpty ? queensland.first : availableStates.first).id;
+    return selectedStateID != null;
   }
 
   Widget _gradientContinueButton() {
@@ -1055,14 +939,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       isLoading = true;
     });
 
-    if (selectedCountry == null) {
-      GlobalSnackBar.valid(context, S.of(context).selectTheCountry);
-      setState(() {
-        isLoading = false;
-      });
-      return;
-    } else if (selectedState == null) {
-      GlobalSnackBar.valid(context, S.of(context).pleaseSelectTheState);
+    if (selectedCountryID == null) {
+      GlobalSnackBar.showError(
+          context, 'Australia membership is unavailable right now.');
       setState(() {
         isLoading = false;
       });
@@ -1133,14 +1012,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         isLoading = false;
       });
       return;
-    } else if (postalCodeController.text.isNotEmpty &&
-        postalCodeController.text.length < 4) {
-      GlobalSnackBar.valid(
-          context, S.of(context).postalCodeShouldBeGreaterThan4Digits);
-      setState(() {
-        isLoading = false;
-      });
-      return;
     } else if (isChecked == false) {
       GlobalSnackBar.valid(context, S.of(context).pleaseAcceptTermsConditions);
       setState(() {
@@ -1149,6 +1020,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     } else {
       FocusManager.instance.primaryFocus?.unfocus();
+      final defaultsReady = await _loadAustraliaBackendDefaults();
+      if (!mounted) return;
+      if (!defaultsReady) {
+        GlobalSnackBar.showError(
+          context,
+          'Australia registration details are unavailable. Please try again.',
+        );
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
       checkProvider();
     }
   }
@@ -1263,6 +1146,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     else if (locationState is LocationAllLoadedState) {
                       LocationGetAllResModel locationList =
                           locationState.locationGetAll; //Location
+                      if (!_applyAustraliaMembershipDefaults(locationList)) {
+                        return const Error1();
+                      }
                       return SingleChildScrollView(
                         padding: const EdgeInsets.only(bottom: 30),
                         child: Column(
@@ -1292,11 +1178,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   children: [
                                     _sectionHeader(
                                         Icons.person_outline, 'Your Details'),
-                                    _countryStateFields(locationList),
-                                    const SizedBox(height: 15),
-                                    _postalCodeField(),
-                                    const SizedBox(height: 15),
-
                                     Row(
                                       children: [
                                         Expanded(
@@ -1405,7 +1286,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         ? Column(children: [
                                             const SizedBox(height: 15),
                                             AutoSizeText(
-                                              'Your mobile country code differs from your selected country.',
+                                              'Your mobile country code differs from your Australia membership.',
                                               style: noteTextStyle,
                                             ),
                                             const SizedBox(height: 15),
@@ -2137,7 +2018,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           'phoneVerifiedBy': smsOtpMedium ?? 'sms',
           'confirmPassword': confirmPassowrdController.text.trim(),
           'phNum': mobileNumberController.text.trim(),
-          'postalCode': postalCodeController.text.trim(),
+          'postalCode': _defaultAustraliaPostalCode,
           'premium': premiumController.text.isEmpty
               ? 'null'
               : premiumController.text.trim().toUpperCase(),

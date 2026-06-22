@@ -329,8 +329,7 @@ class _EditProfileState extends State<EditProfile> {
                                   borderRadius: BorderRadius.circular(999),
                                   onTap: () {
                                     showVerifyEmailBottomSheet(context,
-                                        message:
-                                            S.of(context).sureVerifyYourEmail);
+                                        email: emailController.text.trim());
                                   },
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(

@@ -36,7 +36,7 @@ class NumberOTPScreen extends StatefulWidget {
   static const String routeName = '/number-reg-otp';
   final int countryID;
   final int charityID;
-  final int stateID;
+  final int? stateID;
   final String issuerCode;
   final String firstName;
   final String lastName;
@@ -411,182 +411,155 @@ class _NumberOTPScreenState extends State<NumberOTPScreen> with CodeAutoFill {
                           });
                           return;
                         }
-                        var res = await DioRegister().userRegister(
-                          registerReqModel: RegisterReqModel(
-                            firstname: widget.firstName,
-                            lastname: widget.lastName,
-                            email: widget.email,
-                            password: widget.password,
-                            confirmPassword: widget.confirmPassword,
-                            postalCode: widget.postalCode,
-                            phoneNumberPrefix: widget.phonePrefix,
-                            phoneNumber: widget.phNum,
-                            phoneVerifiedBy: widget.phoneVerifiedBy,
-                            countryId: widget.countryID,
-                            stateId: widget.stateID,
-                            charityId:
-                                widget.charityID == 0 ? null : widget.charityID,
-                            issuerCode: widget.issuerCode,
-                            memberPremiumCode: widget.premium,
-                            memberReferralCode: widget.referralCode,
-                            smsotp: otpControllerr1.text.trim(),
-                          ),
-                        );
-
-                        if (res is RegisterResModel) {
-                          // After success sending to the choosing page of free or paid {User or Member will already be created before going to this page}
-                          // Saving the token
-                          Pref().writeData(
-                              key: saveToken, value: res.data!.accessToken!);
-                          AppVariables.accessToken = res.data!.accessToken!;
-                          Pref().setBool(
-                            key: 'showFreePiiinks',
-                            value: res.data?.showFreePiiinks ?? false,
+                        if (widget.stateID == null ||
+                            widget.postalCode.trim().isEmpty) {
+                          GlobalSnackBar.showError(
+                            context,
+                            'Australia registration details are missing. Please return and try again.',
                           );
-                          AppVariables.showFreePiiinks =
-                              res.data?.showFreePiiinks ?? false;
-                          // Saving the country ID
-                          Pref().writeData(
-                              key: saveCountryID,
-                              value:
-                                  res.data!.memberInfo!.countryId.toString());
-
-                          // Saving the country origin ID
-                          Pref().writeData(
-                              key: saveCountryOriginID,
-                              value: res.data!.memberInfo!.originCountryId
-                                  .toString());
-                          AppVariables.originCountryId =
-                              res.data!.memberInfo!.originCountryId.toString();
-                          //Saving the user ID
-                          Pref().writeData(
-                              key: saveUserID,
-                              value: res.data!.memberInfo!.id.toString());
-                          Pref().writeData(
-                              key: userChosenLocationID,
-                              value: widget.countryID.toString());
-
-                          // Calling the location get all Api for saving the user member country currency symbol and country name
-                          LocationGetAllResModel? countryCurrency =
-                              await DioLocation().getCurrency();
-                          await Pref().writeData(
-                              key: saveCurrency,
-                              value: countryCurrency!.data![0].currencySymbol!);
-                          AppVariables.currency =
-                              countryCurrency.data![0].currencySymbol!;
-                          await Pref().writeData(
-                              key: 'saveUsername', value: widget.phNum);
-                          await Pref().writeData(
-                              key: 'savePassword', value: widget.password);
-                          AppVariables.isLocalAuthEnabled = false;
-                          //Calling API to fetch the stripe key
-                          StripeKeyResModel? getStripeKey =
-                              await DioCommon().getStripe();
-                          if (getStripeKey is StripeKeyResModel) {
-                            Pref().writeData(
-                                key: savePublishableKey,
-                                value:
-                                    getStripeKey.data!.stripePublishableKey ??
-                                        stripePublishableKey);
-
-                            initializeFlutterStripe();
-                          } else {
-                            if (!mounted) return;
-                            GlobalSnackBar.showError(
-                                context,
-                                S
-                                    .of(context)
-                                    .somethingWentWrongCouldnTFetchTheStripeKeyToCompleteTheRegistrationProcess);
-                            setState(() {
-                              isLoadingN = false;
-                            });
-                          }
-
-                          //checking the status and moving to next step
-                          if (!mounted) return;
-                          // if premium code is provided but not paid
-                          // if (res.data!.premiumCodeIsApplied == true &&
-                          //     res.data!.premiumCodeIsPaid == false) {
-
-                          if (res.data!.premiumCodeIsApplied == true &&
-                              res.data?.discount == "100") {
-                            context.pushReplacementNamed(
-                              'paid-free',
-                            );
-                          }
-                          // if premium code is provided plus paid
-                          // else if (res.data!.premiumCodeIsApplied == true &&
-                          //     res.data!.premiumCodeIsPaid == true) {
-                          // else if (res.data!.premiumCodeIsApplied == false &&
-                          //     res.data!.premiumCodeIsPaid == false) {
-                          //   var getRes = await DioRegister().regTopUpStripe(
-                          //     registerTopUpStripeReqModel:
-                          //         RegisterTopUpStripeReqModel(
-                          //       paymentGateway: 'stripe',
-                          //       membershipPackageId:
-                          //           res.data!.packageId.toString(),
-                          //       countryId: widget.countryID.toString(),
-                          //       //   memberPremiumCode: widget.premium,
-                          //       isTopupUponRegistration: true,
-                          //     ),
-                          //   );
-
-                          //   if (!mounted) return;
-                          //   if (getRes is TopUpStripeResModel) {
-                          //     buyPiinkPopUp(
-                          //       getRes.clientSecret,
-                          //       toFixed2DecimalPlaces(
-                          //               res.data!.universalWallet!.balance!)
-                          //           .toString(),
-                          //     );
-                          //     setState(() {
-                          //       isLoadingN = false;
-                          //     });
-                          //   }
-                          //   else {
-                          //     GlobalSnackBar.showError(context,
-                          //         'Something went wrong when validating premium code. Please Try Again Later!!');
-                          //     setState(() {
-                          //       isLoadingN = false;
-                          //     });
-                          //   }
-                          // }
-                          // if premium code is not provided
-
-                          //Yukesh removed this paid-free screen!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                          else {
-                            print(
-                                "000000001111111111111111111111111111111111111110000000000000000000000000000000000000000000");
-                            ScaffoldMessenger.of(context).clearSnackBars();
-                            context.pushReplacementNamed(
-                              'paid-free',
-                            );
-                          }
-                          // else {
-                          //   context.pushReplacementNamed(
-                          //     'top-up',
-                          //   );
-                          // }
-                        } else if (res is ErrorResModel) {
-                          if (!mounted) return;
-                          GlobalSnackBar.showError(context, res.message!);
                           setState(() {
                             isLoadingN = false;
                           });
                           return;
                         }
-                        //If registration is not successfully
-                        else {
-                          if (!mounted) return;
-                          GlobalSnackBar.showError(
+                        try {
+                          var res = await DioRegister().userRegister(
+                            registerReqModel: RegisterReqModel(
+                              firstname: widget.firstName,
+                              lastname: widget.lastName,
+                              email: widget.email,
+                              password: widget.password,
+                              confirmPassword: widget.confirmPassword,
+                              postalCode: widget.postalCode,
+                              phoneNumberPrefix: widget.phonePrefix,
+                              phoneNumber: widget.phNum,
+                              phoneVerifiedBy: widget.phoneVerifiedBy,
+                              countryId: widget.countryID,
+                              stateId: widget.stateID,
+                              charityId: widget.charityID == 0
+                                  ? null
+                                  : widget.charityID,
+                              issuerCode: widget.issuerCode,
+                              memberPremiumCode: widget.premium,
+                              memberReferralCode: widget.referralCode,
+                              smsotp: otpControllerr1.text.trim(),
+                            ),
+                          );
+
+                          if (res is RegisterResModel) {
+                            // After success sending to the choosing page of free or paid {User or Member will already be created before going to this page}
+                            // Saving the token
+                            await Pref().writeData(
+                                key: saveToken, value: res.data!.accessToken!);
+                            AppVariables.accessToken = res.data!.accessToken!;
+                            await Pref().setBool(
+                              key: 'showFreePiiinks',
+                              value: res.data?.showFreePiiinks ?? false,
+                            );
+                            AppVariables.showFreePiiinks =
+                                res.data?.showFreePiiinks ?? false;
+                            // Saving the country ID
+                            await Pref().writeData(
+                                key: saveCountryID,
+                                value:
+                                    res.data!.memberInfo!.countryId.toString());
+
+                            // Saving the country origin ID
+                            await Pref().writeData(
+                                key: saveCountryOriginID,
+                                value: res.data!.memberInfo!.originCountryId
+                                    .toString());
+                            AppVariables.originCountryId = res
+                                .data!.memberInfo!.originCountryId
+                                .toString();
+                            //Saving the user ID
+                            await Pref().writeData(
+                                key: saveUserID,
+                                value: res.data!.memberInfo!.id.toString());
+                            await Pref().writeData(
+                                key: userChosenLocationID,
+                                value: widget.countryID.toString());
+
+                            // Calling the location get all Api for saving the user member country currency symbol and country name
+                            LocationGetAllResModel? countryCurrency =
+                                await DioLocation().getCurrency();
+                            final currencyData = countryCurrency?.data;
+                            final currencySymbol =
+                                currencyData != null && currencyData.isNotEmpty
+                                    ? currencyData.first.currencySymbol ?? r'A$'
+                                    : r'A$';
+                            await Pref().writeData(
+                                key: saveCurrency, value: currencySymbol);
+                            AppVariables.currency = currencySymbol;
+                            await Pref().writeData(
+                                key: 'saveUsername', value: widget.phNum);
+                            await Pref().writeData(
+                                key: 'savePassword', value: widget.password);
+                            AppVariables.isLocalAuthEnabled = false;
+                            //Calling API to fetch the stripe key
+                            StripeKeyResModel? getStripeKey =
+                                await DioCommon().getStripe();
+                            if (getStripeKey is StripeKeyResModel) {
+                              await Pref().writeData(
+                                  key: savePublishableKey,
+                                  value:
+                                      getStripeKey.data!.stripePublishableKey ??
+                                          stripePublishableKey);
+
+                              initializeFlutterStripe();
+                            } else {
+                              if (!mounted) return;
+                              GlobalSnackBar.showError(
+                                  context,
+                                  S
+                                      .of(context)
+                                      .somethingWentWrongCouldnTFetchTheStripeKeyToCompleteTheRegistrationProcess);
+                              setState(() {
+                                isLoadingN = false;
+                              });
+                            }
+
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).clearSnackBars();
+                            context.pushReplacementNamed('paid-free');
+                          } else if (res is ErrorResModel) {
+                            if (!mounted) return;
+                            GlobalSnackBar.showError(
                               context,
-                              S
-                                  .of(context)
-                                  .somethingWentWrongWhenValidatingPremiumCodePleaseTryAgainLater);
-                          setState(() {
-                            isLoadingN = false;
-                          });
-                          return;
+                              res.message ??
+                                  'Registration could not be completed.',
+                            );
+                            setState(() {
+                              isLoadingN = false;
+                            });
+                            return;
+                          }
+                          //If registration is not successfully
+                          else {
+                            if (!mounted) return;
+                            GlobalSnackBar.showError(
+                                context,
+                                S
+                                    .of(context)
+                                    .somethingWentWrongWhenValidatingPremiumCodePleaseTryAgainLater);
+                            setState(() {
+                              isLoadingN = false;
+                            });
+                            return;
+                          }
+                        } catch (error) {
+                          if (mounted) {
+                            GlobalSnackBar.showError(
+                              context,
+                              'Registration could not be completed. Please try again.',
+                            );
+                          }
+                        } finally {
+                          if (mounted) {
+                            setState(() {
+                              isLoadingN = false;
+                            });
+                          }
                         }
                       },
                     ),
