@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/common/navigation/safe_primary_navigation.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/common/widgets/custom_button.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
@@ -59,9 +60,7 @@ class _DetailPayScreenState extends State<DetailPayScreen> {
         child: CustomAppBar(
             text: widget.merchantName,
             icon: Icons.arrow_back_ios,
-            onPressed: () {
-              context.pop();
-            }),
+            onPressed: _returnSafely),
       ),
       body: ScrollConfiguration(
         behavior: const ScrollBehavior(),
@@ -190,6 +189,8 @@ class _DetailPayScreenState extends State<DetailPayScreen> {
                                               });
                                               context.pushNamed('confirm-pay',
                                                   extra: {
+                                                    'merchantId': res
+                                                        .data!.merchantInfo!.id,
                                                     'totalAmount':
                                                         amountController.text
                                                             .trim(),
@@ -220,6 +221,10 @@ class _DetailPayScreenState extends State<DetailPayScreen> {
                                                     'merchantRebateToMember': res
                                                         .data!
                                                         .merchantRebateToMember
+                                                        .toString(),
+                                                    'merchantDiscountPercentage': res
+                                                        .data!
+                                                        .merchantDiscountPercentage
                                                         .toString(),
                                                     'discountedTransactionAmount': res
                                                         .data!
@@ -324,5 +329,15 @@ class _DetailPayScreenState extends State<DetailPayScreen> {
         ],
       ),
     );
+  }
+
+  void _returnSafely() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+
+    navigateToBottomTab(context, 0);
   }
 }

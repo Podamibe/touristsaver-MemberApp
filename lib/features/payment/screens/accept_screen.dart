@@ -269,7 +269,7 @@ class _AcceptScreenState extends State<AcceptScreen> {
       isLoading = false;
     });
     AppVariables.payAmountResetSignal.value++;
-    context.pushReplacementNamed('payment-complete', extra: {
+    context.goNamed('payment-complete', extra: {
       'merchantId': widget.merchantId,
       'merchantName': widget.merchantName,
       'totalAmount': widget.totalAmount,

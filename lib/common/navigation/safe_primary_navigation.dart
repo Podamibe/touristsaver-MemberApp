@@ -6,11 +6,15 @@ void navigateToSafePrimaryScreen(
   BuildContext context, {
   bool returnToSearch = false,
 }) {
-  FocusScope.of(context).unfocus();
   final String page = returnToSearch ? '1' : '0';
-  MerchantDiscoveryIntentStore.requestBottomTab(int.parse(page));
+  navigateToBottomTab(context, int.parse(page));
+}
+
+void navigateToBottomTab(BuildContext context, int page) {
+  FocusManager.instance.primaryFocus?.unfocus();
+  MerchantDiscoveryIntentStore.requestBottomTab(page);
   context.goNamed(
     'bottom-bar',
-    pathParameters: {'page': page},
+    pathParameters: {'page': page.toString()},
   );
 }

@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/common/navigation/safe_primary_navigation.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
@@ -49,7 +50,7 @@ class _ManualCodeState extends State<ManualCode> {
         child: CustomAppBar(
           text: 'Merchant code',
           icon: Icons.arrow_back_ios,
-          onPressed: context.pop,
+          onPressed: _returnToPayEntrySafely,
         ),
       ),
       body: SafeArea(
@@ -221,6 +222,16 @@ class _ManualCodeState extends State<ManualCode> {
         isLoading = false;
       });
     }
+  }
+
+  void _returnToPayEntrySafely() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+
+    navigateToBottomTab(context, 2);
   }
 }
 

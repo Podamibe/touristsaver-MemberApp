@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:touristsaver/common/app_variables.dart';
+import 'package:touristsaver/common/navigation/safe_primary_navigation.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/constants/helper.dart';
 
@@ -56,12 +57,9 @@ class _PaymentCompletedState extends State<PaymentCompleted> {
   bool get _canLeaveReview =>
       widget.merchantId != null && widget.merchantName.trim().isNotEmpty;
 
-  void _finishPaymentFlowToHome() {
+  void _finishPaymentFlowToSavings() {
     AppVariables.payAmountResetSignal.value++;
-    context.goNamed(
-      'bottom-bar',
-      pathParameters: {'page': '0'},
-    );
+    navigateToBottomTab(context, 3);
   }
 
   @override
@@ -70,7 +68,7 @@ class _PaymentCompletedState extends State<PaymentCompleted> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
-          _finishPaymentFlowToHome();
+          _finishPaymentFlowToSavings();
         }
       },
       child: Scaffold(
@@ -120,7 +118,7 @@ class _PaymentCompletedState extends State<PaymentCompleted> {
                 SizedBox(height: 18.h),
                 _GradientButton(
                   label: 'Done',
-                  onTap: _finishPaymentFlowToHome,
+                  onTap: _finishPaymentFlowToSavings,
                 ),
                 if (_canLeaveReview) ...[
                   SizedBox(height: 12.h),

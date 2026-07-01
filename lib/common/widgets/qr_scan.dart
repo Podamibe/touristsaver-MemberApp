@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:touristsaver/common/navigation/safe_primary_navigation.dart';
 import 'package:touristsaver/common/widgets/scanner_error_widget.dart';
 import '../services/image_service.dart';
 import 'custom_app_bar.dart';
@@ -36,6 +37,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
   String _scanResult = '';
   bool isLoading = false;
   bool _debugQrShortcutUsed = false;
+  bool _hasReturned = false;
 
   @override
   void initState() {
@@ -54,7 +56,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!cameraController.value.hasCameraPermission) {
+    if (_hasReturned || !cameraController.value.hasCameraPermission) {
       return;
     }
 
@@ -63,15 +65,29 @@ class _QRScannerScreenState extends State<QRScannerScreen>
       case AppLifecycleState.hidden:
       case AppLifecycleState.inactive:
       case AppLifecycleState.paused:
-        unawaited(cameraController.stop());
+        unawaited(_stopCamera());
         break;
 
       case AppLifecycleState.resumed:
-        unawaited(cameraController.start());
+        unawaited(_startCamera());
         break;
+    }
+  }
 
-      default:
-        break;
+  Future<void> _stopCamera() async {
+    try {
+      await cameraController.stop();
+    } catch (error) {
+      debugPrint('Unable to stop QR scanner: $error');
+    }
+  }
+
+  Future<void> _startCamera() async {
+    if (_hasReturned || !mounted) return;
+    try {
+      await cameraController.start();
+    } catch (error) {
+      debugPrint('Unable to resume QR scanner: $error');
     }
   }
 
@@ -100,12 +116,14 @@ class _QRScannerScreenState extends State<QRScannerScreen>
         final result = barcodes.first.rawValue ?? '';
         if (result.isNotEmpty && _scanResult != result) {
           _scanResult = result;
-          context.pop(_scanResult);
+          _returnFromScanner(_scanResult);
         }
       }
     } catch (e) {
       _resetScanState();
-      GlobalSnackBar.showError(context, e.toString());
+      if (mounted && !_hasReturned) {
+        GlobalSnackBar.showError(context, e.toString());
+      }
     }
   }
 
@@ -121,7 +139,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
             _scanResult = result.barcodes.first.rawValue ?? '';
             // log("Gallery Barcode: $_scanResult");
             if (_scanResult.isNotEmpty) {
-              context.pop(_scanResult);
+              _returnFromScanner(_scanResult);
             }
           } else {
             GlobalSnackBar.valid(context, S.of(context).invalidQrCode);
@@ -131,13 +149,18 @@ class _QRScannerScreenState extends State<QRScannerScreen>
     } catch (e) {
       _resetScanState();
       // log("Error in _scanFromGallery: ${e.toString()}");
-      GlobalSnackBar.showError(context, e.toString());
+      if (mounted && !_hasReturned) {
+        GlobalSnackBar.showError(context, e.toString());
+      }
     } finally {
-      setState(() => isLoading = false);
+      if (mounted && !_hasReturned) {
+        setState(() => isLoading = false);
+      }
     }
   }
 
   void _resetScanState() {
+    if (!mounted || _hasReturned) return;
     setState(() {
       _scanResult = '';
       isLoading = false;
@@ -155,8 +178,23 @@ class _QRScannerScreenState extends State<QRScannerScreen>
 
     // Debug-only emulator shortcut for testing QR redemption without camera scan.
     _debugQrShortcutUsed = true;
-    context.pop('6660000000058');
+    _returnFromScanner('6660000000058');
     return KeyEventResult.handled;
+  }
+
+  void _returnFromScanner([String result = '']) {
+    if (!mounted || _hasReturned) return;
+
+    _hasReturned = true;
+    unawaited(_stopCamera());
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    if (context.canPop()) {
+      context.pop(result);
+      return;
+    }
+
+    navigateToBottomTab(context, 0);
   }
 
   @override
@@ -185,7 +223,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
           child: CustomAppBar(
             text: widget.title,
             icon: Icons.arrow_back_ios,
-            onPressed: () => context.pop(_scanResult),
+            onPressed: () => _returnFromScanner(_scanResult),
             icon2: Icons.flash_on,
             onPressed2: () => cameraController.toggleTorch(),
           ),
