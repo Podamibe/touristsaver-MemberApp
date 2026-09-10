@@ -38,10 +38,18 @@ import 'package:touristsaver/generated/l10n.dart';
 
 class PayScreen extends StatefulWidget {
   static const String routeName = '/pay';
-  const PayScreen({super.key, this.merchantName, this.returnToSearch = false});
+  const PayScreen({
+    super.key,
+    this.merchantName,
+    this.returnToSearch = false,
+    this.initialAmount,
+    this.openScannerOnArrival = false,
+  });
 
   final String? merchantName;
   final bool returnToSearch;
+  final String? initialAmount;
+  final bool openScannerOnArrival;
 
   @override
   State<PayScreen> createState() => _PayScreenState();
@@ -405,12 +413,21 @@ class _PayScreenState extends State<PayScreen> {
 
   @override
   void initState() {
+    super.initState();
+    final String initialAmount = widget.initialAmount?.trim() ?? '';
+    if (initialAmount.isNotEmpty) {
+      amountController.text = initialAmount;
+    }
     _payAmountResetListener = _resetPaymentEntry;
     AppVariables.payAmountResetSignal.addListener(_payAmountResetListener);
     getPiiinkInfo();
     payE = payEnabled();
+    if (widget.openScannerOnArrival) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _openOfferQrScanner();
+      });
+    }
     // log(AppVariables.currency!);
-    super.initState();
   }
 
   @override

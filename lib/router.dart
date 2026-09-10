@@ -442,6 +442,8 @@ final GoRouter goRouter = GoRouter(
           merchantName:
               args == null ? extra as String? : args['merchantName'] as String?,
           returnToSearch: args?['returnToSearch'] == true,
+          initialAmount: args?['initialAmount']?.toString(),
+          openScannerOnArrival: args?['openScannerOnArrival'] == true,
         );
       },
     ),
@@ -567,6 +569,8 @@ final GoRouter goRouter = GoRouter(
             isProfileClaim: args['isProfileClaim'] == true,
             initialRedemptionComplete: args['isProfileClaimApplied'] == true,
             discoverySavingsMessage: args['discoverySavingsMessage'],
+            claimLatitude: (args['claimLatitude'] as num?)?.toDouble(),
+            claimLongitude: (args['claimLongitude'] as num?)?.toDouble(),
           );
         }),
     //Bottom Navigation Bar

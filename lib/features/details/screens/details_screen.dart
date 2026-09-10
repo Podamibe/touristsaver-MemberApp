@@ -11,6 +11,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:touristsaver/common/utils.dart';
+import 'package:touristsaver/common/services/location_service.dart';
 import 'package:touristsaver/common/widgets/custom_app_bar.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
@@ -30,6 +31,7 @@ import 'package:touristsaver/features/details/services/dio_detail.dart';
 import 'package:touristsaver/features/details/services/fav_or_not.dart';
 import 'package:touristsaver/features/discovery_membership/widgets/discovery_savings_limit_sheet.dart';
 import 'package:touristsaver/features/payment/services/dio_payment.dart';
+import 'package:touristsaver/features/payment/widgets/merchant_claim_proximity_fallback.dart';
 import 'package:touristsaver/models/error_res.dart';
 import 'package:touristsaver/models/request/apply_piiink_by_merchant_req.dart';
 import 'package:touristsaver/models/response/confirm_piiink_res.dart'
@@ -879,12 +881,18 @@ class _DetailsScreenState extends State<DetailsScreen> {
       _isVerifyingMemberDiscount = true;
     });
 
+    final ClaimLocation claimLocation =
+        await LocationService().getCurrentClaimLocation();
+    if (!mounted) return;
+
     final results = await Future.wait<dynamic>([
       DioPay().startApplyPiiinkByMerchant(
         applyPiiinkByMerchantReqModel: ApplyPiiinkByMerchantReqModel(
           merchantId: merchantId,
           amount: billAmount,
           lang: AppVariables.selectedLanguageNow,
+          latitude: claimLocation.latitude,
+          longitude: claimLocation.longitude,
         ),
       ),
       Future<void>.delayed(const Duration(seconds: 2)),
@@ -928,6 +936,8 @@ class _DetailsScreenState extends State<DetailsScreen> {
           'universalPiiinkOnHold': data.universalPiiinkBalanceOnHold.toString(),
           'merchantPiiinkOnHold': data.merchantPiiinkBalanceOnHold.toString(),
           'returnToSearch': widget.returnToSearch,
+          'claimLatitude': claimLocation.latitude,
+          'claimLongitude': claimLocation.longitude,
         },
       );
       if (!mounted) return;
@@ -945,6 +955,22 @@ class _DetailsScreenState extends State<DetailsScreen> {
       _isVerifyingMemberDiscount = false;
     });
 
+    final MerchantClaimProximityFailure? proximityFailure =
+        MerchantClaimProximityFailure.fromResponse(res);
+    if (proximityFailure != null) {
+      final String merchantName = merchant.merchantName ?? 'this merchant';
+      final bool scanQr = await showMerchantClaimProximityFallback(
+        context: context,
+        merchantName: merchantName,
+      );
+      if (!mounted || !scanQr) return;
+      _openExistingMerchantQrFlow(
+        merchantName: merchantName,
+        billAmount: billAmount,
+      );
+      return;
+    }
+
     if (await showDiscoverySavingsLimitSheetForResponse(
       context: context,
       response: res,
@@ -957,6 +983,20 @@ class _DetailsScreenState extends State<DetailsScreen> {
       context,
       _directClaimErrorMessage(res) ??
           'The discount could not be created. Please try again or use the QR scan option.',
+    );
+  }
+
+  void _openExistingMerchantQrFlow({
+    required String merchantName,
+    required double billAmount,
+  }) {
+    context.pushNamed(
+      'pay',
+      extra: merchantClaimQrRouteExtra(
+        merchantName: merchantName,
+        amount: billAmount.toStringAsFixed(2),
+        returnToSearch: widget.returnToSearch,
+      ),
     );
   }
 

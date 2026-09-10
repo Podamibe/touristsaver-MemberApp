@@ -120,7 +120,10 @@ class _TermsConditionScreenState extends State<TermsConditionScreen> {
             behavior: const ScrollBehavior(),
             child: SingleChildScrollView(
                 controller: scrollController,
-                padding: const EdgeInsets.only(bottom: 100.0, top: 10.0),
+                padding: EdgeInsets.only(
+                  bottom: 120.0 + MediaQuery.of(context).padding.bottom,
+                  top: 10.0,
+                ),
                 scrollDirection: Axis.vertical,
                 child: BlocProvider(
                   lazy: false,
@@ -216,10 +219,21 @@ class _TermsConditionScreenState extends State<TermsConditionScreen> {
     return Padding(
       padding: const EdgeInsets.only(
         left: 10.0,
-        right: 10.0,
+        right: 80.0,
       ),
       child: Html(
         data: description,
+        style: {
+          'ul': Style(
+            padding: HtmlPaddings.only(left: 24.0),
+          ),
+          'ol': Style(
+            padding: HtmlPaddings.only(left: 24.0),
+          ),
+          'li': Style(
+            margin: Margins.only(bottom: 6.0),
+          ),
+        },
         onLinkTap: (url, _, __) async {
           if (Platform.isIOS) {
             await launchUrlString(

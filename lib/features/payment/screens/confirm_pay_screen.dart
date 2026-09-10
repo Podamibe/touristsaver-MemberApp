@@ -13,6 +13,7 @@ import 'package:touristsaver/common/widgets/touristsaver_loading_view.dart';
 import 'package:touristsaver/constants/helper.dart';
 import 'package:touristsaver/features/discovery_membership/widgets/discovery_savings_limit_sheet.dart';
 import 'package:touristsaver/features/payment/services/dio_payment.dart';
+import 'package:touristsaver/features/payment/widgets/merchant_claim_proximity_fallback.dart';
 import 'package:touristsaver/models/error_res.dart';
 import 'package:touristsaver/models/request/apply_piiink_by_merchant_req.dart';
 import 'package:touristsaver/models/request/sure_apply_piiink_req.dart';
@@ -43,6 +44,8 @@ class ConfimrPaymentScreen extends StatefulWidget {
   final bool isProfileClaim;
   final bool initialRedemptionComplete;
   final String? discoverySavingsMessage;
+  final double? claimLatitude;
+  final double? claimLongitude;
 
   const ConfimrPaymentScreen({
     super.key,
@@ -67,6 +70,8 @@ class ConfimrPaymentScreen extends StatefulWidget {
     this.isProfileClaim = false,
     this.initialRedemptionComplete = false,
     this.discoverySavingsMessage,
+    this.claimLatitude,
+    this.claimLongitude,
   });
 
   @override
@@ -456,6 +461,8 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
         merchantId: merchantId,
         amount: double.parse(widget.totalAmount),
         lang: AppVariables.selectedLanguageNow,
+        latitude: widget.claimLatitude,
+        longitude: widget.claimLongitude,
       ),
     );
 
@@ -468,6 +475,24 @@ class _ConfimrPaymentScreenState extends State<ConfimrPaymentScreen> {
       setState(() {
         isLoading = false;
       });
+      final MerchantClaimProximityFailure? proximityFailure =
+          MerchantClaimProximityFailure.fromResponse(res);
+      if (proximityFailure != null) {
+        final bool scanQr = await showMerchantClaimProximityFallback(
+          context: context,
+          merchantName: widget.merchantName,
+        );
+        if (!mounted || !scanQr) return;
+        context.pushReplacementNamed(
+          'pay',
+          extra: merchantClaimQrRouteExtra(
+            merchantName: widget.merchantName,
+            amount: widget.totalAmount,
+            returnToSearch: widget.returnToSearch,
+          ),
+        );
+        return;
+      }
       if (await showDiscoverySavingsLimitSheetForResponse(
         context: context,
         response: res,

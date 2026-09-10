@@ -59,28 +59,37 @@ class DioPay {
     final responseData = e.response?.data;
     if (responseData is String) {
       try {
-        return errorResModelFromJson(responseData);
+        return errorResModelFromJson(
+          responseData,
+          httpStatusCode: e.response?.statusCode,
+        );
       } catch (_) {
         return ErrorResModel(
           status: e.response?.statusCode,
           message: responseData,
+          httpStatusCode: e.response?.statusCode,
         );
       }
     }
 
     if (responseData is Map<String, dynamic>) {
-      return ErrorResModel.fromJson(responseData);
+      return ErrorResModel.fromJson(
+        responseData,
+        httpStatusCode: e.response?.statusCode,
+      );
     }
 
     if (responseData is Map) {
       return ErrorResModel.fromJson(
         jsonDecode(jsonEncode(responseData)) as Map<String, dynamic>,
+        httpStatusCode: e.response?.statusCode,
       );
     }
 
     return ErrorResModel(
       status: e.response?.statusCode,
       message: e.message,
+      httpStatusCode: e.response?.statusCode,
     );
   }
 

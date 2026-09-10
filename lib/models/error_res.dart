@@ -4,8 +4,8 @@
 
 import 'dart:convert';
 
-ErrorResModel errorResModelFromJson(String str) =>
-    ErrorResModel.fromJson(json.decode(str));
+ErrorResModel errorResModelFromJson(String str, {int? httpStatusCode}) =>
+    ErrorResModel.fromJson(json.decode(str), httpStatusCode: httpStatusCode);
 
 String errorResModelToJson(ErrorResModel data) => json.encode(data.toJson());
 
@@ -16,6 +16,8 @@ class ErrorResModel {
     this.error,
     this.message,
     this.stack,
+    this.data,
+    this.httpStatusCode,
   });
 
   final dynamic status;
@@ -23,13 +25,21 @@ class ErrorResModel {
   final Error? error;
   final String? message;
   final String? stack;
+  final dynamic data;
+  final int? httpStatusCode;
 
-  factory ErrorResModel.fromJson(Map<String, dynamic> json) => ErrorResModel(
+  factory ErrorResModel.fromJson(
+    Map<String, dynamic> json, {
+    int? httpStatusCode,
+  }) =>
+      ErrorResModel(
         status: json["status"],
         code: json["code"]?.toString(),
         error: json["error"] == null ? null : Error.fromJson(json["error"]),
         message: json["message"],
         stack: json["stack"],
+        data: json["data"],
+        httpStatusCode: httpStatusCode,
       );
 
   Map<String, dynamic> toJson() => {
@@ -38,6 +48,7 @@ class ErrorResModel {
         "error": error?.toJson(),
         "message": message,
         "stack": stack,
+        "data": data,
       };
 }
 

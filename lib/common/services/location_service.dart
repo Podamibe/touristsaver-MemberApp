@@ -13,12 +13,55 @@ import 'package:location/location.dart' as lloc;
 
 import '../app_variables.dart';
 
+class ClaimLocation {
+  const ClaimLocation({this.latitude, this.longitude});
+
+  final double? latitude;
+  final double? longitude;
+}
+
 class LocationService {
   static final LocationService _locationService = LocationService._();
   factory LocationService() {
     return _locationService;
   }
   LocationService._();
+
+  /// Gets coordinates for a direct merchant-profile claim without changing
+  /// the app's country-detection state or opening device settings.
+  ///
+  /// An unavailable result is intentionally non-fatal. The claim request is
+  /// still sent without coordinates so the backend can preserve the existing
+  /// flow when proximity verification is not required.
+  Future<ClaimLocation> getCurrentClaimLocation() async {
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        return const ClaimLocation();
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission != LocationPermission.whileInUse &&
+          permission != LocationPermission.always) {
+        return const ClaimLocation();
+      }
+
+      final Position position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+      return ClaimLocation(
+        latitude: position.latitude,
+        longitude: position.longitude,
+      );
+    } catch (_) {
+      return const ClaimLocation();
+    }
+  }
 
   // Future<String?> getCountryCode(double latitude, double longitude) async {
   //   try {
