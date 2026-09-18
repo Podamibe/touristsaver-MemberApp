@@ -1,3 +1,7 @@
+import 'package:touristsaver/common/models/discovery_membership_context.dart';
+import 'package:touristsaver/common/models/registration_membership_offer.dart';
+import 'package:touristsaver/common/models/member_error_presentation.dart';
+
 enum RegistrationCodeCategory {
   campaignInvitation('campaign_invitation_code'),
   discoveryInvitation('discovery_invitation_code'),
@@ -29,6 +33,8 @@ class RegistrationCodeResolution {
     this.communityGroupName,
     this.campaignName,
     this.membershipEffect,
+    this.discoveryMembership,
+    this.membershipOffer,
     this.backendReached = true,
   });
 
@@ -40,6 +46,8 @@ class RegistrationCodeResolution {
   final String? communityGroupName;
   final String? campaignName;
   final String? membershipEffect;
+  final DiscoveryMembershipContext? discoveryMembership;
+  final RegistrationMembershipOffer? membershipOffer;
   final bool backendReached;
 
   bool get isDiscovery =>
@@ -51,6 +59,9 @@ class RegistrationCodeResolution {
   factory RegistrationCodeResolution.fromJson(Map<String, dynamic> json) {
     final valid = json['valid'] == true;
     final category = RegistrationCodeCategory.fromApiValue(json['category']);
+    final dynamic terms = json['discoveryMembership'] ??
+        json['campaignMembership'] ??
+        json['membership'];
     return RegistrationCodeResolution(
       valid: valid && category != RegistrationCodeCategory.unknown,
       category: category,
@@ -60,6 +71,20 @@ class RegistrationCodeResolution {
       communityGroupName: _string(json['communityGroupName']),
       campaignName: _string(json['campaignName']),
       membershipEffect: _string(json['membershipEffect']),
+      membershipOffer: category == RegistrationCodeCategory.membershipOffer &&
+              json['membershipOffer'] is Map
+          ? RegistrationMembershipOffer.fromJson(
+              Map<String, dynamic>.from(json['membershipOffer'] as Map),
+            )
+          : null,
+      discoveryMembership:
+          category == RegistrationCodeCategory.discoveryInvitation ||
+                  category == RegistrationCodeCategory.campaignInvitation
+              ? DiscoveryMembershipContext.fromJson({
+                  ...json,
+                  if (terms is Map) ...Map<String, dynamic>.from(terms),
+                })
+              : null,
     );
   }
 
@@ -176,6 +201,16 @@ String registrationCodeErrorMessage(RegistrationCodeResolution resolution) {
   }
 }
 
+String registrationPromoCodeApplyErrorMessage(
+  RegistrationCodeResolution resolution,
+) {
+  if (!resolution.backendReached) return registrationCodeErrorMessage(resolution);
+  return MemberErrorPresenter.present(
+    code: resolution.reason,
+    context: MemberErrorContext.promoApply,
+  ).displayText;
+}
+
 const String unavailableInvitationLinkMessage =
     'This invitation link is no longer available. You can still continue without an invitation.';
 
@@ -186,7 +221,9 @@ String registrationCodeValidationMessage(
   if (!manuallyEntered && resolution.backendReached) {
     return unavailableInvitationLinkMessage;
   }
-  return registrationCodeErrorMessage(resolution);
+  return manuallyEntered
+      ? registrationPromoCodeApplyErrorMessage(resolution)
+      : registrationCodeErrorMessage(resolution);
 }
 
 bool shouldClearPendingInvitationAfterValidationFailure({

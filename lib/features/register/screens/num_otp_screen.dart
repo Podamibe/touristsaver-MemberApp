@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:touristsaver/common/app_variables.dart';
 import 'package:touristsaver/common/models/registration_premium_offer_context.dart';
 import 'package:touristsaver/common/models/discovery_membership_context.dart';
+import 'package:touristsaver/common/models/member_error_presentation.dart';
 import 'package:touristsaver/common/services/membership_offer_recognition.dart';
 import 'package:touristsaver/common/services/branch_referral_service.dart';
 import 'package:touristsaver/common/services/registration_access_session.dart';
@@ -380,11 +381,11 @@ class _NumberOTPScreenState extends State<NumberOTPScreen> with CodeAutoFill {
                                         context, res.message);
                                   }
                                 } else {
-                                  GlobalSnackBar.showError(
-                                      context,
-                                      S
-                                          .of(context)
-                                          .somethingWentWrongPleaseTryAgain);
+                                  GlobalSnackBar.showMemberError(
+                                    context,
+                                    MemberErrorPresenter.present(
+                                        context: MemberErrorContext.otpSend),
+                                  );
                                   setState(() {
                                     showText1 = true;
                                   });
@@ -641,10 +642,14 @@ class _NumberOTPScreenState extends State<NumberOTPScreen> with CodeAutoFill {
                             );
                           } else if (res is ErrorResModel) {
                             if (!mounted) return;
-                            GlobalSnackBar.showError(
+                            GlobalSnackBar.showMemberError(
                               context,
-                              res.message ??
-                                  'Registration could not be completed.',
+                              MemberErrorPresenter.present(
+                                code: res.technicalCode,
+                                context: MemberErrorContext.registration,
+                                approvedTitle: res.memberFacingTitle,
+                                approvedMessage: res.memberFacingMessage,
+                              ),
                             );
                             setState(() {
                               isLoadingN = false;
@@ -654,11 +659,11 @@ class _NumberOTPScreenState extends State<NumberOTPScreen> with CodeAutoFill {
                           //If registration is not successfully
                           else {
                             if (!mounted) return;
-                            GlobalSnackBar.showError(
-                                context,
-                                S
-                                    .of(context)
-                                    .somethingWentWrongWhenValidatingPremiumCodePleaseTryAgainLater);
+                            GlobalSnackBar.showMemberError(
+                              context,
+                              MemberErrorPresenter.present(
+                                  context: MemberErrorContext.registration),
+                            );
                             setState(() {
                               isLoadingN = false;
                             });

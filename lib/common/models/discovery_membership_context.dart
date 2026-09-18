@@ -205,8 +205,11 @@ class DiscoveryMembershipContext {
         'savingsCap',
         'maximumSavings',
       ]),
-      savingsCapAmountMinor:
-          _int(json, const ['savingsCapMinor', 'savingsCapAmountMinor']),
+      savingsCapAmountMinor: _int(json, const [
+        'savingsCapMinor',
+        'savingsCapAmountMinor',
+        'discoverySavingsCapAmountMinor',
+      ]),
       currencyCode: _string(json, const [
         'savingsCapCurrency',
         'currencyCode',

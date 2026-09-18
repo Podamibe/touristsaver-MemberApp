@@ -5,7 +5,7 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:go_router/go_router.dart';
 import 'package:touristsaver/common/app_variables.dart';
 import 'package:touristsaver/common/models/discovery_membership_context.dart';
-import 'package:touristsaver/common/models/registration_code_resolution.dart';
+import 'package:touristsaver/common/models/member_error_presentation.dart';
 import 'package:touristsaver/common/models/registration_premium_offer_context.dart';
 import 'package:touristsaver/common/services/branch_referral_service.dart';
 import 'package:touristsaver/common/services/membership_offer_recognition.dart';
@@ -295,7 +295,10 @@ class _PaidFreeScreenState extends State<PaidFreeScreen> {
     );
     if (!mounted) return;
     if (!resolution.valid || !resolution.isDiscovery) {
-      _showCodeError(registrationCodeErrorMessage(resolution));
+      _showCodeError(MemberErrorPresenter.present(
+        code: resolution.reason,
+        context: MemberErrorContext.invitation,
+      ).displayText);
       return;
     }
     final claim =
@@ -785,7 +788,10 @@ class _TopUpWidgetState extends State<TopUpWidget> {
 
       if (res is! TopUpStripeResModel) {
         setState(() => isLoading = false);
-        GlobalSnackBar.showError(context, S.of(context).serverError);
+        GlobalSnackBar.showMemberError(
+          context,
+          MemberErrorPresenter.present(context: MemberErrorContext.checkout),
+        );
         _dismissPaymentConfirmation(paymentContext);
         return;
       }
@@ -808,9 +814,10 @@ class _TopUpWidgetState extends State<TopUpWidget> {
           );
         } else {
           _dismissPaymentConfirmation(paymentContext);
-          GlobalSnackBar.showError(
+          GlobalSnackBar.showMemberError(
             context,
-            'Membership activation could not be confirmed. Please try again.',
+            MemberErrorPresenter.present(
+                context: MemberErrorContext.membershipActivation),
           );
         }
         return;
@@ -866,7 +873,10 @@ class _TopUpWidgetState extends State<TopUpWidget> {
       if (mounted) {
         setState(() => isLoading = false);
         _dismissPaymentConfirmation(paymentContext);
-        GlobalSnackBar.showError(context, S.of(context).stripePaymentFail);
+        GlobalSnackBar.showMemberError(
+          context,
+          MemberErrorPresenter.present(context: MemberErrorContext.checkout),
+        );
       }
     }
   }
@@ -899,9 +909,10 @@ class _TopUpWidgetState extends State<TopUpWidget> {
         }
 
         if (mounted) {
-          GlobalSnackBar.showError(
+          GlobalSnackBar.showMemberError(
             context,
-            'We could not confirm your membership activation. Please contact TouristSaver support before trying again.',
+            MemberErrorPresenter.present(
+                context: MemberErrorContext.paymentConfirmation),
           );
         }
       }

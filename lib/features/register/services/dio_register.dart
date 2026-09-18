@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:touristsaver/constants/helper.dart';
 import 'package:touristsaver/constants/url_end_point.dart';
 import 'package:touristsaver/common/models/registration_code_resolution.dart';
+import 'package:touristsaver/common/models/member_error_presentation.dart';
 import 'package:touristsaver/common/models/discovery_membership_context.dart';
 import 'package:touristsaver/common/models/registration_credential_check.dart';
 import 'package:touristsaver/models/error_res.dart';
@@ -57,20 +58,29 @@ class DioRegister {
           ),
         );
       }
-      return const DiscoveryRegistrationCodeClaimResult.failure(
-        'Discovery membership could not be activated. Please try again.',
+      return DiscoveryRegistrationCodeClaimResult.failure(
+        MemberErrorPresenter.present(
+            context: MemberErrorContext.discoveryClaim),
       );
     } on DioException catch (error) {
       final dynamic body = error.response?.data is String
           ? jsonDecode(error.response?.data as String)
           : error.response?.data;
-      final message = body is Map ? body['message']?.toString() : null;
+      final responseError = body is Map
+          ? ErrorResModel.fromJson(Map<String, dynamic>.from(body))
+          : ErrorResModel();
       return DiscoveryRegistrationCodeClaimResult.failure(
-        _discoveryClaimMessage(message),
+        MemberErrorPresenter.present(
+          code: responseError.technicalCode,
+          context: MemberErrorContext.discoveryClaim,
+          approvedTitle: responseError.memberFacingTitle,
+          approvedMessage: responseError.memberFacingMessage,
+        ),
       );
     } catch (_) {
-      return const DiscoveryRegistrationCodeClaimResult.failure(
-        'The invitation service is unavailable. Please check your connection and try again.',
+      return DiscoveryRegistrationCodeClaimResult.failure(
+        MemberErrorPresenter.present(
+            context: MemberErrorContext.discoveryClaim),
       );
     }
   }
@@ -243,16 +253,18 @@ class DioRegister {
         data: phoneOtpReq.toJson(),
       );
       return commonResModelFromJson(response.data!);
-    } catch (e) {
-      if (e is DioException) {
-        if (e.response!.statusCode == 409) {
-          return e.response!.statusCode;
-        } else {
-          return jsonDecode(e.response?.data)["message"];
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 409) return 409;
+      final data = e.response?.data;
+      try {
+        final body = data is String ? jsonDecode(data) : data;
+        if (body is Map) {
+          return ErrorResModel.fromJson(Map<String, dynamic>.from(body));
         }
-      } else {
-        return null;
-      }
+      } catch (_) {}
+      return ErrorResModel(httpStatusCode: e.response?.statusCode);
+    } catch (_) {
+      return ErrorResModel();
     }
   }
 
@@ -363,11 +375,11 @@ class DioRegister {
 class DiscoveryRegistrationCodeClaimResult {
   const DiscoveryRegistrationCodeClaimResult._({
     this.membership,
-    this.errorMessage,
+    this.errorPresentation,
   });
 
-  const DiscoveryRegistrationCodeClaimResult.failure(String message)
-      : this._(errorMessage: message);
+  DiscoveryRegistrationCodeClaimResult.failure(MemberErrorPresentation error)
+      : this._(errorPresentation: error);
 
   factory DiscoveryRegistrationCodeClaimResult.success(
     DiscoveryMembershipContext membership,
@@ -375,27 +387,8 @@ class DiscoveryRegistrationCodeClaimResult {
       DiscoveryRegistrationCodeClaimResult._(membership: membership);
 
   final DiscoveryMembershipContext? membership;
-  final String? errorMessage;
+  final MemberErrorPresentation? errorPresentation;
+  String? get errorMessage => errorPresentation?.displayText;
 
   bool get isSuccess => membership != null;
-}
-
-String _discoveryClaimMessage(String? reason) {
-  final resolution = RegistrationCodeResolution(
-    valid: false,
-    category: RegistrationCodeCategory.campaignInvitation,
-    reason: reason,
-  );
-  switch (reason?.trim().toUpperCase()) {
-    case 'DISCOVERY_REQUIRES_FREE_MEMBER':
-      return 'Discovery invitations are only available to Free members.';
-    case 'DISCOVERY_ENTITLEMENT_ALREADY_EXISTS':
-      return 'A Discovery membership is already linked to this account.';
-    case 'DISCOVERY_ENTITLEMENT_ALREADY_ENDED':
-      return 'This Discovery invitation has already been used by this account.';
-    case 'PREMIUM_PURCHASE_IN_PROGRESS_OR_COMPLETED':
-      return 'A Premium membership purchase is already in progress. Please complete or allow it to expire before applying Discovery.';
-    default:
-      return registrationCodeErrorMessage(resolution);
-  }
 }

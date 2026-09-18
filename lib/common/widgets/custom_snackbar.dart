@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:touristsaver/generated/l10n.dart';
+import 'package:touristsaver/common/models/member_error_presentation.dart';
 
 class GlobalSnackBar {
   final String message;
@@ -7,6 +8,12 @@ class GlobalSnackBar {
   const GlobalSnackBar({
     required this.message,
   });
+
+  static void showMemberError(
+    BuildContext context,
+    MemberErrorPresentation presentation,
+  ) =>
+      showError(context, presentation.displayText);
 
   // Success
   static showSuccess(

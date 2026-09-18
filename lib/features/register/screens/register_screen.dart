@@ -7,9 +7,13 @@ import 'package:flutter/services.dart';
 // import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:touristsaver/common/models/discovery_membership_context.dart';
 import 'package:touristsaver/common/models/registration_code_resolution.dart';
+import 'package:touristsaver/common/models/member_error_presentation.dart';
+import 'package:touristsaver/common/models/registration_membership_offer.dart';
+import 'package:touristsaver/common/models/registration_phone_prefix.dart';
+import 'package:touristsaver/common/models/registration_residence_options.dart';
 import 'package:touristsaver/common/models/registration_credential_check.dart';
 import 'package:touristsaver/common/services/branch_referral_service.dart';
 import 'package:touristsaver/common/services/registration_access_session.dart';
@@ -17,7 +21,6 @@ import 'package:touristsaver/common/widgets/custom_button.dart';
 import 'package:touristsaver/common/widgets/custom_loader.dart';
 import 'package:touristsaver/common/widgets/custom_snackbar.dart';
 import 'package:touristsaver/common/widgets/error.dart';
-import 'package:touristsaver/constants/global_colors.dart';
 import 'package:touristsaver/constants/read_sms_otp.dart';
 import 'package:touristsaver/constants/style.dart';
 import 'package:touristsaver/features/connectivity/cubit/internet_cubit.dart';
@@ -27,6 +30,7 @@ import 'package:touristsaver/features/location/bloc/location_all_states.dart';
 import 'package:touristsaver/features/location/services/dio_location.dart';
 import 'package:touristsaver/features/register/services/dio_register.dart';
 import 'package:touristsaver/models/request/phone_otp_req.dart';
+import 'package:touristsaver/models/error_res.dart';
 import 'package:touristsaver/models/request/premium_validity_req.dart';
 import 'package:touristsaver/models/request/reg_member_otp_req.dart';
 import 'package:touristsaver/models/response/check_issuer_res.dart';
@@ -39,7 +43,6 @@ import 'package:touristsaver/models/response/residence_country_res_model.dart';
 import '../../../common/app_variables.dart';
 import '../../../common/widgets/dropdown_button_widget.dart';
 import '../../../models/request/nearby_req.dart';
-import '../../../models/response/country_wise_prefix_res_model.dart';
 import '../../charity/services/dio_charity.dart';
 import '../../connectivity/screens/connectivity.dart';
 import '../../connectivity/screens/connectivity_screen.dart';
@@ -54,11 +57,46 @@ bool isRegistrationPhoneStructurallyValid({
 
 bool shouldShowRegistrationPromoCodePanel({
   required bool recognizedDiscoveryInvitation,
+  required String? registrationCode,
+  required bool validationFailed,
+}) =>
+    !recognizedDiscoveryInvitation ||
+    registrationCode == null ||
+    registrationCode.trim().isEmpty ||
+    validationFailed;
+
+bool shouldShowDiscoveryInvitationCard({
+  required bool recognizedDiscoveryInvitation,
+  required String? registrationCode,
   required RegistrationCodeResolution? resolution,
   required bool validationFailed,
 }) =>
-    validationFailed ||
-    (!recognizedDiscoveryInvitation && resolution?.isDiscovery != true);
+    !shouldShowRegistrationPromoCodePanel(
+      recognizedDiscoveryInvitation: recognizedDiscoveryInvitation,
+      registrationCode: registrationCode,
+      validationFailed: validationFailed,
+    ) &&
+    resolution?.valid == true &&
+    resolution?.isDiscovery == true;
+
+String registrationDiscoveryTerms(DiscoveryMembershipContext? membership) {
+  // Defaults match the backend's DISCOVERY_DEFAULTS. Resolved campaign values
+  // take precedence when the registration-code response supplies them.
+  final days = membership?.periodDays ?? 30;
+  final amount = membership?.effectiveSavingsCapAmount ?? 25;
+  final currency = membership?.displayCurrency.isNotEmpty == true
+      ? membership!.displayCurrency
+      : r'A$';
+  final amountText = amount == amount.roundToDouble()
+      ? amount.toStringAsFixed(0)
+      : amount.toStringAsFixed(2);
+  return '$days days · $currency$amountText savings allowance';
+}
+
+String registrationDiscoveryMembershipTitle(String? campaignName) {
+  final name = campaignName?.trim();
+  return 'Complimentary ${name == null || name.isEmpty ? 'Wings of Discovery' : name} Membership';
+}
 
 const String unavailableInvitationRecoveryMessage =
     'That invitation is no longer available, but your registration details are safe. You can continue without it or enter another promo or invitation code below.';
@@ -126,7 +164,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isHidden = true;
   bool _isHidden1 = true;
 
-  bool _isPromoExpanded = false;
+  bool _isApplyingCode = false;
+  String? _promoFeedback;
+  RegistrationPromoVerification _promoVerification =
+      const RegistrationPromoVerification.empty();
+  int? _discoveryTermsCountryId;
+  bool _discoveryInvitationCheckUnavailable = false;
   String? _currentRegistrationCode;
   RegistrationCodeResolution? _currentRegistrationCodeResolution;
   bool _registrationCodeValidationFailed = false;
@@ -137,6 +180,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool get _hasRecognizedDiscoveryInvitation =>
       !shouldShowRegistrationPromoCodePanel(
         recognizedDiscoveryInvitation: _linkedDiscoveryInvitationRecognized,
+        registrationCode: _currentRegistrationCode,
+        validationFailed: _registrationCodeValidationFailed,
+      );
+
+  bool get _hasValidatedDiscoveryInvitation =>
+      shouldShowDiscoveryInvitationCard(
+        recognizedDiscoveryInvitation: _linkedDiscoveryInvitationRecognized,
+        registrationCode: _currentRegistrationCode,
         resolution: _currentRegistrationCodeResolution,
         validationFailed: _registrationCodeValidationFailed,
       );
@@ -160,6 +211,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   int? selectedStateID;
   String? selectedPhonePrefix;
   String? selectedPhonePrefixKey;
+  String? selectedPhoneCountryCode;
   String? selectedCharity;
   int? selectedCharityID;
   String? slugg;
@@ -173,13 +225,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String _previousFirstNameText = '';
   String _previousLastNameText = '';
 
-  Future<CountryWisePrefixResModel?>? phonePrefixList;
   Future<ResidenceCountryResModel?>? residenceCountryOptionsList;
-  Future<CountryWisePrefixResModel?> getPhonePrefix() async {
-    CountryWisePrefixResModel? countryWisePrefixResModel =
-        await DioRegister().countryPhonePrefix();
-    return countryWisePrefixResModel;
-  }
 
 //Calling API of GetAll Charity
   Future<NearByCharityListResModel?>? nearByCharityForReg;
@@ -270,7 +316,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         .unavailableInvitationLinks
         .listen((_) => _consumeUnavailableInvitationNotice());
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      phonePrefixList = getPhonePrefix();
       residenceCountryOptionsList = DioRegister().residenceCountries();
       // allCharityy = getAllCharityy();
       providerController.text = widget.issuercode ?? '';
@@ -364,8 +409,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _currentRegistrationCode = null;
       _currentRegistrationCodeResolution = null;
       _registrationCodeValidationFailed = false;
+      _discoveryInvitationCheckUnavailable = false;
       _showUnavailableInvitationInfo = true;
-      _isPromoExpanded = true;
+      _promoFeedback = null;
+      _promoVerification = _promoVerification.edited();
     });
   }
 
@@ -400,31 +447,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _appliedAttributionLabel(String text) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF3F7FF),
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: const Color(0xFFE1E9FA)),
-          ),
-          child: AutoSizeText(
-            text,
-            style: TextStyle(
-              color: _softText,
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -558,79 +580,91 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        InkWell(
-          borderRadius: BorderRadius.circular(14.r),
-          onTap: () {
-            setState(() {
-              _isPromoExpanded = !_isPromoExpanded;
-            });
-          },
-          child: Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F8FF),
-              borderRadius: BorderRadius.circular(14.r),
-              border: Border.all(color: const Color(0xFFE4ECFB)),
-            ),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 32.w,
-                  child: Icon(
-                    Icons.sell_outlined,
-                    color: _primaryBlue,
-                    size: 26.sp,
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Have a promo or invitation code?',
-                        style: TextStyle(
-                          color: const Color(0xFF101B4D),
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w800,
+        Text('Promo or invitation code (optional)',
+            style: TextStyle(
+                color: const Color(0xFF101B4D),
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w800)),
+        SizedBox(height: 9.h),
+        TextFormField(
+          key: const Key('registration-promo-input'),
+          controller: premiumController,
+          cursorColor: _primaryBlue,
+          textCapitalization: TextCapitalization.characters,
+          inputFormatters: [
+            TextInputFormatter.withFunction((oldValue, newValue) =>
+                newValue.copyWith(text: newValue.text.toUpperCase())),
+          ],
+          onChanged: (_) => setState(() {
+            _promoFeedback = null;
+            _promoVerification = _promoVerification.edited();
+          }),
+          onFieldSubmitted: (_) => _applyPromoCode(),
+          decoration: _modernInputDecoration(
+            hintText: 'Enter code',
+            icon: Icons.sell_outlined,
+            suffixIcon: _isApplyingCode
+                ? const Padding(
+                    padding: EdgeInsets.all(15),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : _promoVerification.verified
+                    ? Padding(
+                        padding: EdgeInsets.only(right: 14.w),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.check_rounded,
+                                color: Color(0xFF167047), size: 18),
+                            SizedBox(width: 3.w),
+                            Text('Verified',
+                                style: TextStyle(
+                                  color: const Color(0xFF167047),
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w700,
+                                )),
+                          ],
                         ),
-                      ),
-                      SizedBox(height: 3.h),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'We’ll verify your code before you continue.',
-                          maxLines: 1,
-                          style: TextStyle(
-                            color: _softText,
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w500,
+                      )
+                    : TextButton(
+                        key: const Key('registration-promo-apply'),
+                        onPressed: _applyPromoCode,
+                        style: TextButton.styleFrom(
+                          foregroundColor: _primaryBlue,
+                          padding: EdgeInsets.symmetric(horizontal: 14.w),
+                          textStyle: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
+                        child: const Text('Apply'),
                       ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  _isPromoExpanded
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
-                  color: _primaryBlue,
-                ),
-              ],
-            ),
           ),
         ),
-        if (_isPromoExpanded) ...[
-          SizedBox(height: 12.h),
-          TextFormField(
-            controller: premiumController,
-            cursorColor: _primaryBlue,
-            decoration: _modernInputDecoration(
-              hintText: S.of(context).preCode,
-              icon: Icons.sell_outlined,
+        if (_promoFeedback != null) ...[
+          SizedBox(height: 8.h),
+          Text(_promoFeedback!,
+              key: const Key('registration-promo-feedback'),
+              style: TextStyle(
+                color: const Color(0xFFB3261E),
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+              )),
+        ],
+        if (_promoVerification.verified &&
+            _promoVerification.offer?.displayLine != null) ...[
+          SizedBox(height: 8.h),
+          Text(
+            _promoVerification.offer!.displayLine!,
+            key: const Key('registration-promo-offer'),
+            style: TextStyle(
+              color: const Color(0xFF101B4D),
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -638,60 +672,116 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  String _countryDisplayName(Object? countryName) {
-    final String name = countryName?.toString() ?? '';
-    return name == 'United States of America' ? 'USA' : name;
-  }
-
-  String? _countryCodeForFlag(Object? countryName) {
-    switch (countryName?.toString()) {
-      case 'Australia':
-        return 'AU';
-      case 'Canada':
-        return 'CA';
-      case 'China':
-        return 'CN';
-      case 'Fiji':
-        return 'FJ';
-      case 'Germany':
-        return 'DE';
-      case 'India':
-        return 'IN';
-      case 'Indonesia':
-        return 'ID';
-      case 'Ireland':
-        return 'IE';
-      case 'Lao':
-        return 'LA';
-      case 'Malaysia':
-        return 'MY';
-      case 'New Zealand':
-        return 'NZ';
-      case 'Philippines':
-        return 'PH';
-      case 'Singapore':
-        return 'SG';
-      case 'South Africa':
-        return 'ZA';
-      case 'Thailand':
-        return 'TH';
-      case 'United Kingdom':
-        return 'GB';
-      case 'United States of America':
-        return 'US';
-      case 'Vietnam':
-        return 'VN';
+  Future<void> _applyPromoCode() async {
+    final code = premiumController.text.trim().toUpperCase();
+    if (code.isEmpty) {
+      setState(() {
+        _promoVerification = _promoVerification.edited();
+        _promoFeedback = 'Enter a code to apply.';
+      });
+      return;
     }
-    return null;
+    final countryId = selectedCountryID;
+    if (countryId == null) {
+      setState(() {
+        _promoVerification = _promoVerification.edited();
+        _promoFeedback = 'Membership country is unavailable right now.';
+      });
+      return;
+    }
+    setState(() => _isApplyingCode = true);
+    final resolution = await DioRegister()
+        .resolveRegistrationCode(code: code, countryId: countryId);
+    if (!mounted) return;
+    setState(() {
+      _isApplyingCode = false;
+      if (premiumController.text.trim().toUpperCase() != code) return;
+      _promoVerification = RegistrationPromoVerification(
+        verified: resolution.valid,
+        offer: resolution.valid ? resolution.membershipOffer : null,
+      );
+      _promoFeedback =
+          resolution.valid
+              ? null
+              : registrationPromoCodeApplyErrorMessage(resolution);
+    });
   }
 
-  String? _flagEmoji(Object? countryName) {
-    final String? countryCode = _countryCodeForFlag(countryName);
-    if (countryCode == null || countryCode.length != 2) return null;
+  Widget _discoveryInvitationCard() {
+    final membership = _currentRegistrationCodeResolution?.discoveryMembership;
+    final campaignName = _currentRegistrationCodeResolution?.campaignName;
+    return Container(
+      key: const Key('discovery-registration-invitation'),
+      width: double.infinity,
+      padding: EdgeInsets.all(17.w),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+            colors: [Color(0xFF101B4D), Color(0xFF192D62)]),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: const Color(0xFFC9B787), width: 0.8),
+        boxShadow: [
+          BoxShadow(
+              color: const Color(0xFF101B4D).withValues(alpha: 0.16),
+              blurRadius: 12,
+              offset: const Offset(0, 5))
+        ],
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Your invitation includes',
+            style: TextStyle(
+                color: const Color(0xFFE4D7B1),
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w700)),
+        SizedBox(height: 6.h),
+        Text(registrationDiscoveryMembershipTitle(campaignName),
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 16.sp,
+                height: 1.3,
+                fontWeight: FontWeight.w800)),
+        SizedBox(height: 8.h),
+        Text(registrationDiscoveryTerms(membership),
+            style: TextStyle(
+                color: const Color(0xFFE9E5DB),
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w600)),
+      ]),
+    );
+  }
 
-    final int firstLetter = countryCode.codeUnitAt(0) - 0x41 + 0x1F1E6;
-    final int secondLetter = countryCode.codeUnitAt(1) - 0x41 + 0x1F1E6;
-    return String.fromCharCodes([firstLetter, secondLetter]);
+  Widget _discoveryInvitationChecking() {
+    return Container(
+      key: const Key('discovery-registration-checking'),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F7FF),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: _fieldBorder),
+      ),
+      child: Row(children: [
+        if (!_discoveryInvitationCheckUnavailable)
+          const SizedBox(
+            width: 17,
+            height: 17,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        else
+          const Icon(Icons.info_outline_rounded, color: _primaryBlue, size: 18),
+        SizedBox(width: 10.w),
+        Expanded(
+          child: Text(
+            _discoveryInvitationCheckUnavailable
+                ? 'We’ll check your invitation when you continue.'
+                : 'Checking your invitation…',
+            style: TextStyle(
+              color: const Color(0xFF101B4D),
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ]),
+    );
   }
 
   String _flagEmojiFromAlpha2(String isoAlpha2) {
@@ -720,7 +810,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   String _residenceDropdownKey(ResidenceCountry item, int index) {
-    return '${item.countryName} ${item.isoAlpha3} ${item.id}';
+    return '${item.countryName} ${item.isoAlpha3} ${item.id} $index';
   }
 
   String? _selectedResidenceKey(List<ResidenceCountry> countryItems) {
@@ -730,90 +820,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return index < 0 ? null : _residenceDropdownKey(countryItems[index], index);
   }
 
-  Widget _fallbackFlag(Object? countryName) {
-    final String? emoji = _flagEmoji(countryName);
-    if (emoji != null) {
-      return Center(
-        child: Text(
-          emoji,
-          style: TextStyle(fontSize: 17.sp),
-        ),
-      );
-    }
-
-    return Container(
-      color: const Color(0xFFEAF0F8),
-      alignment: Alignment.center,
-      child: Icon(
-        Icons.flag_outlined,
-        color: _softText,
-        size: 15.sp,
-      ),
-    );
-  }
-
-  Widget _prefixFlag(Object? logoUrl, Object? countryName) {
-    final String flagUrl = logoUrl?.toString().trim() ?? '';
-    if (flagUrl.isEmpty) return _fallbackFlag(countryName);
-
-    final String imageUrl = flagUrl;
-    final bool isSvg = imageUrl.toLowerCase().contains('.svg');
-
-    if (isSvg) {
-      return SvgPicture.network(
-        imageUrl,
-        height: 20,
-        width: 25,
-        fit: BoxFit.cover,
-        placeholderBuilder: (_) => _fallbackFlag(countryName),
-        errorBuilder: (_, __, ___) => _fallbackFlag(countryName),
-      );
-    }
-
-    return Image.network(
-      imageUrl,
-      height: 20,
-      width: 25,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) {
-        return _fallbackFlag(countryName);
-      },
-    );
-  }
-
-  String _prefixDropdownKey(dynamic item, int index) {
-    final String countryName = item.countryName?.toString() ?? '';
-    final String displayName = _countryDisplayName(countryName);
-    final String phonePrefix = item.phonePrefix?.toString() ?? '';
-    final String id = item.id?.toString() ?? index.toString();
-    return '$displayName $countryName $phonePrefix $id';
-  }
-
-  String? _selectedPrefixKey(List<dynamic> prefixItems) {
+  String? _selectedPrefixKey(List<RegistrationPhonePrefixOption> prefixItems) {
     if (selectedPhonePrefix == null) return null;
-
-    for (var index = 0; index < prefixItems.length; index++) {
-      if (_prefixDropdownKey(prefixItems[index], index) ==
-          selectedPhonePrefixKey) {
-        return selectedPhonePrefixKey;
-      }
+    if (selectedPhonePrefixKey != null &&
+        prefixItems.any((item) => item.key == selectedPhonePrefixKey)) {
+      return selectedPhonePrefixKey;
     }
-
     final int countryMatchIndex = prefixItems.indexWhere((item) =>
-        item.phonePrefix?.toString() == selectedPhonePrefix &&
-        item.countryName?.toString() == selectedCountry);
+        item.dialCode == selectedPhonePrefix &&
+        item.country.countryCode == selectedPhoneCountryCode);
     if (countryMatchIndex >= 0) {
-      return _prefixDropdownKey(
-          prefixItems[countryMatchIndex], countryMatchIndex);
+      return prefixItems[countryMatchIndex].key;
     }
-
-    final int prefixMatchIndex = prefixItems.indexWhere(
-        (item) => item.phonePrefix?.toString() == selectedPhonePrefix);
+    final int prefixMatchIndex =
+        prefixItems.indexWhere((item) => item.dialCode == selectedPhonePrefix);
     if (prefixMatchIndex >= 0) {
-      return _prefixDropdownKey(
-          prefixItems[prefixMatchIndex], prefixMatchIndex);
+      return prefixItems[prefixMatchIndex].key;
     }
-
     return null;
   }
 
@@ -823,161 +846,103 @@ class _RegisterScreenState extends State<RegisterScreen> {
         .toDouble();
     const double prefixFieldHeight = _inputHeight - 2;
 
-    return FutureBuilder<CountryWisePrefixResModel?>(
-        future: phonePrefixList,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return const Error1();
-          } else if (!snapshot.hasData) {
-            return Row(
-              children: [
-                SizedBox(
-                  width: prefixWidth,
-                  child: AutoSizeText(
-                    S.of(context).pleaseWaitD,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        color: GlobalColors.gray.withValues(alpha: 0.8),
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w500),
-                  ),
-                ),
-                const SizedBox(width: 10.0),
-                Expanded(
-                  child: AutoSizeText(
-                    S.of(context).pleaseWaitD,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        color: GlobalColors.gray.withValues(alpha: 0.8),
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            );
-          } else {
-            final prefixItems = [...snapshot.data!.data!]..sort((a, b) =>
-                (a.countryName ?? '')
-                    .toString()
-                    .toLowerCase()
-                    .compareTo((b.countryName ?? '').toString().toLowerCase()));
-            final prefixItemsByKey = <String, dynamic>{
-              for (var index = 0; index < prefixItems.length; index++)
-                _prefixDropdownKey(prefixItems[index], index):
-                    prefixItems[index],
-            };
+    final prefixItems = registrationPhonePrefixOptions(
+      membershipCountryIso2: selectedCountryShortName,
+    );
+    final prefixItemsByKey = <String, RegistrationPhonePrefixOption>{
+      for (final item in prefixItems) item.key: item,
+    };
 
-            return Row(
-              children: [
-                SizedBox(
-                  width: prefixWidth,
-                  height: prefixFieldHeight,
-                  child: DropdownButtonWidget(
-                    label: S.of(context).prefix,
-                    bWidth: prefixWidth,
-                    dropWidth: 190.w,
-                    lPadding: 3,
-                    fillColor: Colors.white,
-                    borderColor: _fieldBorder,
-                    borderRadius: 12.r,
-                    iconColor: _primaryBlue,
-                    hintStyle: _dropdownHintStyle,
-                    height: prefixFieldHeight,
-                    buttonHeight: prefixFieldHeight - 2,
-                    buttonPadding: EdgeInsets.only(left: 10.w, right: 0),
-                    searchController: phonePrefixSearchController,
-                    items: prefixItems.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final e = entry.value;
-                      return DropdownMenuItem(
-                        value: _prefixDropdownKey(e, index),
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: Row(
-                            children: [
-                              Container(
-                                height: 20,
-                                width: 25,
-                                decoration: BoxDecoration(
-                                    border: Border.all(
-                                        color: Colors.grey
-                                            .withValues(alpha: 0.4))),
-                                clipBehavior: Clip.antiAlias,
-                                child: _prefixFlag(e.logoUrl, e.countryName),
-                              ),
-                              const SizedBox(width: 5.0),
-                              Expanded(
-                                child: AutoSizeText(
-                                  '${_countryDisplayName(e.countryName)} ${e.phonePrefix ?? ''}',
-                                  maxLines: 1,
-                                  style: dopdownTextStyle,
-                                ),
-                              ),
-                            ],
-                          ),
+    return Row(
+      children: [
+        SizedBox(
+          width: prefixWidth,
+          height: prefixFieldHeight,
+          child: DropdownButtonWidget(
+            label: S.of(context).prefix,
+            bWidth: prefixWidth,
+            dropWidth: 270.w,
+            lPadding: 3,
+            fillColor: Colors.white,
+            borderColor: _fieldBorder,
+            borderRadius: 12.r,
+            iconColor: _primaryBlue,
+            hintStyle: _dropdownHintStyle,
+            height: prefixFieldHeight,
+            buttonHeight: prefixFieldHeight - 2,
+            buttonPadding: EdgeInsets.only(left: 10.w, right: 0),
+            searchController: phonePrefixSearchController,
+            items: prefixItems.map((item) {
+              return DropdownMenuItem(
+                value: item.key,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: AutoSizeText(
+                          item.label,
+                          maxLines: 1,
+                          style: dopdownTextStyle,
                         ),
-                      );
-                    }).toList(),
-                    selectedItemBuilder: (context) {
-                      return prefixItems.map((e) {
-                        return Row(
-                          children: [
-                            Container(
-                              height: 20,
-                              width: 25,
-                              decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color:
-                                          Colors.grey.withValues(alpha: 0.4))),
-                              clipBehavior: Clip.antiAlias,
-                              child: _prefixFlag(e.logoUrl, e.countryName),
-                            ),
-                            SizedBox(width: 6.w),
-                            Flexible(
-                              child: AutoSizeText(
-                                e.phonePrefix ?? '',
-                                maxLines: 1,
-                                style: dopdownTextStyle,
-                              ),
-                            ),
-                          ],
-                        );
-                      }).toList();
-                    },
-                    onChanged: (newVal) async {
-                      final String key = newVal as String;
-                      final selectedPrefixItem = prefixItemsByKey[key];
-                      setState(() {
-                        selectedPhonePrefix =
-                            selectedPrefixItem?.phonePrefix?.toString();
-                        selectedPhonePrefixKey = key;
-                        phonePrefixSearchController.clear();
-                      });
-                    },
-                    value: _selectedPrefixKey(prefixItems),
-                  ),
-                ),
-                const SizedBox(width: 10.0),
-                Expanded(
-                  child: SizedBox(
-                    height: _inputHeight,
-                    child: TextFormField(
-                      controller: mobileNumberController,
-                      cursorColor: _primaryBlue,
-                      decoration: _modernInputDecoration(
-                        hintText: 'Mobile number',
                       ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: <TextInputFormatter>[
-                        FilteringTextInputFormatter.allow(RegExp(r'[0-9]*'))
-                      ],
-                    ),
+                    ],
                   ),
                 ),
+              );
+            }).toList(),
+            selectedItemBuilder: (context) {
+              return prefixItems.map((item) {
+                return Row(
+                  children: [
+                    Text(item.country.flagEmoji,
+                        style: TextStyle(fontSize: 17.sp)),
+                    SizedBox(width: 6.w),
+                    Flexible(
+                      child: AutoSizeText(
+                        item.dialCode,
+                        maxLines: 1,
+                        style: dopdownTextStyle,
+                      ),
+                    ),
+                  ],
+                );
+              }).toList();
+            },
+            onChanged: (newVal) {
+              final String key = newVal as String;
+              final selectedPrefixItem = prefixItemsByKey[key];
+              if (selectedPrefixItem == null) return;
+              setState(() {
+                selectedPhonePrefix = selectedPrefixItem.dialCode;
+                selectedPhoneCountryCode =
+                    selectedPrefixItem.country.countryCode;
+                selectedPhonePrefixKey = key;
+                phonePrefixSearchController.clear();
+              });
+            },
+            value: _selectedPrefixKey(prefixItems),
+          ),
+        ),
+        const SizedBox(width: 10.0),
+        Expanded(
+          child: SizedBox(
+            height: _inputHeight,
+            child: TextFormField(
+              controller: mobileNumberController,
+              cursorColor: _primaryBlue,
+              decoration: _modernInputDecoration(
+                hintText: 'Mobile number',
+              ),
+              keyboardType: TextInputType.number,
+              inputFormatters: <TextInputFormatter>[
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9]*'))
               ],
-            );
-          }
-        });
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _residenceFields() {
@@ -988,10 +953,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           return _placeholderField(S.of(context).pleaseWaitD);
         }
 
-        final countryItems = snapshot.data!.data.toList(growable: false)
-          ..sort((a, b) => a.countryName
-              .toLowerCase()
-              .compareTo(b.countryName.toLowerCase()));
+        final countryItems = registrationResidenceOptions(
+          countries: snapshot.data!.data,
+          membershipCountryIso2: selectedCountryShortName,
+        );
         final countryItemsByKey = <String, ResidenceCountry>{
           for (var index = 0; index < countryItems.length; index++)
             _residenceDropdownKey(countryItems[index], index):
@@ -1117,10 +1082,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
         selectedCountry = country.countryName ?? 'Australia';
         selectedCountryID = country.id;
         selectedCountryShortName = country.countryShortName ?? 'AU';
+        if (_hasRecognizedDiscoveryInvitation &&
+            _discoveryTermsCountryId != country.id &&
+            country.id != null) {
+          _discoveryTermsCountryId = country.id;
+          unawaited(_loadDiscoveryInvitationTerms(country.id!));
+        }
         return selectedCountryID != null;
       }
     }
     return false;
+  }
+
+  Future<void> _loadDiscoveryInvitationTerms(int countryId) async {
+    final code = _currentRegistrationCode;
+    if (code == null) return;
+    final resolution = await DioRegister()
+        .resolveRegistrationCode(code: code, countryId: countryId);
+    if (!mounted ||
+        !_hasRecognizedDiscoveryInvitation ||
+        selectedCountryID != countryId) {
+      return;
+    }
+    if (resolution.valid && resolution.isDiscovery) {
+      setState(() {
+        _currentRegistrationCodeResolution = resolution;
+        _discoveryInvitationCheckUnavailable = false;
+      });
+    } else if (resolution.backendReached) {
+      await BranchReferralService.clearPendingDiscoveryReferral(code: code);
+      if (mounted) _recoverFromUnavailableLinkedInvitation();
+    } else {
+      setState(() => _discoveryInvitationCheckUnavailable = true);
+    }
   }
 
   Future<bool> _loadMembershipCountryBackendDefaults() async {
@@ -1445,6 +1439,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
                                   children: [
+                                    if (_hasRecognizedDiscoveryInvitation) ...[
+                                      if (_hasValidatedDiscoveryInvitation)
+                                        _discoveryInvitationCard()
+                                      else
+                                        _discoveryInvitationChecking(),
+                                      SizedBox(height: 22.h),
+                                    ],
                                     _sectionHeader(
                                         Icons.person_outline, 'Your Details'),
                                     Row(
@@ -1497,6 +1498,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                                     _phoneNumberFields(),
                                     const SizedBox(height: 22),
+
+                                    if (_showUnavailableInvitationInfo) ...[
+                                      _unavailableInvitationInfo(),
+                                      SizedBox(height: 12.h),
+                                    ],
+                                    if (!_hasRecognizedDiscoveryInvitation)
+                                      _promoCodeSection(),
+                                    SizedBox(height: 22.h),
 
                                     _sectionHeader(Icons.lock_outline,
                                         'Secure Your Account'),
@@ -1555,24 +1564,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     ),
 
                                     SizedBox(height: 22.h),
-                                    if (_showUnavailableInvitationInfo) ...[
-                                      _unavailableInvitationInfo(),
-                                      SizedBox(height: 12.h),
-                                    ],
-                                    if (!_hasRecognizedDiscoveryInvitation) ...[
-                                      _promoCodeSection(),
-                                      const SizedBox(height: 15),
-                                    ],
-
-                                    if (_currentRegistrationCode != null &&
-                                        !_registrationCodeValidationFailed)
-                                      _appliedAttributionLabel(
-                                        _currentRegistrationCodeResolution
-                                                    ?.displayName !=
-                                                null
-                                            ? 'Invitation detected: ${_currentRegistrationCodeResolution!.displayName}'
-                                            : 'Your Discovery invitation has been recognised',
-                                      ),
 
                                     // Select Charity
 
@@ -2087,16 +2078,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (shouldClearPending) {
         _recoverFromUnavailableLinkedInvitation();
       } else {
-        GlobalSnackBar.showError(
-          context,
-          registrationCodeValidationMessage(
-            resolution,
-            manuallyEntered: manuallyEntered,
-          ),
-        );
+        final message = registrationCodeValidationMessage(resolution,
+            manuallyEntered: manuallyEntered);
+        if (!manuallyEntered) GlobalSnackBar.showError(context, message);
         setState(() {
           isLoading = false;
           _registrationCodeValidationFailed = true;
+          if (manuallyEntered) {
+            _promoVerification = _promoVerification.edited();
+            _promoFeedback = message;
+          }
         });
       }
       return;
@@ -2402,14 +2393,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
         });
       }
     } else if (res == 409) {
-      GlobalSnackBar.showError(
-          context, S.of(context).emailOrPhoneNumberAlreadyExists);
-    } else if (res.toString().contains('is not a valid phone number')) {
-      // log(res.toString());
-      GlobalSnackBar.showError(context, res.toString());
+      GlobalSnackBar.showMemberError(
+        context,
+        MemberErrorPresenter.present(
+          code: 'EMAIL_OR_PHONE_ALREADY_EXIST',
+          context: MemberErrorContext.otpSend,
+        ),
+      );
+    } else if (res is ErrorResModel) {
+      GlobalSnackBar.showMemberError(
+        context,
+        MemberErrorPresenter.present(
+          code: res.technicalCode,
+          context: MemberErrorContext.otpSend,
+          approvedTitle: res.memberFacingTitle,
+          approvedMessage: res.memberFacingMessage,
+        ),
+      );
     } else {
-      // log(res.toString());
-      GlobalSnackBar.showError(context, res.toString());
+      GlobalSnackBar.showMemberError(
+        context,
+        MemberErrorPresenter.present(context: MemberErrorContext.otpSend),
+      );
     }
     setState(() {
       isLoading = false;

@@ -38,6 +38,22 @@ void main() {
       expect(premium.isPremium, isTrue);
     });
 
+    test('reads Discovery invitation terms from resolver campaign data', () {
+      final resolution = RegistrationCodeResolution.fromJson({
+        'valid': true,
+        'category': 'campaign_invitation_code',
+        'campaignMembership': {
+          'membershipDays': 45,
+          'discoverySavingsCapAmountMinor': 4000,
+          'currencyCode': 'AUD',
+        },
+      });
+
+      expect(resolution.discoveryMembership?.periodDays, 45);
+      expect(resolution.discoveryMembership?.effectiveSavingsCapAmount, 40);
+      expect(resolution.discoveryMembership?.displayCurrency, r'A$');
+    });
+
     test('does not accept an unknown category as valid', () {
       final resolution = RegistrationCodeResolution.fromJson({
         'valid': true,
@@ -101,7 +117,7 @@ void main() {
           invalid,
           manuallyEntered: true,
         ),
-        'We couldn’t verify this code. Please check it and try again.',
+        'We couldn’t verify this code.\nPlease check it and try again.',
       );
       expect(
         shouldClearPendingInvitationAfterValidationFailure(
@@ -155,6 +171,45 @@ void main() {
           failure('REGISTRATION_CODE_ALREADY_REDEEMED'),
         ),
         contains('already been redeemed'),
+      );
+    });
+
+    test('Apply shows promo-specific eligibility messages from resolver reasons',
+        () {
+      RegistrationCodeResolution failure(String reason) =>
+          RegistrationCodeResolution(
+            valid: false,
+            category: RegistrationCodeCategory.unknown,
+            reason: reason,
+          );
+
+      expect(
+        registrationPromoCodeApplyErrorMessage(
+          failure('CAMPAIGN_INVITATION_EXPIRED'),
+        ),
+        'This promo code has expired.\nPlease use another code or continue without one.',
+      );
+      expect(
+        registrationPromoCodeApplyErrorMessage(
+          failure('MEMBER_PREMIUM_CODE_NOT_VALID'),
+        ),
+        'This promo code is no longer valid.\nPlease use another code or continue without one.',
+      );
+      expect(
+        registrationPromoCodeApplyErrorMessage(
+          failure('MULTI_USE_PREMIUM_CODE_REDEMPTION_LIMIT_REACHED'),
+        ),
+        'This promo code is no longer available.\nPlease use another code or continue without one.',
+      );
+      expect(
+        registrationPromoCodeApplyErrorMessage(failure('INVALID_CODE')),
+        'We couldn’t verify this code.\nPlease check it and try again.',
+      );
+      expect(
+        registrationPromoCodeApplyErrorMessage(
+          RegistrationCodeResolution.unavailable(),
+        ),
+        contains('unavailable'),
       );
     });
 
